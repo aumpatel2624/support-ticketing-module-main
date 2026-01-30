@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Clock,
@@ -45,10 +45,25 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
     const [uploadProgress, setUploadProgress] = useState({});
     const [showUpload, setShowUpload] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    const isInitialMount = useRef(true);
 
     if (!ticket) return <div>Ticket not found</div>;
 
     const handleStatusChange = async (newStatus) => {
+        // Skip on initial mount to prevent unwanted API calls
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+
+        // Validate that newStatus is one of the allowed values
+        const validStatuses = ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Closed', 'Escalated'];
+        if (!validStatuses.includes(newStatus)) {
+            console.error('Invalid status:', newStatus);
+            toast.error('Invalid status value');
+            return;
+        }
+
         try {
             setIsUpdatingStatus(true);
             await ticketService.updateTicket(ticket._id, {
@@ -165,7 +180,7 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
                     </h1>
                 </div>
                 <div className="flex items-center gap-2">
-                    {/* whaatwh<Button variant="outline">Edit</Button> */}
+                    {/* <Button variant="outline">Edit</Button> */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -262,20 +277,24 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
                         <CardContent className="space-y-4">
                             <div>
                                 <span className="text-xs text-muted-foreground block mb-1">Status</span>
-                                <Select value={ticket.status} onValueChange={handleStatusChange} disabled={isUpdatingStatus}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="New">New</SelectItem>
-                                        <SelectItem value="Assigned">Assigned</SelectItem>
-                                        <SelectItem value="InProgress">In Progress</SelectItem>
-                                        <SelectItem value="Pending">Pending</SelectItem>
-                                        <SelectItem value="Completed">Completed</SelectItem>
-                                        <SelectItem value="Closed">Closed</SelectItem>
-                                        <SelectItem value="Escalated">Escalated</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                {ticket.status ? (
+                                    <Select value={ticket.status} onValueChange={handleStatusChange} disabled={isUpdatingStatus}>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="New">New</SelectItem>
+                                            <SelectItem value="Assigned">Assigned</SelectItem>
+                                            <SelectItem value="InProgress">In Progress</SelectItem>
+                                            <SelectItem value="Pending">Pending</SelectItem>
+                                            <SelectItem value="Completed">Completed</SelectItem>
+                                            <SelectItem value="Closed">Closed</SelectItem>
+                                            <SelectItem value="Escalated">Escalated</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <Badge variant="outline">No Status</Badge>
+                                )}
                             </div>
 
                             <Separator />
