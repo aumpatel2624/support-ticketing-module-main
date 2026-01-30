@@ -383,13 +383,8 @@ const assignTicket = asyncHandler(async (req, res) => {
 
     ticket.assignedTo = assignedTo;
 
-    // If status was 'New', move to 'Assigned'
-    if (ticket.status === 'New') {
-        ticket.status = 'Assigned';
-        ticket.addStatusHistory('Assigned', req.user._id, comment || 'Ticket assigned');
-    } else {
-        ticket.addStatusHistory(ticket.status, req.user._id, comment || `Ticket reassigned to ${assignedTo}`);
-    }
+    // Add assignment to status history (without changing the status itself)
+    ticket.addStatusHistory(ticket.status, req.user._id, comment || `Ticket assigned to user`);
 
     await ticket.save();
 

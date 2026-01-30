@@ -147,9 +147,13 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
         try {
             // First assign the ticket
             await ticketService.assignTicket(ticketId, selectedUser._id, `Assigned to ${selectedUser.name}`);
-            // Then update the status
-            await ticketService.updateTicketStatus(ticketId, newStatus);
-            toast.success(`Assigned to ${selectedUser.name} and status updated`);
+            // Only update status if it's different from current status (avoid "Assigned" -> "Assigned" error on reassignment)
+            if (ticket.status !== newStatus) {
+                await ticketService.updateTicketStatus(ticketId, newStatus);
+                toast.success(`Assigned to ${selectedUser.name} and status updated`);
+            } else {
+                toast.success(`Assigned to ${selectedUser.name}`);
+            }
         } catch (error) {
             console.error('Failed to update ticket:', error);
             toast.error('Failed to assign ticket');
