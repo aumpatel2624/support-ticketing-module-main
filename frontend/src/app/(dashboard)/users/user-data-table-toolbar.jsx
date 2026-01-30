@@ -1,10 +1,12 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DataTableFacetedFilter } from '@/components/ui/data-table-faceted-filter';
 import { USER_ROLES } from '@/lib/constants';
+import departmentService from '@/lib/services/departmentService';
 
 // Convert constants to options format
 const roleOptions = Object.values(USER_ROLES).map((role) => ({
@@ -12,16 +14,29 @@ const roleOptions = Object.values(USER_ROLES).map((role) => ({
     label: role,
 }));
 
-// Mock Departments
-const departmentOptions = [
-    { value: 'IT Support', label: 'IT Support' },
-    { value: 'HR', label: 'HR' },
-    { value: 'Sales', label: 'Sales' },
-    { value: 'Operations', label: 'Operations' },
-];
-
 export function UserDataTableToolbar({ table }) {
+    const [departmentOptions, setDepartmentOptions] = useState([]);
     const isFiltered = table.getState().columnFilters.length > 0;
+
+    useEffect(() => {
+        const fetchDepartments = async () => {
+            try {
+                const output = await departmentService.getDepartments();
+                let list = [];
+                if (output.data && Array.isArray(output.data)) list = output.data;
+                else if (Array.isArray(output)) list = output;
+
+                const options = list.map((dept) => ({
+                    value: dept.name,
+                    label: dept.name,
+                }));
+                setDepartmentOptions(options);
+            } catch (err) {
+                console.error('Failed to load departments:', err);
+            }
+        };
+        fetchDepartments();
+    }, []);
 
     return (
         <div className="flex items-center justify-between">
@@ -41,7 +56,7 @@ export function UserDataTableToolbar({ table }) {
                         options={roleOptions}
                     />
                 )}
-                {table.getColumn('department') && (
+                {table.getColumn('department') && departmentOptions.length > 0 && (
                     <DataTableFacetedFilter
                         column={table.getColumn('department')}
                         title="Department"

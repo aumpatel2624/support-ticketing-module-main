@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials, getAvatarColor } from '@/lib/utils';
 
-export const columns = [
+export const createColumns = (onEdit, onDeactivate) => [
     {
         id: 'select',
         header: ({ table }) => (
@@ -133,6 +133,7 @@ export const columns = [
         id: 'actions',
         enableHiding: false,
         cell: ({ row }) => {
+            const user = row.original;
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -143,10 +144,13 @@ export const columns = [
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit User</DropdownMenuItem>
-                        <DropdownMenuItem>Reset Password</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEdit(user)}>
+                            Edit User
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">Deactivate</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => onDeactivate(user)}>
+                            Deactivate
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             );

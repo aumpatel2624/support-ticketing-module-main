@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
-import { columns } from './columns';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { createColumns } from './columns';
 import { UserDataTableToolbar } from './user-data-table-toolbar';
 import PageHeader from '@/components/common/PageHeader';
 import CreateUserDialog from '@/components/settings/CreateUserDialog';
+import EditUserDialog from '@/components/settings/EditUserDialog';
 import userService from '@/lib/services/userService';
 import toast from 'react-hot-toast';
 import useAuthStore from '@/store/authStore';
@@ -15,6 +17,8 @@ import useAuthStore from '@/store/authStore';
 export default function UsersPage() {
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [editUser, setEditUser] = useState(null);
+    const [deleteUser, setDeleteUser] = useState(null);
     const { user } = useAuthStore();
     const isSuperAdmin = user?.role === 'SuperAdmin';
 
@@ -41,8 +45,30 @@ export default function UsersPage() {
     }, []);
 
     const handleUserCreated = () => {
-        fetchUsers(); // Refresh list
+        fetchUsers();
     };
+
+    const handleUserUpdated = () => {
+        fetchUsers();
+        setEditUser(null);
+    };
+
+    const handleDeleteUser = async () => {
+        try {
+            await userService.deleteUser(deleteUser._id);
+            toast.success('User deactivated successfully');
+            fetchUsers();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to deactivate user');
+        } finally {
+            setDeleteUser(null);
+        }
+    };
+
+    const columns = useMemo(
+        () => createColumns(setEditUser, setDeleteUser),
+        []
+    );
 
     return (
         <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
@@ -66,6 +92,23 @@ export default function UsersPage() {
                     />
                 )}
             </div>
+
+            <EditUserDialog
+                user={editUser}
+                open={!!editUser}
+                onOpenChange={(open) => !open && setEditUser(null)}
+                onUserUpdated={handleUserUpdated}
+            />
+
+            <ConfirmDialog
+                open={!!deleteUser}
+                onOpenChange={(open) => !open && setDeleteUser(null)}
+                title="Deactivate User"
+                description={`Are you sure you want to deactivate "${deleteUser?.name}"? They will no longer be able to access the system.`}
+                confirmText="Deactivate"
+                variant="destructive"
+                onConfirm={handleDeleteUser}
+            />
         </div>
     );
 }
