@@ -17,6 +17,8 @@ export default function CategoriesPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [editCategory, setEditCategory] = useState(null);
     const [deleteCategory, setDeleteCategory] = useState(null);
+    const [deleteError, setDeleteError] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const { user } = useAuthStore();
     const isSuperAdmin = user?.role === 'SuperAdmin';
 
@@ -57,14 +59,20 @@ export default function CategoriesPage() {
     };
 
     const handleDeleteCategory = async () => {
+        setIsDeleting(true);
+        setDeleteError(null);
         try {
             await categoryService.deleteCategory(deleteCategory._id);
             toast.success('Category deleted successfully');
+            setDeleteCategory(null);
+            setDeleteError(null);
             fetchCategories();
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to delete category');
+            const errorMessage = error.response?.data?.message || 'Failed to delete category';
+            setDeleteError(errorMessage);
+            // Keep the dialog open to show the error
         } finally {
-            setDeleteCategory(null);
+            setIsDeleting(false);
         }
     };
 
@@ -104,12 +112,19 @@ export default function CategoriesPage() {
 
             <ConfirmDialog
                 open={!!deleteCategory}
-                onOpenChange={(open) => !open && setDeleteCategory(null)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setDeleteCategory(null);
+                        setDeleteError(null);
+                    }
+                }}
                 title="Delete Category"
                 description={`Are you sure you want to delete "${deleteCategory?.name}"? This action cannot be undone.`}
                 confirmText="Delete"
                 variant="destructive"
                 onConfirm={handleDeleteCategory}
+                isLoading={isDeleting}
+                error={deleteError}
             />
         </div>
     );

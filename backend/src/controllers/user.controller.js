@@ -208,6 +208,34 @@ const deleteUser = asyncHandler(async (req, res) => {
         throw new ValidationError('Cannot delete your own account');
     }
 
+    // Cascading validation: Check for references before deletion
+    const Department = require('../models/Department');
+    const Ticket = require('../models/Ticket');
+
+    // Check 1: User is a department head
+    const departmentsHeadingCount = await Department.countDocuments({
+        headUserId: req.params.id,
+        isActive: true
+    });
+
+    if (departmentsHeadingCount > 0) {
+        throw new ValidationError(
+            `Cannot deactivate user who is the head of ${departmentsHeadingCount} ${departmentsHeadingCount > 1 ? 'departments' : 'department'}. Please assign a new head first.`
+        );
+    }
+
+    // Check 2: User has assigned tickets
+    const assignedTicketsCount = await Ticket.countDocuments({
+        assignedTo: req.params.id,
+        status: { $nin: ['Closed'] }
+    });
+
+    if (assignedTicketsCount > 0) {
+        throw new ValidationError(
+            `Cannot deactivate user with ${assignedTicketsCount} active ${assignedTicketsCount > 1 ? 'tickets' : 'ticket'} assigned. Please reassign them first.`
+        );
+    }
+
     // Soft delete - set isActive to false
     user.isActive = false;
     await user.save();

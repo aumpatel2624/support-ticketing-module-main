@@ -16,6 +16,8 @@ export default function DepartmentsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [editDepartment, setEditDepartment] = useState(null);
     const [deleteDepartment, setDeleteDepartment] = useState(null);
+    const [deleteError, setDeleteError] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchDepartments = async () => {
         try {
@@ -49,14 +51,20 @@ export default function DepartmentsPage() {
     };
 
     const handleDeleteDepartment = async () => {
+        setIsDeleting(true);
+        setDeleteError(null);
         try {
             await departmentService.deleteDepartment(deleteDepartment._id);
             toast.success('Department deleted successfully');
+            setDeleteDepartment(null);
+            setDeleteError(null);
             fetchDepartments();
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to delete department');
+            const errorMessage = error.response?.data?.message || 'Failed to delete department';
+            setDeleteError(errorMessage);
+            // Keep the dialog open to show the error
         } finally {
-            setDeleteDepartment(null);
+            setIsDeleting(false);
         }
     };
 
@@ -96,12 +104,19 @@ export default function DepartmentsPage() {
 
             <ConfirmDialog
                 open={!!deleteDepartment}
-                onOpenChange={(open) => !open && setDeleteDepartment(null)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setDeleteDepartment(null);
+                        setDeleteError(null);
+                    }
+                }}
                 title="Delete Department"
                 description={`Are you sure you want to delete "${deleteDepartment?.name}"? This action cannot be undone.`}
                 confirmText="Delete"
                 variant="destructive"
                 onConfirm={handleDeleteDepartment}
+                isLoading={isDeleting}
+                error={deleteError}
             />
         </div>
     );

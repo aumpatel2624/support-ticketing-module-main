@@ -151,7 +151,35 @@ const deleteDepartment = asyncHandler(async (req, res) => {
         throw new NotFoundError('Department not found');
     }
 
-    // Check for active tickets (if Ticket model exists)
+    // Cascading validation: Check for references before deletion
+    const User = require('../models/User');
+    const Category = require('../models/Category');
+
+    // Check 1: Users assigned to this department
+    const usersCount = await User.countDocuments({
+        department: req.params.id,
+        isActive: true
+    });
+
+    if (usersCount > 0) {
+        throw new ValidationError(
+            `Cannot delete department with ${usersCount} active user(s) assigned. Please reassign or deactivate them first.`
+        );
+    }
+
+    // Check 2: Categories assigned to this department
+    const categoriesCount = await Category.countDocuments({
+        departmentId: req.params.id,
+        isActive: true
+    });
+
+    if (categoriesCount > 0) {
+        throw new ValidationError(
+            `Cannot delete department with ${categoriesCount} active ${categoriesCount > 1 ? 'categories' : 'category'}. Please deactivate them first.`
+        );
+    }
+
+    // Check 3: Active tickets in this department
     const activeTicketsCount = await Ticket.countDocuments({
         departmentId: req.params.id,
         status: { $nin: ['Closed'] }

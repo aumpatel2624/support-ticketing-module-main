@@ -232,7 +232,7 @@ const deleteCategory = asyncHandler(async (req, res) => {
         throw new AuthorizationError('Not authorized to delete this category');
     }
 
-    // Check for tickets using this category
+    // Cascading validation: Check for active tickets using this category
     const ticketsCount = await Ticket.countDocuments({
         categoryId: req.params.id,
         status: { $nin: ['Closed'] }
@@ -240,7 +240,7 @@ const deleteCategory = asyncHandler(async (req, res) => {
 
     if (ticketsCount > 0) {
         throw new ValidationError(
-            `Cannot delete category with ${ticketsCount} active ticket(s). Please close or recategorize them first.`
+            `Cannot delete category with ${ticketsCount} active ${ticketsCount > 1 ? 'tickets' : 'ticket'}. Please close or recategorize them first.`
         );
     }
 

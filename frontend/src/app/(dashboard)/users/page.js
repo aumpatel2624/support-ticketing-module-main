@@ -19,6 +19,8 @@ export default function UsersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [editUser, setEditUser] = useState(null);
     const [deleteUser, setDeleteUser] = useState(null);
+    const [deleteError, setDeleteError] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const { user } = useAuthStore();
     const isSuperAdmin = user?.role === 'SuperAdmin';
 
@@ -54,14 +56,20 @@ export default function UsersPage() {
     };
 
     const handleDeleteUser = async () => {
+        setIsDeleting(true);
+        setDeleteError(null);
         try {
             await userService.deleteUser(deleteUser._id);
             toast.success('User deactivated successfully');
+            setDeleteUser(null);
+            setDeleteError(null);
             fetchUsers();
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to deactivate user');
+            const errorMessage = error.response?.data?.message || 'Failed to deactivate user';
+            setDeleteError(errorMessage);
+            // Keep the dialog open to show the error
         } finally {
-            setDeleteUser(null);
+            setIsDeleting(false);
         }
     };
 
@@ -102,12 +110,19 @@ export default function UsersPage() {
 
             <ConfirmDialog
                 open={!!deleteUser}
-                onOpenChange={(open) => !open && setDeleteUser(null)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setDeleteUser(null);
+                        setDeleteError(null);
+                    }
+                }}
                 title="Deactivate User"
                 description={`Are you sure you want to deactivate "${deleteUser?.name}"? They will no longer be able to access the system.`}
                 confirmText="Deactivate"
                 variant="destructive"
                 onConfirm={handleDeleteUser}
+                isLoading={isDeleting}
+                error={deleteError}
             />
         </div>
     );
