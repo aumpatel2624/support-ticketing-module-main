@@ -28,8 +28,9 @@ const errorHandler = (err, req, res, next) => {
         error = new ApiError(409, `${field} already exists`);
     }
 
-    // Mongoose validation error
-    if (err.name === 'ValidationError') {
+    // Mongoose validation error (NOT our custom ValidationError)
+    // Check for Mongoose validation by looking for 'errors' property with validation details
+    if (err.name === 'ValidationError' && err.errors && typeof err.errors === 'object') {
         const messages = Object.values(err.errors).map(e => e.message);
         error = new ApiError(400, 'Validation failed', messages);
     }
