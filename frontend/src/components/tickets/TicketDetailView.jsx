@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Clock,
@@ -48,14 +48,18 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [pendingStatus, setPendingStatus] = useState(null);
-    const isInitialMount = useRef(true);
+    const [isReady, setIsReady] = useState(false);
 
     if (!ticket) return <div>Ticket not found</div>;
 
+    // Mark component as ready for user interaction after mount
+    useEffect(() => {
+        setIsReady(true);
+    }, []);
+
     const handleStatusChange = async (newStatus) => {
-        // Skip on initial mount to prevent unwanted API calls
-        if (isInitialMount.current) {
-            isInitialMount.current = false;
+        // Only allow status changes after component is ready (after mount)
+        if (!isReady) {
             return;
         }
 
