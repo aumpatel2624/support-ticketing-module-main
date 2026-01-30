@@ -282,7 +282,7 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
                             <div>
                                 <span className="text-xs text-muted-foreground block mb-1">Status</span>
                                 {ticket.status ? (
-                                    <Select value={ticket.status} onValueChange={handleStatusChange} disabled={isUpdatingStatus}>
+                                    <Select value={ticket.status} onValueChange={handleStatusChange} disabled={isUpdatingStatus || !isReady}>
                                         <SelectTrigger className="w-full">
                                             <SelectValue />
                                         </SelectTrigger>

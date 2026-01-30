@@ -42,19 +42,19 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
             className="group cursor-grab active:cursor-grabbing"
         >
             <Card
-                className={`p-4 transition-all ${
+                className={`p-3 transition-all ${
                     isDragging ? 'opacity-50 ring-2 ring-primary' : ''
                 } hover:shadow-md border-0 ${colorMap[ageCategory]}`}
             >
                 {/* Header with grip and actions */}
-                <div className="flex items-start justify-between mb-3">
+                <div className="flex items-start justify-between mb-2">
                     <div className="flex items-start gap-2 flex-1">
                         {isHovering && (
                             <GripHorizontal className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                         )}
                         <Link
                             href={`/tickets/${ticket._id}`}
-                            className="font-bold text-sm text-primary hover:underline truncate flex-1"
+                            className="font-bold text-xs text-primary hover:underline truncate flex-1"
                             title={ticket.ticketId}
                         >
                             {ticket.ticketId}
@@ -66,9 +66,9 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
-                                <MoreHorizontal className="h-4 w-4" />
+                                <MoreHorizontal className="h-3 w-3" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
@@ -95,7 +95,7 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <p className="text-sm font-medium text-foreground mb-3 line-clamp-2 hover:underline">
+                            <p className="text-xs font-medium text-foreground mb-2 line-clamp-1 hover:underline">
                                 {ticket.subject}
                             </p>
                         </TooltipTrigger>
@@ -105,29 +105,20 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
                     </Tooltip>
                 </TooltipProvider>
 
-                {/* Category and Department */}
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                {/* Category and Priority on same line */}
+                <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                     {ticket.category && (
-                        <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                        <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
                             {ticket.category.name}
                         </Badge>
                     )}
-                    {ticket.department && (
-                        <span className="text-xs text-muted-foreground">
-                            {ticket.department.name}
-                        </span>
-                    )}
-                </div>
-
-                {/* Priority Badge */}
-                <div className="mb-3">
-                    <Badge variant="outline" className={getPriorityColor(ticket.priority)}>
+                    <Badge variant="outline" className={`${getPriorityColor(ticket.priority)} text-xs px-1.5 py-0.5`}>
                         {ticket.priority}
                     </Badge>
                 </div>
 
                 {/* Footer with age and assignee */}
-                <div className="flex items-center justify-between pt-3 border-t">
+                <div className="flex items-center justify-between pt-2 border-t text-xs">
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -144,10 +135,12 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
                         </Tooltip>
                     </TooltipProvider>
 
-                    {ticket.assignedTo && (
-                        <span className="text-xs text-muted-foreground">
+                    {ticket.assignedTo ? (
+                        <span className="text-xs text-muted-foreground truncate max-w-[100px]">
                             {ticket.assignedTo.name}
                         </span>
+                    ) : (
+                        <span className="text-xs text-muted-foreground italic">Unassigned</span>
                     )}
                 </div>
             </Card>
