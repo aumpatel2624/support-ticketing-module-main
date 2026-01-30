@@ -25,17 +25,25 @@ const ticketService = {
      * @param {Object} ticketData 
      */
     async createTicket(ticketData) {
+        // Validate required fields
+        if (!ticketData.subject || !ticketData.description || !ticketData.departmentId || !ticketData.categoryId) {
+            throw new Error('Missing required fields: subject, description, departmentId, categoryId');
+        }
+
         // Check if attachments are present and use FormData if so
         if (ticketData.attachments && ticketData.attachments.length > 0) {
             const formData = new FormData();
-            Object.keys(ticketData).forEach(key => {
-                if (key === 'attachments') {
-                    Array.from(ticketData.attachments).forEach(file => {
-                        formData.append('attachments', file);
-                    });
-                } else {
-                    formData.append(key, ticketData[key]);
-                }
+
+            // Add form fields
+            formData.append('subject', ticketData.subject);
+            formData.append('description', ticketData.description);
+            formData.append('departmentId', ticketData.departmentId);
+            formData.append('categoryId', ticketData.categoryId);
+            if (ticketData.priority) formData.append('priority', ticketData.priority);
+
+            // Add files
+            Array.from(ticketData.attachments).forEach(file => {
+                formData.append('attachments', file);
             });
 
             const response = await api.post(API_ENDPOINTS.TICKETS, formData, {
@@ -44,6 +52,7 @@ const ticketService = {
             return response.data;
         }
 
+        // Send as JSON
         const response = await api.post(API_ENDPOINTS.TICKETS, ticketData);
         return response.data;
     },

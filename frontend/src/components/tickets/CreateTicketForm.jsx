@@ -121,8 +121,8 @@ export default function CreateTicketForm() {
         try {
             const payload = {
                 ...values,
-                createdBy: user?.id || user?._id, // Backend might need this if not inferred from token
-                attachments: attachments.length > 0 ? attachments : undefined
+                // Only include attachments if there are files
+                ...(attachments.length > 0 && { attachments })
             };
 
             await ticketService.createTicket(payload);

@@ -20,6 +20,16 @@ const validateBody = (schema) => {
                 throw new Error('Invalid schema: schema is undefined or does not have a parse method');
             }
 
+            // Debug: log request body
+            console.log('[validateBody] req.body:', req.body);
+            console.log('[validateBody] req.headers:', req.headers);
+
+            // Check if body is undefined or empty
+            if (!req.body) {
+                console.error('[validateBody] ERROR: req.body is undefined or null');
+                throw new ValidationError('Request body is required', [{ field: 'body', message: 'Request body cannot be empty' }]);
+            }
+
             const validated = schema.parse(req.body);
             req.body = validated;
             next();
