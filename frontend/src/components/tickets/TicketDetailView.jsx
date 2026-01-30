@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     Clock,
     MessageSquare,
@@ -10,7 +11,8 @@ import {
     AlertCircle,
     CheckCircle2,
     Calendar,
-    Upload
+    Upload,
+    ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +40,7 @@ import ticketService from '@/lib/services/ticketService';
 import toast from 'react-hot-toast';
 
 export default function TicketDetailView({ ticket, onTicketUpdate }) {
+    const router = useRouter();
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState({});
     const [showUpload, setShowUpload] = useState(false);
@@ -135,6 +138,17 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
 
     return (
         <div className="space-y-6">
+            {/* Back Button */}
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.back()}
+                className="w-fit"
+            >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Tickets
+            </Button>
+
             {/* Header Section */}
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="space-y-1">
@@ -151,7 +165,7 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
                     </h1>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline">Edit</Button>
+                    {/* whaatwh<Button variant="outline">Edit</Button> */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -278,7 +292,7 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
 
                             <div>
                                 <span className="text-xs text-muted-foreground block mb-1">Category</span>
-                                <div className="font-medium">{ticket.category?.name || 'Uncategorized'}</div>
+                                <div className="font-medium">{ticket.categoryId?.name || 'Uncategorized'}</div>
                             </div>
 
                             <Separator />
