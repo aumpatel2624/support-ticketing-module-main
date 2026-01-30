@@ -1,7 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
   reactCompiler: true,
+  // Turbopack configuration for path aliases
+  turbopack: {
+    resolveAlias: {
+      '@/*': './src/*',
+    },
+  },
+  // Fallback webpack config for non-turbopack builds
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': './src',
+    };
+    return config;
+  },
 };
 
 export default nextConfig;
