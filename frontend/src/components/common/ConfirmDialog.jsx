@@ -48,13 +48,10 @@ export default function ConfirmDialog({
             <AlertDialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
                 <AlertDialogHeader>
                     <AlertDialogTitle>{title}</AlertDialogTitle>
+                    <AlertDialogDescription>{description}</AlertDialogDescription>
                 </AlertDialogHeader>
 
                 <div className="flex-1 overflow-hidden flex flex-col gap-4">
-                    <AlertDialogDescription className="space-y-2">
-                        <div>{description}</div>
-                    </AlertDialogDescription>
-
                     {error && (
                         <div className="rounded-md bg-red-50 p-3 text-sm text-red-700 border border-red-200">
                             <div className="font-semibold mb-1">⚠️ Cannot Complete Action</div>
@@ -81,25 +78,25 @@ export default function ConfirmDialog({
                                                 {ref.items.slice(0, 5).map((item, itemIdx) => (
                                                     <div key={itemIdx} className="text-sm text-gray-600 bg-gray-50 p-2 rounded truncate">
                                                         {ref.type === 'users' && (
-                                                            <div>
+                                                            <>
                                                                 <div className="font-medium">{item.name}</div>
                                                                 <div className="text-xs text-gray-500">{item.email} • {item.employeeId}</div>
-                                                            </div>
+                                                            </>
                                                         )}
                                                         {ref.type === 'tickets' && (
-                                                            <div>
+                                                            <>
                                                                 <div className="font-medium">{item.ticketId} - {item.title}</div>
                                                                 <div className="text-xs text-gray-500">{item.status} • {item.priority}</div>
-                                                            </div>
+                                                            </>
                                                         )}
                                                         {ref.type === 'categories' && (
                                                             <div className="font-medium">{item.name}</div>
                                                         )}
                                                         {ref.type === 'departments' && (
-                                                            <div>
+                                                            <>
                                                                 <div className="font-medium">{item.name}</div>
                                                                 <div className="text-xs text-gray-500">{item.code}</div>
-                                                            </div>
+                                                            </>
                                                         )}
                                                     </div>
                                                 ))}
