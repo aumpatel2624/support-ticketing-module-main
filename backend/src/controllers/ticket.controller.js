@@ -212,16 +212,77 @@ const updateTicket = asyncHandler(async (req, res) => {
         throw new AuthorizationError('You do not have permission to update this ticket');
     }
 
-    const updatedTicket = await Ticket.findByIdAndUpdate(
-        req.params.id,
-        { $set: req.body },
-        { new: true, runValidators: true }
-    );
+    // If status is being updated, handle it with full status change logic
+    if (req.body.status && req.body.status !== ticket.status) {
+        const newStatus = req.body.status;
+
+        // Validate transition
+        if (!ticket.canTransitionTo(newStatus)) {
+            throw new ValidationError(`Invalid status transition from ${ticket.status} to ${newStatus}`);
+        }
+
+        const oldStatus = ticket.status;
+        ticket.status = newStatus;
+
+        // Update timestamps based on status
+        if (newStatus === 'Completed') ticket.resolvedAt = new Date();
+        if (newStatus === 'Closed') ticket.closedAt = new Date();
+
+        // Add to status history
+        ticket.addStatusHistory(newStatus, req.user._id, req.body.comment || null);
+
+        // Update other fields if provided
+        const { status, comment, ...otherFields } = req.body;
+        Object.assign(ticket, otherFields);
+
+        await ticket.save();
+
+        // Send notifications for status change
+        if (req.user._id.toString() !== ticket.createdBy.toString()) {
+            await ticket.populate('createdBy', 'name email');
+
+            await Notification.create({
+                userId: ticket.createdBy._id,
+                ticketId: ticket._id,
+                type: 'StatusUpdated',
+                message: `Your ticket ${ticket.ticketId} status has been updated to ${newStatus}`
+            });
+
+            // Send email notification
+            await emailService.sendStatusUpdateEmail(ticket.createdBy, ticket, oldStatus, newStatus);
+
+            // Socket: Notify creator
+            socketService.emitToUser(ticket.createdBy._id, 'notification', {
+                type: 'StatusUpdated',
+                message: `Your ticket ${ticket.ticketId} status has been updated to ${newStatus}`
+            });
+        }
+
+        // Broadcast status change to all connected users
+        socketService.broadcast('ticketUpdated', {
+            ticketId: ticket._id,
+            status: newStatus,
+            updatedBy: req.user._id
+        });
+    } else {
+        // Just update other fields without status change
+        const updatedTicket = await Ticket.findByIdAndUpdate(
+            req.params.id,
+            { $set: req.body },
+            { new: true, runValidators: true }
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: 'Ticket updated successfully',
+            data: updatedTicket
+        });
+    }
 
     res.status(200).json({
         success: true,
         message: 'Ticket updated successfully',
-        data: updatedTicket
+        data: ticket
     });
 });
 

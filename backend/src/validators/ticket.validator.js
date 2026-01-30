@@ -34,6 +34,8 @@ const updateTicketSchema = z.object({
         .trim()
         .optional(),
     priority: z.enum(['Low', 'Medium', 'High', 'Urgent'])
+        .optional(),
+    status: z.enum(['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Closed', 'Escalated'])
         .optional()
 });
 
