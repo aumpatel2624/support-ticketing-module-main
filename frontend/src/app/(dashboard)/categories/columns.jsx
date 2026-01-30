@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 
-export const columns = [
+export const createColumns = (onEdit, onDelete) => [
     {
         id: 'select',
         header: ({ table }) => (
@@ -107,6 +107,7 @@ export const columns = [
         id: 'actions',
         enableHiding: false,
         cell: ({ row }) => {
+            const category = row.original;
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -117,9 +118,13 @@ export const columns = [
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit Category</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEdit(category)}>
+                            Edit Category
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => onDelete(category)}>
+                            Delete
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
