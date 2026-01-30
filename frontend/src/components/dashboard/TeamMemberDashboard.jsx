@@ -30,7 +30,7 @@ export default function TeamMemberDashboard({ user }) {
                 if (statsData) {
                     setStats({
                         assigned: statsData.totalTickets || 0,
-                        inProgress: statsData.statusStats?.['In Progress'] || 0,
+                        inProgress: statsData.statusStats?.['InProgress'] || 0,
                         completed: statsData.resolvedTickets || 0,
                         avgResolution: statsData.avgResolutionTime ? `${statsData.avgResolutionTime}h` : '0h'
                     });

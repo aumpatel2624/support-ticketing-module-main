@@ -8,7 +8,7 @@ import KanbanCardSortable from './KanbanCardSortable';
 /**
  * KanbanColumn - A column in the Kanban board representing a status
  */
-export default function KanbanColumn({ status, tickets, onMenuAction }) {
+export default function KanbanColumn({ status, tickets, onMenuAction, isStaff }) {
     const { setNodeRef } = useDroppable({
         id: status,
     });
@@ -51,6 +51,7 @@ export default function KanbanColumn({ status, tickets, onMenuAction }) {
                                 key={ticket._id}
                                 ticket={ticket}
                                 onMenuAction={onMenuAction}
+                                isStaff={isStaff}
                             />
                         ))
                     ) : (

@@ -106,6 +106,45 @@ const getPublicSettings = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @desc    Send test email with current SMTP settings
+ * @route   POST /api/admin/settings/test-email
+ * @access  Private - SuperAdmin only
+ */
+const sendTestEmail = asyncHandler(async (req, res) => {
+  const emailService = require('../services/email.service');
+
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user || !user.email) {
+      throw new NotFoundError('User email not found');
+    }
+
+    await emailService.sendEmail({
+      to: user.email,
+      subject: 'Test Email - System Settings',
+      html: `
+        <h2>System Settings Test Email</h2>
+        <p>This is a test email from your ticketing system to verify that email notifications are working correctly.</p>
+        <p>If you received this email, your SMTP configuration is properly set up.</p>
+        <hr />
+        <p style="color: #999; font-size: 12px;">
+          Sent to: ${user.email}<br />
+          Timestamp: ${new Date().toISOString()}
+        </p>
+      `
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Test email sent successfully to ${user.email}`
+    });
+  } catch (error) {
+    logger.error('Failed to send test email:', error);
+    throw error;
+  }
+});
+
+/**
  * ========== USER PREFERENCES CONTROLLERS ==========
  */
 
@@ -380,6 +419,7 @@ module.exports = {
   getSystemSettings,
   updateSystemSettings,
   getPublicSettings,
+  sendTestEmail,
 
   // User Preferences
   getUserPreferences,

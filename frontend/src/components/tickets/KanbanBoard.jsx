@@ -13,6 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import toast from 'react-hot-toast';
+import useAuth from '@/hooks/useAuth';
 import ticketService from '@/lib/services/ticketService';
 import KanbanColumn from './KanbanColumn';
 import KanbanCard from './KanbanCard';
@@ -24,11 +25,15 @@ const STATUSES = ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Clos
  * KanbanBoard - Main Kanban view component with drag-and-drop ticket management
  */
 export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
+    const { user } = useAuth();
     const [tickets, setTickets] = useState(initialTickets);
     const [isUpdating, setIsUpdating] = useState(null);
     const [activeId, setActiveId] = useState(null);
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [pendingTicketUpdate, setPendingTicketUpdate] = useState(null);
+
+    // Check if current user is staff (can drag and modify)
+    const isStaff = user && ['Admin', 'TeamMember', 'SuperAdmin'].includes(user.role);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -51,6 +56,11 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
 
     // Handle drag start
     const handleDragStart = (event) => {
+        // Prevent dragging if user is not staff
+        if (!isStaff) {
+            toast.error('You do not have permission to move tickets');
+            return;
+        }
         setActiveId(event.active.id);
     };
 
@@ -93,9 +103,7 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
         // Call API to update status
         setIsUpdating(ticketId);
         try {
-            await ticketService.updateTicket(ticketId, {
-                status: newStatus,
-            });
+            await ticketService.updateTicketStatus(ticketId, newStatus);
             toast.success('Ticket status updated');
         } catch (error) {
             console.error('Failed to update ticket status:', error);
@@ -130,10 +138,10 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
         // Call API to update both status and assignedTo
         setIsUpdating(ticketId);
         try {
-            await ticketService.updateTicket(ticketId, {
-                status: newStatus,
-                assignedTo: selectedUser._id,
-            });
+            // First assign the ticket
+            await ticketService.assignTicket(ticketId, selectedUser._id, `Assigned to ${selectedUser.name}`);
+            // Then update the status
+            await ticketService.updateTicketStatus(ticketId, newStatus);
             toast.success(`Assigned to ${selectedUser.name} and status updated`);
         } catch (error) {
             console.error('Failed to update ticket:', error);
@@ -199,6 +207,7 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
                         status={status}
                         tickets={getTicketsByStatus(status)}
                         onMenuAction={handleMenuAction}
+                        isStaff={isStaff}
                     />
                 ))}
             </div>

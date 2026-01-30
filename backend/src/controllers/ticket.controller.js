@@ -262,7 +262,18 @@ const updateTicket = asyncHandler(async (req, res) => {
         socketService.emitToAll('ticketUpdated', {
             ticketId: ticket._id,
             status: newStatus,
-            updatedBy: req.user._id
+            assignedTo: ticket.assignedTo,
+            updatedBy: req.user._id,
+            updatedAt: ticket.updatedAt
+        });
+
+        // Also emit to the ticket's room for viewers
+        socketService.emitToTicket(ticket._id, 'ticketUpdated', {
+            ticketId: ticket._id,
+            status: newStatus,
+            assignedTo: ticket.assignedTo,
+            updatedBy: req.user._id,
+            updatedAt: ticket.updatedAt
         });
     } else {
         // Just update other fields without status change
@@ -334,8 +345,10 @@ const updateStatus = asyncHandler(async (req, res) => {
             message: `Your ticket ${ticket.ticketId} status has been updated to ${status}`
         });
 
-        // Send email notification
-        await emailService.sendStatusUpdateEmail(ticket.createdBy, ticket, oldStatus, status);
+        // Send email notification (non-blocking)
+        emailService.sendStatusUpdateEmail(ticket.createdBy, ticket, oldStatus, status).catch(err => {
+            logger.error('Failed to send status update email:', err);
+        });
 
         // Socket: Notify creator
         socketService.emitToUser(ticket.createdBy._id, 'notification', {
@@ -614,6 +627,124 @@ const getTicketHistory = asyncHandler(async (req, res) => {
     });
 });
 
+/**
+ * @desc    Get tickets created by current user
+ * @route   GET /api/tickets/my-tickets
+ * @access  Private
+ */
+const getMyTickets = asyncHandler(async (req, res) => {
+    const { page, limit, skip } = getPaginationParams(req.query);
+    const { status, priority, search, sortBy, sortOrder, dateFrom, dateTo } = req.query;
+
+    // Build filter - only tickets created by the current user
+    const filter = {
+        createdBy: req.user._id
+    };
+
+    // Optional filters
+    if (status) filter.status = status;
+    if (priority) filter.priority = priority;
+
+    // Search filter
+    if (search) {
+        filter.$or = [
+            { ticketId: { $regex: search, $options: 'i' } },
+            { subject: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } }
+        ];
+    }
+
+    // Date range filter
+    if (dateFrom || dateTo) {
+        filter.createdAt = {};
+        if (dateFrom) filter.createdAt.$gte = new Date(dateFrom);
+        if (dateTo) filter.createdAt.$lte = new Date(dateTo);
+    }
+
+    // Sorting
+    const sort = {};
+    sort[sortBy || 'createdAt'] = sortOrder === 'asc' ? 1 : -1;
+
+    const [tickets, total] = await Promise.all([
+        Ticket.find(filter)
+            .populate('createdBy', 'name email employeeId')
+            .populate('assignedTo', 'name email employeeId')
+            .populate('departmentId', 'name color')
+            .populate('categoryId', 'name')
+            .sort(sort)
+            .skip(skip)
+            .limit(limit),
+        Ticket.countDocuments(filter)
+    ]);
+
+    const pagination = createPaginationResponse(total, page, limit);
+
+    res.status(200).json({
+        success: true,
+        data: tickets,
+        pagination
+    });
+});
+
+/**
+ * @desc    Get tickets assigned to current user
+ * @route   GET /api/tickets/assigned
+ * @access  Private
+ */
+const getAssignedTickets = asyncHandler(async (req, res) => {
+    const { page, limit, skip } = getPaginationParams(req.query);
+    const { status, priority, search, sortBy, sortOrder, dateFrom, dateTo } = req.query;
+
+    // Build filter - only tickets assigned to the current user
+    const filter = {
+        assignedTo: req.user._id
+    };
+
+    // Optional filters
+    if (status) filter.status = status;
+    if (priority) filter.priority = priority;
+
+    // Search filter
+    if (search) {
+        filter.$or = [
+            { ticketId: { $regex: search, $options: 'i' } },
+            { subject: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } }
+        ];
+    }
+
+    // Date range filter
+    if (dateFrom || dateTo) {
+        filter.createdAt = {};
+        if (dateFrom) filter.createdAt.$gte = new Date(dateFrom);
+        if (dateTo) filter.createdAt.$lte = new Date(dateTo);
+    }
+
+    // Sorting
+    const sort = {};
+    sort[sortBy || 'createdAt'] = sortOrder === 'asc' ? 1 : -1;
+
+    const [tickets, total] = await Promise.all([
+        Ticket.find(filter)
+            .populate('createdBy', 'name email employeeId')
+            .populate('assignedTo', 'name email employeeId')
+            .populate('departmentId', 'name color')
+            .populate('categoryId', 'name')
+            .sort(sort)
+            .skip(skip)
+            .limit(limit),
+        Ticket.countDocuments(filter)
+    ]);
+
+    const pagination = createPaginationResponse(total, page, limit);
+
+    res.status(200).json({
+        success: true,
+        data: tickets,
+        pagination
+    });
+});
+
 module.exports = {
     getTickets,
     getTicketById,
@@ -625,5 +756,7 @@ module.exports = {
     rateTicket,
     uploadAttachment,
     deleteAttachment,
-    getTicketHistory
+    getTicketHistory,
+    getMyTickets,
+    getAssignedTickets
 };

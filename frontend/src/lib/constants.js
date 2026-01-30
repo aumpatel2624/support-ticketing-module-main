@@ -45,7 +45,7 @@ export const USER_ROLES = {
 export const TICKET_STATUS = {
     NEW: 'New',
     ASSIGNED: 'Assigned',
-    IN_PROGRESS: 'In Progress',
+    IN_PROGRESS: 'InProgress',
     PENDING: 'Pending',
     COMPLETED: 'Completed',
     CLOSED: 'Closed',
@@ -182,4 +182,90 @@ export const NAVIGATION_ITEMS = {
         { name: 'Analytics', href: '/analytics', icon: 'BarChart3' },
         // { name: 'Settings', href: '/settings', icon: 'Settings' },
     ],
+};
+
+// System Settings Constants
+export const SYSTEM_SETTINGS_DATE_FORMATS = ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'];
+export const SYSTEM_SETTINGS_TIME_FORMATS = ['12h', '24h'];
+export const ESCALATION_TARGETS = ['supervisor', 'manager', 'admin'];
+export const NOTIFY_VIA_OPTIONS = ['email', 'inApp', 'both'];
+
+// Common Timezones
+export const TIMEZONES = [
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'America/Anchorage',
+    'Pacific/Honolulu',
+    'Europe/London',
+    'Europe/Paris',
+    'Europe/Berlin',
+    'Europe/Amsterdam',
+    'Asia/Tokyo',
+    'Asia/Shanghai',
+    'Asia/Hong_Kong',
+    'Asia/Singapore',
+    'Asia/Dubai',
+    'Asia/Kolkata',
+    'Australia/Sydney',
+    'Australia/Melbourne',
+    'Australia/Brisbane',
+    'Pacific/Auckland',
+];
+
+// File type options for system settings
+export const FILE_TYPE_OPTIONS = [
+    { label: 'Images', value: 'image' },
+    { label: 'PDF', value: 'pdf' },
+    { label: 'Word Docs', value: 'doc' },
+    { label: 'Excel Sheets', value: 'xls' },
+    { label: 'Text Files', value: 'txt' },
+];
+
+// Default System Settings
+export const DEFAULT_SYSTEM_SETTINGS = {
+    companyName: 'My Company',
+    companyLogo: '',
+    brandColor: '#0066cc',
+    brandSecondaryColor: '#00ccff',
+    timezone: 'America/New_York',
+    dateFormat: 'MM/DD/YYYY',
+    timeFormat: '12h',
+    maintenanceMode: false,
+    maintenanceMessage: '',
+    ticketAutoCloseAfterDays: 30,
+    allowReopeningClosedTickets: true,
+    requireResolutionCommentOnClose: false,
+    enableKanbanView: true,
+    enableCardView: true,
+    enableTableView: true,
+    enableAdvancedFilters: true,
+    enableBulkOperations: true,
+    slaDefaults: {
+        lowPriority: 168,
+        mediumPriority: 48,
+        highPriority: 24,
+        criticalPriority: 4,
+    },
+    escalationRules: [],
+    emailFrom: 'noreply@company.com',
+    emailReplyTo: 'support@company.com',
+    emailNotificationsEnabled: true,
+    inAppNotificationsEnabled: true,
+    passwordPolicy: {
+        minLength: 8,
+        requireUppercase: true,
+        requireNumbers: true,
+        requireSpecialChars: true,
+        passwordExpiryDays: 90,
+    },
+    sessionTimeoutMinutes: 30,
+    maxConcurrentSessions: 5,
+    auditEnabled: true,
+    auditRetentionDays: 90,
+    fileUploadMaxSize: 10,
+    allowedFileTypes: ['image', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt'],
+    enableReportExports: true,
+    enableDarkMode: true,
 };

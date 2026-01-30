@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import useAuthStore from '@/store/authStore';
+import { initSocket } from '@/lib/socket';
 import { Loader2 } from 'lucide-react';
 
 const PUBLIC_PATHS = [
@@ -17,6 +18,18 @@ export default function RouteGuard({ children }) {
     const pathname = usePathname();
     const { isAuthenticated, token, isHydrated } = useAuthStore();
     const [authorized, setAuthorized] = useState(false);
+
+    // Initialize Socket.io when user is authenticated
+    useEffect(() => {
+        if (isAuthenticated && token) {
+            try {
+                initSocket(token);
+                console.log('Socket.io initialized');
+            } catch (error) {
+                console.error('Failed to initialize Socket.io:', error);
+            }
+        }
+    }, [isAuthenticated, token]);
 
     useEffect(() => {
         if (!isHydrated) return;
@@ -34,7 +47,7 @@ export default function RouteGuard({ children }) {
                 if (hasAccess) {
                     console.log('Redirecting to dashboard: User is already logged in.');
                     router.replace('/dashboard');
-                    // We don't setAuthorized(false) here to avoid showing a loader 
+                    // We don't setAuthorized(false) here to avoid showing a loader
                     // during the brief redirection to dashboard
                 } else {
                     setAuthorized(true);

@@ -36,7 +36,11 @@ const updateTicketSchema = z.object({
     priority: z.enum(['Low', 'Medium', 'High', 'Urgent'])
         .optional(),
     status: z.enum(['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Closed', 'Escalated'])
+        .optional(),
+    assignedTo: z.string()
+        .regex(/^[0-9a-fA-F]{24}$/, 'Invalid user ID format')
         .optional()
+        .nullable()
 });
 
 // Update status schema

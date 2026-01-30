@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import TicketVolumeChart from '@/components/dashboard/TicketVolumeChart';
 import TicketStatusPieChart from '@/components/dashboard/TicketStatusPieChart';
 import TicketTrendChart from '@/components/dashboard/TicketTrendChart';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import analyticsService from '@/lib/services/analyticsService';
 import ExportButton from '@/components/analytics/ExportButton';
 import { Filter, Calendar, Download } from 'lucide-react';

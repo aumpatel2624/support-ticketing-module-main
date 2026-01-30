@@ -59,6 +59,32 @@ const ticketService = {
     },
 
     /**
+     * Update ticket status
+     * @param {string} id
+     * @param {string} status
+     * @param {string} comment - Optional status change comment
+     */
+    async updateTicketStatus(id, status, comment = null) {
+        const payload = { status };
+        if (comment) payload.comment = comment;
+        const response = await api.patch(`${API_ENDPOINTS.TICKETS}/${id}/status`, payload);
+        return response.data;
+    },
+
+    /**
+     * Assign ticket to a user
+     * @param {string} id
+     * @param {string} userId
+     * @param {string} comment - Optional assignment comment
+     */
+    async assignTicket(id, userId, comment = null) {
+        const payload = { assignedTo: userId };
+        if (comment) payload.comment = comment;
+        const response = await api.patch(`${API_ENDPOINTS.TICKETS}/${id}/assign`, payload);
+        return response.data;
+    },
+
+    /**
      * Delete ticket
      * @param {string} id 
      */

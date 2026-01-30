@@ -1,13 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { Users, Building, Shield, Bell, Key } from 'lucide-react';
+import { Users, Building, Shield, Bell, Key, Cog } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import PageHeader from '@/components/common/PageHeader';
 import useAuthStore from '@/store/authStore';
 import { USER_ROLES } from '@/lib/constants';
 
 const SETTINGS_SECTIONS = [
+    {
+        title: 'System Settings',
+        description: 'Configure company-wide settings, SLA defaults, and system policies.',
+        icon: Cog,
+        href: '/settings/system',
+        roles: [USER_ROLES.SUPER_ADMIN],
+    },
     {
         title: 'User Management',
         description: 'Manage user accounts, roles, and access permissions.',

@@ -36,18 +36,51 @@ import { getStatusColor, getPriorityColor, formatDate, getInitials, getAvatarCol
 import PageHeader from '@/components/common/PageHeader';
 import AttachmentList from './AttachmentList';
 import FileUpload from './FileUpload';
+import AssignTicketModal from './AssignTicketModal';
+import useAuth from '@/hooks/useAuth';
+import useTicketUpdates from '@/hooks/useTicketUpdates';
 import ticketService from '@/lib/services/ticketService';
 import toast from 'react-hot-toast';
 
-export default function TicketDetailView({ ticket, onTicketUpdate }) {
+export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate }) {
     const router = useRouter();
+    const { user } = useAuth();
+    const [ticket, setTicket] = useState(initialTicket);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState({});
     const [showUpload, setShowUpload] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [isReady, setIsReady] = useState(false);
+    const [showAssignModal, setShowAssignModal] = useState(false);
+    const [pendingStatus, setPendingStatus] = useState(null);
 
     if (!ticket) return <div>Ticket not found</div>;
+
+    // Check if current user is staff (can modify tickets)
+    const isStaff = user && ['Admin', 'TeamMember', 'SuperAdmin'].includes(user.role);
+    const isNormalUser = user && user.role === 'NormalUser';
+
+    // Update local ticket state when prop changes
+    useEffect(() => {
+        setTicket(initialTicket);
+    }, [initialTicket]);
+
+    // Listen for real-time ticket updates
+    useTicketUpdates((data) => {
+        // Only update if this is the current ticket
+        if (data.ticketId === ticket._id) {
+            // Refetch the full ticket data to get all updates
+            ticketService.getTicket(ticket._id)
+                .then((response) => {
+                    const updatedTicket = response.data || response;
+                    setTicket(updatedTicket);
+                    toast.success('Ticket updated');
+                })
+                .catch((error) => {
+                    console.error('Failed to fetch updated ticket:', error);
+                });
+        }
+    });
 
     // Mark component as ready for user interaction after mount
     useEffect(() => {
@@ -60,19 +93,39 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
             return;
         }
 
+        // Only staff members can change status
+        if (!isStaff) {
+            toast.error('You do not have permission to change ticket status');
+            return;
+        }
+
+        // Debug: Log the status value being sent
+        console.log('Status change:', { newStatus, currentStatus: ticket.status, newStatusLength: newStatus?.length });
+
         // Validate that newStatus is one of the allowed values
         const validStatuses = ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Closed', 'Escalated'];
         if (!validStatuses.includes(newStatus)) {
-            console.error('Invalid status:', newStatus);
+            console.error('Invalid status:', newStatus, 'Valid statuses:', validStatuses);
             toast.error('Invalid status value');
+            return;
+        }
+
+        // If changing to "Assigned" and ticket is unassigned, show assign modal
+        if (newStatus === 'Assigned' && !ticket.assignedTo) {
+            setPendingStatus(newStatus);
+            setShowAssignModal(true);
             return;
         }
 
         try {
             setIsUpdatingStatus(true);
-            await ticketService.updateTicket(ticket._id, {
-                status: newStatus
-            });
+            const updateData = { status: newStatus };
+            console.log('Sending status update:', updateData);
+            const response = await ticketService.updateTicket(ticket._id, updateData);
+            // Update local ticket state with the response
+            if (response.data) {
+                setTicket(response.data);
+            }
             toast.success(`Ticket status updated to ${newStatus}`);
             if (onTicketUpdate) {
                 onTicketUpdate();
@@ -82,6 +135,30 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
             toast.error('Failed to update ticket status');
         } finally {
             setIsUpdatingStatus(false);
+        }
+    };
+
+    const handleAssignUser = async (selectedUser) => {
+        try {
+            setIsUpdatingStatus(true);
+            const response = await ticketService.updateTicket(ticket._id, {
+                status: pendingStatus,
+                assignedTo: selectedUser._id
+            });
+            // Update local ticket state with the response
+            if (response.data) {
+                setTicket(response.data);
+            }
+            toast.success(`Ticket assigned to ${selectedUser.name} and status updated to ${pendingStatus}`);
+            if (onTicketUpdate) {
+                onTicketUpdate();
+            }
+        } catch (error) {
+            console.error('Failed to assign ticket:', error);
+            toast.error('Failed to assign ticket');
+        } finally {
+            setIsUpdatingStatus(false);
+            setPendingStatus(null);
         }
     };
 
@@ -96,13 +173,13 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
     const handleFileUpload = async (files) => {
         setIsUploading(true);
         const newProgress = {};
-        
+
         try {
             for (const file of files) {
                 newProgress[file.name] = 0;
                 setUploadProgress({ ...newProgress });
 
-                await ticketService.uploadAttachment(
+                const response = await ticketService.uploadAttachment(
                     ticket._id,
                     file,
                     (progress) => {
@@ -110,6 +187,11 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
                         setUploadProgress({ ...newProgress });
                     }
                 );
+
+                // Update local ticket state with the response
+                if (response.data) {
+                    setTicket(response.data);
+                }
 
                 newProgress[file.name] = 100;
                 setUploadProgress({ ...newProgress });
@@ -131,7 +213,11 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
 
     const handleDeleteAttachment = async (attachment) => {
         try {
-            await ticketService.deleteAttachment(ticket._id, attachment._id || attachment.id);
+            const response = await ticketService.deleteAttachment(ticket._id, attachment._id || attachment.id);
+            // Update local ticket state with the response
+            if (response.data) {
+                setTicket(response.data);
+            }
             toast.success('Attachment deleted');
             if (onTicketUpdate) {
                 onTicketUpdate();
@@ -183,24 +269,27 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
                         {ticket.subject}
                     </h1>
                 </div>
-                <div className="flex items-center gap-2">
-                    {/* <Button variant="outline">Edit</Button> */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={handleEscalate} disabled={isUpdatingStatus}>
-                                Escalate
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleCloseTicket} disabled={isUpdatingStatus} className="text-destructive">
-                                Close Ticket
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
+                {/* Only show action buttons for staff members */}
+                {isStaff && (
+                    <div className="flex items-center gap-2">
+                        {/* <Button variant="outline">Edit</Button> */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={handleEscalate} disabled={isUpdatingStatus}>
+                                    Escalate
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleCloseTicket} disabled={isUpdatingStatus} className="text-destructive">
+                                    Close Ticket
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                )}
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
@@ -281,23 +370,31 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
                         <CardContent className="space-y-4">
                             <div>
                                 <span className="text-xs text-muted-foreground block mb-1">Status</span>
-                                {ticket.status ? (
-                                    <Select value={ticket.status} onValueChange={handleStatusChange} disabled={isUpdatingStatus || !isReady}>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="New">New</SelectItem>
-                                            <SelectItem value="Assigned">Assigned</SelectItem>
-                                            <SelectItem value="InProgress">In Progress</SelectItem>
-                                            <SelectItem value="Pending">Pending</SelectItem>
-                                            <SelectItem value="Completed">Completed</SelectItem>
-                                            <SelectItem value="Closed">Closed</SelectItem>
-                                            <SelectItem value="Escalated">Escalated</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                {isStaff ? (
+                                    // Staff can change status
+                                    ticket.status ? (
+                                        <Select value={ticket.status} onValueChange={handleStatusChange} disabled={isUpdatingStatus || !isReady}>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="New">New</SelectItem>
+                                                <SelectItem value="Assigned">Assigned</SelectItem>
+                                                <SelectItem value="InProgress">In Progress</SelectItem>
+                                                <SelectItem value="Pending">Pending</SelectItem>
+                                                <SelectItem value="Completed">Completed</SelectItem>
+                                                <SelectItem value="Closed">Closed</SelectItem>
+                                                <SelectItem value="Escalated">Escalated</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    ) : (
+                                        <Badge variant="outline">No Status</Badge>
+                                    )
                                 ) : (
-                                    <Badge variant="outline">No Status</Badge>
+                                    // Normal users can only view status
+                                    <Badge variant="outline" className={getStatusColor(ticket.status)}>
+                                        {ticket.status || 'No Status'}
+                                    </Badge>
                                 )}
                             </div>
 
@@ -366,6 +463,17 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
                     </Card>
                 </div>
             </div>
+
+            {/* Assign Ticket Modal */}
+            <AssignTicketModal
+                isOpen={showAssignModal}
+                onClose={() => {
+                    setShowAssignModal(false);
+                    setPendingStatus(null);
+                }}
+                onAssign={handleAssignUser}
+                isLoading={isUpdatingStatus}
+            />
         </div>
     );
 }

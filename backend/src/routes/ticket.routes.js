@@ -11,7 +11,9 @@ const {
     rateTicket,
     uploadAttachment,
     deleteAttachment,
-    getTicketHistory
+    getTicketHistory,
+    getMyTickets,
+    getAssignedTickets
 } = require('../controllers/ticket.controller');
 const { authenticate } = require('../middleware/auth');
 const { requireAdmin, requireSuperAdmin } = require('../middleware/rbac');
@@ -62,6 +64,54 @@ const { objectIdSchema } = require('../validators/user.validator');
  *         description: List of tickets retrieved successfully
  */
 router.get('/', authenticate, validateQuery(ticketListQuerySchema), getTickets);
+
+/**
+ * @swagger
+ * /tickets/my-tickets:
+ *   get:
+ *     summary: Get my tickets
+ *     description: Retrieve tickets created by the current user
+ *     tags: [Tickets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: User's tickets retrieved successfully
+ */
+router.get('/my-tickets', authenticate, validateQuery(ticketListQuerySchema), getMyTickets);
+
+/**
+ * @swagger
+ * /tickets/assigned:
+ *   get:
+ *     summary: Get assigned tickets
+ *     description: Retrieve tickets assigned to the current user
+ *     tags: [Tickets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Assigned tickets retrieved successfully
+ */
+router.get('/assigned', authenticate, validateQuery(ticketListQuerySchema), getAssignedTickets);
 
 /**
  * @swagger

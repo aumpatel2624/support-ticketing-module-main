@@ -13,6 +13,7 @@ import TicketCardView from '@/components/tickets/TicketCardView';
 import AdvancedFilterPanel from '@/components/tickets/AdvancedFilterPanel';
 import ticketService from '@/lib/services/ticketService';
 import useTicketStore from '@/store/ticketStore';
+import useTicketUpdates from '@/hooks/useTicketUpdates';
 import toast from 'react-hot-toast';
 
 export default function TicketsPage() {
@@ -46,6 +47,12 @@ export default function TicketsPage() {
     useEffect(() => {
         fetchTickets();
     }, []);
+
+    // Listen for real-time ticket updates
+    useTicketUpdates((data) => {
+        // Refetch tickets when any ticket is updated
+        fetchTickets();
+    });
 
     return (
         <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">

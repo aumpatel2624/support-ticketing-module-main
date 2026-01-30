@@ -39,30 +39,23 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
         <div
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
-            onPointerDown={(e) => {
-                // Only allow dragging from the card background, not from interactive elements
-                if (e.target.closest('a, button, [role="button"]')) {
-                    return;
-                }
-            }}
-            className="group cursor-grab active:cursor-grabbing"
+            className="group"
         >
             <Card
-                className={`p-3 transition-all ${
-                    isDragging ? 'opacity-50 ring-2 ring-primary' : ''
-                } hover:shadow-md border-0 ${colorMap[ageCategory]}`}
+                className={`p-3 transition-all ${isDragging ? 'opacity-50 ring-2 ring-primary' : ''
+                    } hover:shadow-md border-0 ${colorMap[ageCategory]}`}
             >
                 {/* Header with grip and actions */}
                 <div className="flex items-start justify-between mb-2">
                     <div className="flex items-start gap-2 flex-1">
                         {isHovering && (
-                            <GripHorizontal className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                            <GripHorizontal className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0 cursor-grab" data-drag-handle />
                         )}
                         <Link
                             href={`/tickets/${ticket._id}`}
                             className="font-bold text-xs text-primary hover:underline truncate flex-1"
                             title={ticket.ticketId}
-                            onClick={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
                         >
                             {ticket.ticketId}
                         </Link>

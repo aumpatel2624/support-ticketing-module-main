@@ -297,7 +297,9 @@ ticketSchema.methods.calculateSLA = async function () {
 
     if (category && category.defaultSLA) {
         const slaHours = category.defaultSLA;
-        this.slaDeadline = new Date(this.createdAt.getTime() + (slaHours * 60 * 60 * 1000));
+        // Use current date if createdAt is not set (document not yet saved)
+        const baseDate = this.createdAt || new Date();
+        this.slaDeadline = new Date(baseDate.getTime() + (slaHours * 60 * 60 * 1000));
     }
 };
 

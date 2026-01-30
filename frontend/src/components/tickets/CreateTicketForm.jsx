@@ -27,9 +27,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { TICKET_PRIORITY } from '@/lib/constants';
 import ticketService from '@/lib/services/ticketService';
 import categoryService from '@/lib/services/categoryService';
+import departmentService from '@/lib/services/departmentService';
 import useAuthStore from '@/store/authStore';
 import FileUpload from './FileUpload';
 
@@ -37,7 +37,7 @@ import FileUpload from './FileUpload';
 const ticketSchema = z.object({
     subject: z.string().min(5, 'Subject must be at least 5 characters'),
     description: z.string().min(10, 'Description must be at least 10 characters'),
-    priority: z.enum(Object.values(TICKET_PRIORITY)),
+    departmentId: z.string().min(1, 'Please select a department'),
     categoryId: z.string().min(1, 'Please select a category'),
 });
 
@@ -45,8 +45,10 @@ export default function CreateTicketForm() {
     const router = useRouter();
     const { user } = useAuthStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [departments, setDepartments] = useState([]);
     const [categories, setCategories] = useState([]);
-    const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+    const [isLoadingDepartments, setIsLoadingDepartments] = useState(true);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(false);
     const [attachments, setAttachments] = useState([]);
 
     const form = useForm({
@@ -54,22 +56,55 @@ export default function CreateTicketForm() {
         defaultValues: {
             subject: '',
             description: '',
-            priority: TICKET_PRIORITY.MEDIUM,
+            departmentId: '',
             categoryId: '',
         },
     });
 
-    // Fetch Categories
+    // Fetch Departments
+    useEffect(() => {
+        const fetchDepartments = async () => {
+            try {
+                const output = await departmentService.getDepartments();
+                // Handle response format
+                let deptList = [];
+                if (Array.isArray(output)) deptList = output;
+                else if (output.data && Array.isArray(output.data)) deptList = output.data;
+
+                setDepartments(deptList);
+            } catch (error) {
+                console.error('Error fetching departments:', error);
+                toast.error('Failed to load departments');
+            } finally {
+                setIsLoadingDepartments(false);
+            }
+        };
+
+        fetchDepartments();
+    }, []);
+
+    // Fetch Categories when department changes
+    const selectedDepartmentId = form.watch('departmentId');
+
     useEffect(() => {
         const fetchCategories = async () => {
+            if (!selectedDepartmentId) {
+                setCategories([]);
+                form.setValue('categoryId', '');
+                return;
+            }
+
+            setIsLoadingCategories(true);
             try {
-                const output = await categoryService.getCategories();
+                const output = await categoryService.getCategories({ departmentId: selectedDepartmentId });
                 // Handle response format
                 let catList = [];
                 if (Array.isArray(output)) catList = output;
                 else if (output.data && Array.isArray(output.data)) catList = output.data;
 
                 setCategories(catList);
+                // Reset category selection when department changes
+                form.setValue('categoryId', '');
             } catch (error) {
                 console.error('Error fetching categories:', error);
                 toast.error('Failed to load categories');
@@ -79,22 +114,13 @@ export default function CreateTicketForm() {
         };
 
         fetchCategories();
-    }, []);
+    }, [selectedDepartmentId, form]);
 
     const onSubmit = async (values) => {
         setIsSubmitting(true);
         try {
-            // Find selected category to get departmentId
-            const selectedCategory = categories.find(c => c.id === values.categoryId || c._id === values.categoryId);
-
-            if (!selectedCategory) {
-                toast.error('Invalid category selected');
-                return;
-            }
-
             const payload = {
                 ...values,
-                departmentId: selectedCategory.departmentId || selectedCategory.department, // Handle both structures
                 createdBy: user?.id || user?._id, // Backend might need this if not inferred from token
                 attachments: attachments.length > 0 ? attachments : undefined
             };
@@ -135,20 +161,20 @@ export default function CreateTicketForm() {
                 <div className="grid gap-6 md:grid-cols-2">
                     <FormField
                         control={form.control}
-                        name="categoryId"
+                        name="departmentId"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Category</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingCategories}>
+                                <FormLabel>Department</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingDepartments}>
                                     <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder={isLoadingCategories ? "Loading..." : "Select a category"} />
+                                            <SelectValue placeholder={isLoadingDepartments ? "Loading..." : "Select a department"} />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {categories.map((category) => (
-                                            <SelectItem key={category.id || category._id} value={category.id || category._id}>
-                                                {category.name}
+                                        {departments.map((department) => (
+                                            <SelectItem key={department.id || department._id} value={department.id || department._id}>
+                                                {department.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -160,27 +186,36 @@ export default function CreateTicketForm() {
 
                     <FormField
                         control={form.control}
-                        name="priority"
+                        name="categoryId"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Priority</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormLabel>Category</FormLabel>
+                                <Select
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    disabled={isLoadingCategories || !selectedDepartmentId || categories.length === 0}
+                                >
                                     <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select priority" />
+                                            <SelectValue placeholder={
+                                                isLoadingCategories
+                                                    ? "Loading..."
+                                                    : !selectedDepartmentId
+                                                        ? "Select a department first"
+                                                        : categories.length === 0
+                                                            ? "No categories available"
+                                                            : "Select a category"
+                                            } />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {Object.values(TICKET_PRIORITY).map((priority) => (
-                                            <SelectItem key={priority} value={priority}>
-                                                {priority}
+                                        {categories.map((category) => (
+                                            <SelectItem key={category.id || category._id} value={category.id || category._id}>
+                                                {category.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <FormDescription className="text-xs">
-                                    Low (Routine) to Urgent (System Critical).
-                                </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}

@@ -4,6 +4,7 @@ const {
   getSystemSettings,
   updateSystemSettings,
   getPublicSettings,
+  sendTestEmail,
 
   // User Preferences
   getUserPreferences,
@@ -53,6 +54,20 @@ const router = express.Router();
  */
 router.get('/admin/settings', authenticate, requireSuperAdmin, getSystemSettings);
 router.put('/admin/settings', authenticate, requireSuperAdmin, updateSystemSettings);
+
+/**
+ * @swagger
+ * /api/admin/settings/test-email:
+ *   post:
+ *     summary: Send test email with current SMTP settings
+ *     tags: [Settings]
+ *     security:
+ *       - Bearer: []
+ *     responses:
+ *       200:
+ *         description: Test email sent successfully
+ */
+router.post('/admin/settings/test-email', authenticate, requireSuperAdmin, sendTestEmail);
 
 /**
  * @swagger
