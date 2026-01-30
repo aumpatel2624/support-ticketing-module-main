@@ -34,7 +34,7 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
         })
     );
 
-    // Sync local state with prop when initialTickets changes
+    // Sync local state with prop when initialTickets changes (on view switch or manual refresh)
     useEffect(() => {
         setTickets(initialTickets);
     }, [initialTickets]);
@@ -79,7 +79,6 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
                 status: newStatus,
             });
             toast.success('Ticket status updated');
-            onTicketUpdate?.();
         } catch (error) {
             console.error('Failed to update ticket status:', error);
             toast.error('Failed to update ticket status');
