@@ -43,12 +43,15 @@ const errorHandler = (err, req, res, next) => {
     const statusCode = error.statusCode || 500;
     const message = error.message || 'Internal server error';
 
+    // Preserve references from original error (custom property)
+    const references = err.references || error.references;
+
     res.status(statusCode).json({
         success: false,
         error: message,
         details: error.details || null,
         // Include references if present (for cascading validation errors)
-        ...(error.references && { references: error.references }),
+        ...(references && { references }),
         ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 };
