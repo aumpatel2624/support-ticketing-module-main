@@ -212,28 +212,54 @@ const deleteUser = asyncHandler(async (req, res) => {
     const Department = require('../models/Department');
     const Ticket = require('../models/Ticket');
 
+    // Collect all references
+    const references = [];
+
     // Check 1: User is a department head
-    const departmentsHeadingCount = await Department.countDocuments({
+    const departments = await Department.find({
         headUserId: req.params.id,
         isActive: true
-    });
+    }).select('_id name code').lean();
 
-    if (departmentsHeadingCount > 0) {
-        throw new ValidationError(
-            `Cannot deactivate user who is the head of ${departmentsHeadingCount} ${departmentsHeadingCount > 1 ? 'departments' : 'department'}. Please assign a new head first.`
-        );
+    if (departments.length > 0) {
+        references.push({
+            type: 'departments',
+            count: departments.length,
+            items: departments.map(d => ({
+                id: d._id,
+                name: d.name,
+                code: d.code
+            }))
+        });
     }
 
     // Check 2: User has assigned tickets
-    const assignedTicketsCount = await Ticket.countDocuments({
+    const tickets = await Ticket.find({
         assignedTo: req.params.id,
         status: { $nin: ['Closed'] }
-    });
+    }).select('_id id title status priority').lean();
 
-    if (assignedTicketsCount > 0) {
-        throw new ValidationError(
-            `Cannot deactivate user with ${assignedTicketsCount} active ${assignedTicketsCount > 1 ? 'tickets' : 'ticket'} assigned. Please reassign them first.`
+    if (tickets.length > 0) {
+        references.push({
+            type: 'tickets',
+            count: tickets.length,
+            items: tickets.map(t => ({
+                id: t._id,
+                ticketId: t.id,
+                title: t.title,
+                status: t.status,
+                priority: t.priority
+            }))
+        });
+    }
+
+    // If any references exist, return error with details
+    if (references.length > 0) {
+        const error = new ValidationError(
+            `Cannot deactivate user "${user.name}" because they have active references. Please resolve them first.`
         );
+        error.references = references;
+        throw error;
     }
 
     // Soft delete - set isActive to false

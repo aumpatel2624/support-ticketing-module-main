@@ -155,40 +155,72 @@ const deleteDepartment = asyncHandler(async (req, res) => {
     const User = require('../models/User');
     const Category = require('../models/Category');
 
+    // Collect all references
+    const references = [];
+
     // Check 1: Users assigned to this department
-    const usersCount = await User.countDocuments({
+    const users = await User.find({
         department: req.params.id,
         isActive: true
-    });
+    }).select('_id name email employeeId').lean();
 
-    if (usersCount > 0) {
-        throw new ValidationError(
-            `Cannot delete department with ${usersCount} active user(s) assigned. Please reassign or deactivate them first.`
-        );
+    if (users.length > 0) {
+        references.push({
+            type: 'users',
+            count: users.length,
+            items: users.map(u => ({
+                id: u._id,
+                name: u.name,
+                email: u.email,
+                employeeId: u.employeeId
+            }))
+        });
     }
 
     // Check 2: Categories assigned to this department
-    const categoriesCount = await Category.countDocuments({
+    const categories = await Category.find({
         departmentId: req.params.id,
         isActive: true
-    });
+    }).select('_id name').lean();
 
-    if (categoriesCount > 0) {
-        throw new ValidationError(
-            `Cannot delete department with ${categoriesCount} active ${categoriesCount > 1 ? 'categories' : 'category'}. Please deactivate them first.`
-        );
+    if (categories.length > 0) {
+        references.push({
+            type: 'categories',
+            count: categories.length,
+            items: categories.map(c => ({
+                id: c._id,
+                name: c.name
+            }))
+        });
     }
 
     // Check 3: Active tickets in this department
-    const activeTicketsCount = await Ticket.countDocuments({
+    const tickets = await Ticket.find({
         departmentId: req.params.id,
         status: { $nin: ['Closed'] }
-    });
+    }).select('_id id title status priority').lean();
 
-    if (activeTicketsCount > 0) {
-        throw new ValidationError(
-            `Cannot delete department with ${activeTicketsCount} active ticket(s). Please close or reassign them first.`
+    if (tickets.length > 0) {
+        references.push({
+            type: 'tickets',
+            count: tickets.length,
+            items: tickets.map(t => ({
+                id: t._id,
+                ticketId: t.id,
+                title: t.title,
+                status: t.status,
+                priority: t.priority
+            }))
+        });
+    }
+
+    // If any references exist, return error with details
+    if (references.length > 0) {
+        const error = new ValidationError(
+            `Cannot delete department "${department.name}" because it has active references. Please resolve them first.`
         );
+        error.references = references;
+        throw error;
     }
 
     department.isActive = false;

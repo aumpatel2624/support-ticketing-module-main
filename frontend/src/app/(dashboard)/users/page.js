@@ -20,6 +20,7 @@ export default function UsersPage() {
     const [editUser, setEditUser] = useState(null);
     const [deleteUser, setDeleteUser] = useState(null);
     const [deleteError, setDeleteError] = useState(null);
+    const [deleteReferences, setDeleteReferences] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const { user } = useAuthStore();
     const isSuperAdmin = user?.role === 'SuperAdmin';
@@ -58,16 +59,20 @@ export default function UsersPage() {
     const handleDeleteUser = async () => {
         setIsDeleting(true);
         setDeleteError(null);
+        setDeleteReferences(null);
         try {
             await userService.deleteUser(deleteUser._id);
             toast.success('User deactivated successfully');
             setDeleteUser(null);
             setDeleteError(null);
+            setDeleteReferences(null);
             fetchUsers();
         } catch (error) {
-            const errorMessage = error.response?.data?.message || 'Failed to deactivate user';
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to deactivate user';
+            const references = error.response?.data?.references || null;
             setDeleteError(errorMessage);
-            // Keep the dialog open to show the error
+            setDeleteReferences(references);
+            // Keep the dialog open to show the error and references
         } finally {
             setIsDeleting(false);
         }
@@ -114,6 +119,7 @@ export default function UsersPage() {
                     if (!open) {
                         setDeleteUser(null);
                         setDeleteError(null);
+                        setDeleteReferences(null);
                     }
                 }}
                 title="Deactivate User"
@@ -123,6 +129,7 @@ export default function UsersPage() {
                 onConfirm={handleDeleteUser}
                 isLoading={isDeleting}
                 error={deleteError}
+                references={deleteReferences}
             />
         </div>
     );

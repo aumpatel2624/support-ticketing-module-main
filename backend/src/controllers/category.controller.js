@@ -233,15 +233,27 @@ const deleteCategory = asyncHandler(async (req, res) => {
     }
 
     // Cascading validation: Check for active tickets using this category
-    const ticketsCount = await Ticket.countDocuments({
+    const tickets = await Ticket.find({
         categoryId: req.params.id,
         status: { $nin: ['Closed'] }
-    });
+    }).select('_id id title status priority').lean();
 
-    if (ticketsCount > 0) {
-        throw new ValidationError(
-            `Cannot delete category with ${ticketsCount} active ${ticketsCount > 1 ? 'tickets' : 'ticket'}. Please close or recategorize them first.`
+    if (tickets.length > 0) {
+        const error = new ValidationError(
+            `Cannot delete category "${category.name}" because it has active references. Please resolve them first.`
         );
+        error.references = [{
+            type: 'tickets',
+            count: tickets.length,
+            items: tickets.map(t => ({
+                id: t._id,
+                ticketId: t.id,
+                title: t.title,
+                status: t.status,
+                priority: t.priority
+            }))
+        }];
+        throw error;
     }
 
     category.isActive = false;

@@ -47,6 +47,8 @@ const errorHandler = (err, req, res, next) => {
         success: false,
         error: message,
         details: error.details || null,
+        // Include references if present (for cascading validation errors)
+        ...(error.references && { references: error.references }),
         ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 };

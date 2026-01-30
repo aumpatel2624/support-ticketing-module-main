@@ -18,6 +18,7 @@ export default function CategoriesPage() {
     const [editCategory, setEditCategory] = useState(null);
     const [deleteCategory, setDeleteCategory] = useState(null);
     const [deleteError, setDeleteError] = useState(null);
+    const [deleteReferences, setDeleteReferences] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const { user } = useAuthStore();
     const isSuperAdmin = user?.role === 'SuperAdmin';
@@ -61,16 +62,20 @@ export default function CategoriesPage() {
     const handleDeleteCategory = async () => {
         setIsDeleting(true);
         setDeleteError(null);
+        setDeleteReferences(null);
         try {
             await categoryService.deleteCategory(deleteCategory._id);
             toast.success('Category deleted successfully');
             setDeleteCategory(null);
             setDeleteError(null);
+            setDeleteReferences(null);
             fetchCategories();
         } catch (error) {
-            const errorMessage = error.response?.data?.message || 'Failed to delete category';
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to delete category';
+            const references = error.response?.data?.references || null;
             setDeleteError(errorMessage);
-            // Keep the dialog open to show the error
+            setDeleteReferences(references);
+            // Keep the dialog open to show the error and references
         } finally {
             setIsDeleting(false);
         }
@@ -116,6 +121,7 @@ export default function CategoriesPage() {
                     if (!open) {
                         setDeleteCategory(null);
                         setDeleteError(null);
+                        setDeleteReferences(null);
                     }
                 }}
                 title="Delete Category"
@@ -125,6 +131,7 @@ export default function CategoriesPage() {
                 onConfirm={handleDeleteCategory}
                 isLoading={isDeleting}
                 error={deleteError}
+                references={deleteReferences}
             />
         </div>
     );

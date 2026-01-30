@@ -17,6 +17,7 @@ export default function DepartmentsPage() {
     const [editDepartment, setEditDepartment] = useState(null);
     const [deleteDepartment, setDeleteDepartment] = useState(null);
     const [deleteError, setDeleteError] = useState(null);
+    const [deleteReferences, setDeleteReferences] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchDepartments = async () => {
@@ -53,16 +54,20 @@ export default function DepartmentsPage() {
     const handleDeleteDepartment = async () => {
         setIsDeleting(true);
         setDeleteError(null);
+        setDeleteReferences(null);
         try {
             await departmentService.deleteDepartment(deleteDepartment._id);
             toast.success('Department deleted successfully');
             setDeleteDepartment(null);
             setDeleteError(null);
+            setDeleteReferences(null);
             fetchDepartments();
         } catch (error) {
-            const errorMessage = error.response?.data?.message || 'Failed to delete department';
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to delete department';
+            const references = error.response?.data?.references || null;
             setDeleteError(errorMessage);
-            // Keep the dialog open to show the error
+            setDeleteReferences(references);
+            // Keep the dialog open to show the error and references
         } finally {
             setIsDeleting(false);
         }
@@ -108,6 +113,7 @@ export default function DepartmentsPage() {
                     if (!open) {
                         setDeleteDepartment(null);
                         setDeleteError(null);
+                        setDeleteReferences(null);
                     }
                 }}
                 title="Delete Department"
@@ -117,6 +123,7 @@ export default function DepartmentsPage() {
                 onConfirm={handleDeleteDepartment}
                 isLoading={isDeleting}
                 error={deleteError}
+                references={deleteReferences}
             />
         </div>
     );
