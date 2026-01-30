@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Resolved</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .success-icon {
+            font-size: 60px;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .resolution-box {
+            background-color: #e8f5e9;
+            border-left: 4px solid #00b09b;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .ticket-id {
+            font-size: 14px;
+            color: #00b09b;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .ticket-subject {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .resolution-details {
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            margin: 20px 10px 20px 0;
+            font-weight: bold;
+        }
+
+        .cta-button-secondary {
+            display: inline-block;
+            background-color: #ffffff;
+            color: #00b09b;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+            border: 2px solid #00b09b;
+        }
+
+        .rating-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .stars {
+            font-size: 30px;
+            color: #ffc107;
+            margin: 10px 0;
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="success-icon">✅</div>
+            <h1>Ticket Resolved!</h1>
+        </div>
+        <div class="content">
+            <p>Hi {{userName}},</p>
+            <p>Great news! Your ticket has been resolved by our support team.</p>
+
+            <div class="resolution-box">
+                <div class="ticket-id">{{ticketId}}</div>
+                <div class="ticket-subject">{{ticketSubject}}</div>
+
+                <div class="resolution-details">
+                    <strong>Resolved by:</strong> {{resolvedByName}}<br>
+                    <strong>Resolution date:</strong> {{resolvedDate}}<br>
+                    <strong>Resolution time:</strong> {{resolutionTime}}
+                </div>
+
+                {{#if resolutionNotes}}
+                <div style="margin-top: 15px; padding: 15px; background-color: #fff3cd; border-radius: 4px;">
+                    <strong>Resolution Notes:</strong><br>
+                    {{resolutionNotes}}
+                </div>
+                {{/if}}
+            </div>
+
+            <div class="rating-section">
+                <h3>How was your experience?</h3>
+                <p>Please take a moment to rate the support you received:</p>
+                <div class="stars">⭐⭐⭐⭐⭐</div>
+                <a href="{{ratingUrl}}" class="cta-button">Rate This Ticket</a>
+            </div>
+
+            <p>If you have any further questions or the issue persists, please don't hesitate to reopen the ticket.</p>
+
+            <a href="{{ticketUrl}}" class="cta-button-secondary">View Ticket Details</a>
+
+            <p>Thank you for using our support system!<br>Best regards,<br>Support Team</p>
+        </div>
+        <div class="footer">
+            <p>This email was sent from the Support Ticketing System.</p>
+        </div>
+    </div>
+</body>
+
+</html>

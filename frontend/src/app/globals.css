@@ -1,0 +1,220 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-outfit);
+
+  /* Base Colors */
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  /* Primary Colors */
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  /* Secondary Colors */
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  /* Success Colors */
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+
+  /* Warning Colors */
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+
+  /* Destructive Colors */
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  /* Muted Colors */
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  /* Accent Colors */
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  /* Popover Colors */
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  /* Card Colors */
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  /* Ticket Age Colors */
+  --color-fresh: hsl(var(--fresh));
+  --color-recent: hsl(var(--recent));
+  --color-aging: hsl(var(--aging));
+  --color-old: hsl(var(--old));
+  --color-critical: hsl(var(--critical));
+
+  /* Ticket Status Colors */
+  --color-status-new: hsl(var(--status-new));
+  --color-status-assigned: hsl(var(--status-assigned));
+  --color-status-in-progress: hsl(var(--status-in-progress));
+  --color-status-pending: hsl(var(--status-pending));
+  --color-status-completed: hsl(var(--status-completed));
+  --color-status-closed: hsl(var(--status-closed));
+  --color-status-escalated: hsl(var(--status-escalated));
+
+  /* Priority Colors */
+  --color-priority-low: hsl(var(--priority-low));
+  --color-priority-medium: hsl(var(--priority-medium));
+  --color-priority-high: hsl(var(--priority-high));
+  --color-priority-urgent: hsl(var(--priority-urgent));
+
+  /* Border Radius */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  /* Shadows */
+  --shadow-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  --shadow-glass: 0 4px 12px 0 rgba(0, 0, 0, 0.08);
+}
+
+/* Light Theme (Default) - Sophisticated Modern Palette */
+:root {
+  --radius: 0.75rem;
+
+  /* Base Colors */
+  --background: 210 40% 98%;
+  --foreground: 224 71% 4%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 224 71% 4%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 71% 4%;
+
+  /* Primary Brand Colors (Apidel Teal - Darker) */
+  --primary: 180 81% 25%;
+  --primary-foreground: 180 0% 100%;
+
+  /* Secondary (Sophisticated Slate) */
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 224 71% 4%;
+
+  /* Success (Emerald) */
+  --success: 142 76% 36%;
+  --success-foreground: 355.7 100% 97.3%;
+
+  /* Warning (Amber) */
+  --warning: 38 92% 50%;
+  --warning-foreground: 224 71% 4%;
+
+  /* Destructive (Rose/Crimson) */
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 20% 98%;
+
+  /* Muted */
+  --muted: 220 14.3% 95.9%;
+  --muted-foreground: 220 8.9% 46.1%;
+
+  /* Accent */
+  --accent: 220 14.3% 95.9%;
+  --accent-foreground: 224 71.4% 4.1%;
+
+  /* Borders and Inputs */
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 262 83% 58%;
+
+  /* Ticket Age Colors */
+  --ticket-fresh: 142 76% 36%;
+  --ticket-recent: 217 91% 60%;
+  --ticket-aging: 38 92% 50%;
+  --ticket-old: 24 95% 50%;
+  --ticket-critical: 0 84.2% 60.2%;
+
+  /* Ticket Status Colors */
+  --status-new: 217 91% 60%;
+  --status-assigned: 199 89% 48%;
+  --status-in-progress: 38 92% 50%;
+  --status-pending: 24 95% 50%;
+  --status-completed: 142 76% 36%;
+  --status-closed: 220 13% 91%;
+  --status-escalated: 0 84.2% 60.2%;
+
+  /* Priority Colors */
+  --priority-low: 220 13% 91%;
+  --priority-medium: 38 92% 50%;
+  --priority-high: 24 95% 50%;
+  --priority-urgent: 0 84.2% 60.2%;
+}
+
+/* Base Styles */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading tracking-tight;
+  }
+}
+
+/* Utility Classes */
+@layer utilities {
+  .glass {
+    @apply bg-card border border-border shadow-md;
+  }
+
+  .premium-card {
+    @apply bg-card border-border/50 shadow-premium transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600;
+  }
+}
+
+/* Transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/30 transition-colors;
+}
