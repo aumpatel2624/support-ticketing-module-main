@@ -20,7 +20,6 @@ export default function KanbanCardSortable({ ticket, onMenuAction }) {
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1,
     };
 
     return (
@@ -29,6 +28,7 @@ export default function KanbanCardSortable({ ticket, onMenuAction }) {
             style={style}
             {...attributes}
             {...listeners}
+            className="touch-none"
         >
             <KanbanCard
                 ticket={ticket}

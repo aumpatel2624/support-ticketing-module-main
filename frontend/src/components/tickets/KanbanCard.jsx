@@ -39,6 +39,12 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
         <div
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
+            onPointerDown={(e) => {
+                // Only allow dragging from the card background, not from interactive elements
+                if (e.target.closest('a, button, [role="button"]')) {
+                    return;
+                }
+            }}
             className="group cursor-grab active:cursor-grabbing"
         >
             <Card
@@ -56,6 +62,7 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
                             href={`/tickets/${ticket._id}`}
                             className="font-bold text-xs text-primary hover:underline truncate flex-1"
                             title={ticket.ticketId}
+                            onClick={(e) => e.stopPropagation()}
                         >
                             {ticket.ticketId}
                         </Link>
@@ -67,6 +74,8 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
                                 variant="ghost"
                                 size="sm"
                                 className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
                             >
                                 <MoreHorizontal className="h-3 w-3" />
                             </Button>
