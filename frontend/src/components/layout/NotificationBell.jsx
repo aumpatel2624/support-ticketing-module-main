@@ -32,6 +32,9 @@ export default function NotificationBell() {
         try {
             const socket = initSocket(token);
 
+            // Only proceed if socket was successfully initialized
+            if (!socket) return;
+
             // Join user's notification room
             socket.emit('join', user._id);
 

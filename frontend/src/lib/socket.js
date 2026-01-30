@@ -4,11 +4,42 @@ let socket = null;
 
 /**
  * Initialize Socket.io connection
- * Currently disabled - will be enabled when real-time features are needed
  */
 export const initSocket = (token) => {
-    // Socket.io disabled for now
-    return null;
+    if (socket) return socket;
+
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+        socket = io(apiUrl, {
+            path: '/socket.io/',
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: 5,
+            extraHeaders: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        socket.on('connect', () => {
+            console.log('Socket connected:', socket.id);
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Socket connection error:', error);
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Socket disconnected');
+        });
+
+        return socket;
+    } catch (error) {
+        console.error('Failed to initialize socket:', error);
+        socket = null;
+        return null;
+    }
 };
 
 /**
@@ -39,11 +70,11 @@ export const emitSocketEvent = (event, data) => {
 
 /**
  * Listen for socket events
- * Currently disabled - will be enabled when real-time features are needed
  */
 export const onSocketEvent = (event, callback) => {
-    // Socket.io disabled - return no-op listener
-    return () => {};
+    if (socket) {
+        socket.on(event, callback);
+    }
 };
 
 /**
