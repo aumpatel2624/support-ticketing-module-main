@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import ticketService from '@/lib/services/ticketService';
+import toast from 'react-hot-toast';
 import {
     User,
     Clock,
@@ -36,9 +38,27 @@ import { getAgeCategory, getAgeLabel, getAgeDescription } from '@/lib/ticketAgeH
  */
 export default function TicketCard({ ticket, onQuickAction }) {
     const [isHovering, setIsHovering] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
     const ageCategory = getAgeCategory(ticket.createdAt);
     const ageLabel = getAgeLabel(ticket.createdAt);
     const ageDescription = getAgeDescription(ticket.createdAt);
+
+    const handleMarkCompleted = async (e) => {
+        e.stopPropagation();
+        try {
+            setIsUpdating(true);
+            await ticketService.updateTicket(ticket._id, {
+                status: 'Completed'
+            });
+            toast.success('Ticket marked as completed');
+            onQuickAction?.('refresh');
+        } catch (error) {
+            console.error('Failed to update ticket:', error);
+            toast.error('Failed to update ticket status');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
 
     const colorMap = {
         fresh: 'border-l-green-500',
@@ -115,6 +135,10 @@ export default function TicketCard({ ticket, onQuickAction }) {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => onQuickAction?.('priority', ticket)}>
                                     Change priority
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={handleMarkCompleted} disabled={isUpdating}>
+                                    Mark as completed
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => onQuickAction?.('copy', ticket.ticketId)}>

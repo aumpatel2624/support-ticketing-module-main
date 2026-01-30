@@ -23,6 +23,13 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { getStatusColor, getPriorityColor, formatDate, getInitials, getAvatarColor, formatRelativeTime } from '@/lib/utils';
 import PageHeader from '@/components/common/PageHeader';
 import AttachmentList from './AttachmentList';
@@ -34,8 +41,35 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState({});
     const [showUpload, setShowUpload] = useState(false);
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
     if (!ticket) return <div>Ticket not found</div>;
+
+    const handleStatusChange = async (newStatus) => {
+        try {
+            setIsUpdatingStatus(true);
+            await ticketService.updateTicket(ticket._id, {
+                status: newStatus
+            });
+            toast.success(`Ticket status updated to ${newStatus}`);
+            if (onTicketUpdate) {
+                onTicketUpdate();
+            }
+        } catch (error) {
+            console.error('Failed to update ticket status:', error);
+            toast.error('Failed to update ticket status');
+        } finally {
+            setIsUpdatingStatus(false);
+        }
+    };
+
+    const handleEscalate = () => {
+        handleStatusChange('Escalated');
+    };
+
+    const handleCloseTicket = () => {
+        handleStatusChange('Closed');
+    };
 
     const handleFileUpload = async (files) => {
         setIsUploading(true);
@@ -125,8 +159,12 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem>Escalate</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">Close Ticket</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleEscalate} disabled={isUpdatingStatus}>
+                                Escalate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleCloseTicket} disabled={isUpdatingStatus} className="text-destructive">
+                                Close Ticket
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -208,6 +246,26 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            <div>
+                                <span className="text-xs text-muted-foreground block mb-1">Status</span>
+                                <Select value={ticket.status} onValueChange={handleStatusChange} disabled={isUpdatingStatus}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="New">New</SelectItem>
+                                        <SelectItem value="Assigned">Assigned</SelectItem>
+                                        <SelectItem value="InProgress">In Progress</SelectItem>
+                                        <SelectItem value="Pending">Pending</SelectItem>
+                                        <SelectItem value="Completed">Completed</SelectItem>
+                                        <SelectItem value="Closed">Closed</SelectItem>
+                                        <SelectItem value="Escalated">Escalated</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <Separator />
+
                             <div>
                                 <span className="text-xs text-muted-foreground block mb-1">Priority</span>
                                 <Badge variant="outline" className={getPriorityColor(ticket.priority)}>

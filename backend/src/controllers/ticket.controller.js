@@ -259,7 +259,7 @@ const updateTicket = asyncHandler(async (req, res) => {
         }
 
         // Broadcast status change to all connected users
-        socketService.broadcast('ticketUpdated', {
+        socketService.emitToAll('ticketUpdated', {
             ticketId: ticket._id,
             status: newStatus,
             updatedBy: req.user._id

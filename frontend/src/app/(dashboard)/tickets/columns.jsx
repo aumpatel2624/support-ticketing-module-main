@@ -16,6 +16,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getStatusColor, getPriorityColor, formatDate } from '@/lib/utils';
 import { getAgeCategory, getAgeLabel, getAgeDescription } from '@/lib/ticketAgeHelper';
+import ticketService from '@/lib/services/ticketService';
+import toast from 'react-hot-toast';
 
 export const columns = [
     {
@@ -172,6 +174,20 @@ export const columns = [
         cell: ({ row }) => {
             const ticket = row.original;
 
+            const handleMarkResolved = async (e) => {
+                e.preventDefault();
+                try {
+                    await ticketService.updateTicket(ticket._id || ticket.id, {
+                        status: 'Completed'
+                    });
+                    toast.success('Ticket marked as resolved');
+                    window.location.reload();
+                } catch (error) {
+                    console.error('Failed to mark ticket as resolved:', error);
+                    toast.error('Failed to mark ticket as resolved');
+                }
+            };
+
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -189,9 +205,11 @@ export const columns = [
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                            <Link href={`/tickets/${ticket.id}`}>View details</Link>
+                            <Link href={`/tickets/${ticket._id || ticket.id}`}>View details</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Mark as resolved</DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleMarkResolved}>
+                            Mark as resolved
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
