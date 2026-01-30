@@ -1,19 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { format, isValid, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 /**
- * DateRangePicker component - Select a date range with calendar
+ * DateRangePicker component - Simple date range picker with manual input
  */
 export default function DateRangePicker({
     value,
@@ -21,87 +16,89 @@ export default function DateRangePicker({
     placeholder = 'Select date range',
     className
 }) {
-    const [isOpen, setIsOpen] = useState(false);
+    const [fromInput, setFromInput] = useState(value?.from || '');
+    const [toInput, setToInput] = useState(value?.to || '');
 
-    // Parse dates from value
-    const fromDate = value?.from ? parseISO(value.from) : undefined;
-    const toDate = value?.to ? parseISO(value.to) : undefined;
-
-    const handleSelect = (range) => {
-        if (!range) {
-            onChange(undefined);
-            return;
-        }
-
-        const newRange = {
-            from: range.from ? format(range.from, 'yyyy-MM-dd') : undefined,
-            to: range.to ? format(range.to, 'yyyy-MM-dd') : undefined,
-        };
-
-        onChange(newRange);
-
-        // Close popover if both dates are selected
-        if (range.from && range.to) {
-            setIsOpen(false);
-        }
+    const handleFromChange = (e) => {
+        const newFrom = e.target.value;
+        setFromInput(newFrom);
+        onChange({
+            from: newFrom || undefined,
+            to: toInput || undefined,
+        });
     };
 
-    const clearSelection = (e) => {
+    const handleToChange = (e) => {
+        const newTo = e.target.value;
+        setToInput(newTo);
+        onChange({
+            from: fromInput || undefined,
+            to: newTo || undefined,
+        });
+    };
+
+    const handleClear = (e) => {
         e.stopPropagation();
+        setFromInput('');
+        setToInput('');
         onChange(undefined);
     };
 
     const displayValue = () => {
-        if (fromDate && toDate && isValid(fromDate) && isValid(toDate)) {
-            return `${format(fromDate, 'MMM dd')} - ${format(toDate, 'MMM dd')}`;
+        if (fromInput && toInput) {
+            return `${fromInput} - ${toInput}`;
         }
-        if (fromDate && isValid(fromDate)) {
-            return `From ${format(fromDate, 'MMM dd')}`;
+        if (fromInput) {
+            return `From ${fromInput}`;
         }
-        if (toDate && isValid(toDate)) {
-            return `Until ${format(toDate, 'MMM dd')}`;
+        if (toInput) {
+            return `Until ${toInput}`;
         }
         return placeholder;
     };
 
-    const hasValue = fromDate || toDate;
+    const hasValue = fromInput || toInput;
 
     return (
-        <div className={cn('grid gap-2', className)}>
-            <Popover open={isOpen} onOpenChange={setIsOpen}>
-                <PopoverTrigger asChild>
-                    <Button
-                        id="date"
-                        variant={'outline'}
-                        className={cn(
-                            'w-full justify-start text-left font-normal',
-                            !hasValue && 'text-muted-foreground'
-                        )}
-                    >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        <span className="flex-1 truncate">{displayValue()}</span>
-                        {hasValue && (
-                            <X
-                                className="ml-2 h-4 w-4 text-muted-foreground hover:text-foreground"
-                                onClick={clearSelection}
-                            />
-                        )}
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                        initialFocus
-                        mode="range"
-                        defaultMonth={fromDate}
-                        selected={{
-                            from: fromDate,
-                            to: toDate,
-                        }}
-                        onSelect={handleSelect}
-                        numberOfMonths={2}
+        <div className={cn('space-y-2', className)}>
+            <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                    <label className="text-xs text-muted-foreground block mb-1">From</label>
+                    <Input
+                        type="date"
+                        value={fromInput}
+                        onChange={handleFromChange}
+                        placeholder="Start date"
+                        className="text-sm"
                     />
-                </PopoverContent>
-            </Popover>
+                </div>
+                <div className="flex-1">
+                    <label className="text-xs text-muted-foreground block mb-1">To</label>
+                    <Input
+                        type="date"
+                        value={toInput}
+                        onChange={handleToChange}
+                        placeholder="End date"
+                        className="text-sm"
+                    />
+                </div>
+                {hasValue && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 px-2"
+                        onClick={handleClear}
+                        title="Clear date range"
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                )}
+            </div>
+            {hasValue && (
+                <div className="text-xs text-muted-foreground">
+                    {displayValue()}
+                </div>
+            )}
         </div>
     );
 }
