@@ -8,7 +8,7 @@ import useSettingsStore from '@/store/settingsStore';
 import { useToast } from '@/hooks/use-toast';
 import { DEFAULT_SYSTEM_SETTINGS, SYSTEM_SETTINGS_DATE_FORMATS, SYSTEM_SETTINGS_TIME_FORMATS, TIMEZONES, ESCALATION_TARGETS, NOTIFY_VIA_OPTIONS } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Loader2 } from 'lucide-react';
 import GeneralSettingsTab from './GeneralSettingsTab';
