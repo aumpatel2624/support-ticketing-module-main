@@ -36,7 +36,6 @@ import { getStatusColor, getPriorityColor, formatDate, getInitials, getAvatarCol
 import PageHeader from '@/components/common/PageHeader';
 import AttachmentList from './AttachmentList';
 import FileUpload from './FileUpload';
-import AssignTicketModal from './AssignTicketModal';
 import ticketService from '@/lib/services/ticketService';
 import toast from 'react-hot-toast';
 
@@ -46,8 +45,6 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
     const [uploadProgress, setUploadProgress] = useState({});
     const [showUpload, setShowUpload] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-    const [showAssignModal, setShowAssignModal] = useState(false);
-    const [pendingStatus, setPendingStatus] = useState(null);
     const [isReady, setIsReady] = useState(false);
 
     if (!ticket) return <div>Ticket not found</div>;
@@ -71,17 +68,6 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
             return;
         }
 
-        // If changing to "Assigned" and ticket is not already assigned, show assignment modal
-        if (newStatus === 'Assigned' && !ticket.assignedTo) {
-            setPendingStatus(newStatus);
-            setShowAssignModal(true);
-            return;
-        }
-
-        await updateTicketStatus(newStatus);
-    };
-
-    const updateTicketStatus = async (newStatus) => {
         try {
             setIsUpdatingStatus(true);
             await ticketService.updateTicket(ticket._id, {
@@ -94,28 +80,6 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
         } catch (error) {
             console.error('Failed to update ticket status:', error);
             toast.error('Failed to update ticket status');
-        } finally {
-            setIsUpdatingStatus(false);
-        }
-    };
-
-    const handleAssignUser = async (selectedUser) => {
-        try {
-            setIsUpdatingStatus(true);
-            // First assign the ticket
-            await ticketService.updateTicket(ticket._id, {
-                assignedTo: selectedUser._id,
-                status: pendingStatus
-            });
-            toast.success(`Ticket assigned to ${selectedUser.name} and status updated`);
-            setShowAssignModal(false);
-            setPendingStatus(null);
-            if (onTicketUpdate) {
-                onTicketUpdate();
-            }
-        } catch (error) {
-            console.error('Failed to assign ticket:', error);
-            toast.error('Failed to assign ticket');
         } finally {
             setIsUpdatingStatus(false);
         }
@@ -402,14 +366,6 @@ export default function TicketDetailView({ ticket, onTicketUpdate }) {
                     </Card>
                 </div>
             </div>
-
-            {/* Assignment Modal */}
-            <AssignTicketModal
-                isOpen={showAssignModal}
-                onClose={() => setShowAssignModal(false)}
-                onAssign={handleAssignUser}
-                isLoading={isUpdatingStatus}
-            />
         </div>
     );
 }
