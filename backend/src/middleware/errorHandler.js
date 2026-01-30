@@ -11,6 +11,10 @@ const errorHandler = (err, req, res, next) => {
     // Log error for debugging
     if (process.env.NODE_ENV === 'development') {
         console.error('Error:', err);
+        console.error('Error has references:', !!err.references);
+        if (err.references) {
+            console.error('References:', err.references);
+        }
     }
 
     // Mongoose bad ObjectId
@@ -46,14 +50,20 @@ const errorHandler = (err, req, res, next) => {
     // Preserve references from original error (custom property)
     const references = err.references || error.references;
 
-    res.status(statusCode).json({
+    const responseData = {
         success: false,
         error: message,
         details: error.details || null,
         // Include references if present (for cascading validation errors)
         ...(references && { references }),
         ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-    });
+    };
+
+    if (process.env.NODE_ENV === 'development') {
+        console.error('Response data:', JSON.stringify(responseData, null, 2));
+    }
+
+    res.status(statusCode).json(responseData);
 };
 
 /**

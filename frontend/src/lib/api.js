@@ -69,9 +69,9 @@ api.interceptors.response.use(
             }
         }
 
-        // Convert API errors to user-friendly messages
-        const errorMessage = getErrorMessage(error);
-        return Promise.reject({ ...error, message: errorMessage });
+        // Return the original Axios error object (has response, config, etc.)
+        // Don't spread/modify it as it loses properties
+        return Promise.reject(error);
     }
 );
 
