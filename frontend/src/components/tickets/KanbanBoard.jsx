@@ -86,11 +86,18 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
         // Validate status transition if needed
         if (ticket.status === newStatus) return;
 
-        // If dragging to "Assigned" and ticket is not already assigned, show assignment modal
+        // If dragging to "Assigned" and ticket is not already assigned, show assignment modal (admin/superadmin only)
         if (newStatus === 'Assigned' && !ticket.assignedTo) {
-            setPendingTicketUpdate({ ticketId, newStatus });
-            setShowAssignModal(true);
-            return;
+            // Only show assignment modal for admins/superadmins
+            if (['Admin', 'SuperAdmin'].includes(user?.role)) {
+                setPendingTicketUpdate({ ticketId, newStatus });
+                setShowAssignModal(true);
+                return;
+            } else {
+                // Non-admins just change status without assigning
+                toast.error('Only admins can assign tickets. Contact your administrator.');
+                return;
+            }
         }
 
         // Optimistic update
