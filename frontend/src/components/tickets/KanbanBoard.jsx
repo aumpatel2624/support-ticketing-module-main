@@ -34,6 +34,11 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
         })
     );
 
+    // Sync local state with prop when initialTickets changes
+    useEffect(() => {
+        setTickets(initialTickets);
+    }, [initialTickets]);
+
     // Organize tickets by status
     const getTicketsByStatus = (status) => {
         return tickets.filter((ticket) => ticket.status === status);
