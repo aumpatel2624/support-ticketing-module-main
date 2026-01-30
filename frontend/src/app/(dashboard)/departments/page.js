@@ -1,17 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
 import PageHeader from '@/components/common/PageHeader';
 import { DataTable } from '@/components/ui/data-table';
-import { columns } from './columns';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { createColumns } from './columns';
 import CreateDepartmentDialog from '@/components/settings/CreateDepartmentDialog';
+import EditDepartmentDialog from '@/components/settings/EditDepartmentDialog';
 import departmentService from '@/lib/services/departmentService';
 import toast from 'react-hot-toast';
 
 export default function DepartmentsPage() {
     const [departments, setDepartments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [editDepartment, setEditDepartment] = useState(null);
+    const [deleteDepartment, setDeleteDepartment] = useState(null);
 
     const fetchDepartments = async () => {
         try {
@@ -39,6 +43,28 @@ export default function DepartmentsPage() {
         fetchDepartments();
     };
 
+    const handleDepartmentUpdated = () => {
+        fetchDepartments();
+        setEditDepartment(null);
+    };
+
+    const handleDeleteDepartment = async () => {
+        try {
+            await departmentService.deleteDepartment(deleteDepartment._id);
+            toast.success('Department deleted successfully');
+            fetchDepartments();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to delete department');
+        } finally {
+            setDeleteDepartment(null);
+        }
+    };
+
+    const columns = useMemo(
+        () => createColumns(setEditDepartment, setDeleteDepartment),
+        []
+    );
+
     return (
         <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
             <PageHeader
@@ -60,6 +86,23 @@ export default function DepartmentsPage() {
                     />
                 )}
             </div>
+
+            <EditDepartmentDialog
+                department={editDepartment}
+                open={!!editDepartment}
+                onOpenChange={(open) => !open && setEditDepartment(null)}
+                onDepartmentUpdated={handleDepartmentUpdated}
+            />
+
+            <ConfirmDialog
+                open={!!deleteDepartment}
+                onOpenChange={(open) => !open && setDeleteDepartment(null)}
+                title="Delete Department"
+                description={`Are you sure you want to delete "${deleteDepartment?.name}"? This action cannot be undone.`}
+                confirmText="Delete"
+                variant="destructive"
+                onConfirm={handleDeleteDepartment}
+            />
         </div>
     );
 }

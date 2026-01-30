@@ -8,12 +8,13 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials, getAvatarColor } from '@/lib/utils';
 
-export const columns = [
+export const createColumns = (onEdit, onDelete) => [
     {
         accessorKey: 'name',
         header: 'Department Name',
@@ -56,6 +57,7 @@ export const columns = [
     {
         id: 'actions',
         cell: ({ row }) => {
+            const department = row.original;
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -66,9 +68,13 @@ export const columns = [
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit Details</DropdownMenuItem>
-                        <DropdownMenuItem>Manage Members</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEdit(department)}>
+                            Edit Details
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive" onClick={() => onDelete(department)}>
+                            Delete
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
