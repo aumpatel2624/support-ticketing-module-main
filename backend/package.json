@@ -9,7 +9,9 @@
     "test": "jest",
     "lint": "eslint src/",
     "seed": "node src/scripts/seed.js",
-    "seed:super": "node src/scripts/seed-superadmin.js"
+    "seed:super": "node src/scripts/seed-superadmin.js",
+    "seed:mock": "node src/scripts/seed-mock-data.js",
+    "migrate:s3-urls": "node src/scripts/migrate-attachments-to-s3-urls.js"
   },
   "keywords": [],
   "author": "",
