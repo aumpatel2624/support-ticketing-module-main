@@ -19,7 +19,7 @@ import KanbanColumn from './KanbanColumn';
 import KanbanCard from './KanbanCard';
 import AssignTicketModal from './AssignTicketModal';
 
-const STATUSES = ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Closed', 'Escalated'];
+const STATUSES = ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Reopened', 'Closed', 'Escalated'];
 
 /**
  * KanbanBoard - Main Kanban view component with drag-and-drop ticket management
