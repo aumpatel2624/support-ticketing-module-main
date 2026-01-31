@@ -14,8 +14,16 @@ const init = (server) => {
         }
     });
 
+    // Add logging middleware
+    io.use((socket, next) => {
+        console.log(`Socket attempting connection: ${socket.id} (handshake: ${JSON.stringify(socket.handshake.query)})`);
+        next();
+    });
+
     io.on('connection', (socket) => {
         console.log('User connected:', socket.id);
+        console.log('Socket Handshake Auth:', socket.handshake.auth);
+        console.log('Socket Handshake Headers:', socket.handshake.headers);
 
         // Join room based on user role/id if needed
         socket.on('join', (userId) => {
@@ -33,8 +41,12 @@ const init = (server) => {
             console.log(`User joined ticket room: ticket_${ticketId}`);
         });
 
-        socket.on('disconnect', () => {
-            console.log('User disconnected:', socket.id);
+        socket.on('disconnect', (reason) => {
+            console.log(`User disconnected: ${socket.id}. Reason: ${reason}`);
+        });
+
+        socket.on('error', (err) => {
+            console.error(`Socket error for ${socket.id}:`, err);
         });
     });
 

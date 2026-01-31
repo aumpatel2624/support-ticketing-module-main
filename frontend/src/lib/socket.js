@@ -9,7 +9,12 @@ export const initSocket = (token) => {
     if (socket) return socket;
 
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+        // Remove /api suffix for socket connection to avoid namespace error
+        if (apiUrl.endsWith('/api')) {
+            apiUrl = apiUrl.replace(/\/api$/, '');
+        }
 
         socket = io(apiUrl, {
             path: '/socket.io/',

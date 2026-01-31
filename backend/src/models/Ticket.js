@@ -201,6 +201,14 @@ const ticketSchema = new mongoose.Schema({
         trim: true,
         default: null
     },
+    feedbackGiven: {
+        type: Boolean,
+        default: false
+    },
+    feedbackGivenAt: {
+        type: Date,
+        default: null
+    },
     slaDeadline: {
         type: Date,
         default: null

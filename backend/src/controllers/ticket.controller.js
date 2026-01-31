@@ -38,7 +38,19 @@ const getTickets = asyncHandler(async (req, res) => {
     if (req.user.role === 'NormalUser') {
         filter.createdBy = req.user._id;
     } else if (req.user.role === 'TeamMember') {
-        filter.assignedTo = req.user._id;
+        // Team Members see:
+        // 1. Tickets assigned to them
+        // 2. Unassigned tickets in their department (so they can self-assign)
+        if (req.user.department) {
+            filter.$or = [
+                { assignedTo: req.user._id },
+                { assignedTo: null, departmentId: req.user.department },
+                { assignedTo: { $exists: false }, departmentId: req.user.department } // Handle missing assignedTo field
+            ];
+        } else {
+            // Fallback if no department: just see assigned to them
+            filter.assignedTo = req.user._id;
+        }
     } else if (req.user.role === 'Admin') {
         // Admins usually see their own department tickets
         if (req.user.department) {
@@ -252,18 +264,15 @@ const updateTicket = asyncHandler(async (req, res) => {
         if (req.user._id.toString() !== ticket.createdBy.toString()) {
             await ticket.populate('createdBy', 'name email');
 
-            await Notification.create({
+            const notification = await Notification.create({
                 userId: ticket.createdBy._id,
                 ticketId: ticket._id,
                 type: 'StatusUpdated',
                 message: `Your ticket ${ticket.ticketId} status has been updated to ${newStatus}`
             });
 
-            // Socket: Notify creator
-            socketService.emitToUser(ticket.createdBy._id, 'notification', {
-                type: 'StatusUpdated',
-                message: `Your ticket ${ticket.ticketId} status has been updated to ${newStatus}`
-            });
+            // Socket: Notify creator with full notification object (includes _id)
+            socketService.emitToUser(ticket.createdBy._id, 'notification', notification);
         }
 
         // Broadcast status change to all connected users
@@ -346,18 +355,15 @@ const updateStatus = asyncHandler(async (req, res) => {
     if (req.user._id.toString() !== ticket.createdBy.toString()) {
         await ticket.populate('createdBy', 'name email');
 
-        await Notification.create({
+        const notification = await Notification.create({
             userId: ticket.createdBy._id,
             ticketId: ticket._id,
             type: 'StatusUpdated',
             message: `Your ticket ${ticket.ticketId} status has been updated to ${status}`
         });
 
-        // Socket: Notify creator
-        socketService.emitToUser(ticket.createdBy._id, 'notification', {
-            type: 'StatusUpdated',
-            message: `Your ticket ${ticket.ticketId} status has been updated to ${status}`
-        });
+        // Socket: Notify creator with full notification object
+        socketService.emitToUser(ticket.createdBy._id, 'notification', notification);
         socketService.emitToTicket(ticket._id, 'status_updated', ticket);
     }
 
@@ -379,9 +385,18 @@ const assignTicket = asyncHandler(async (req, res) => {
 
     if (!ticket) throw new NotFoundError('Ticket not found');
 
-    // Permission check: SuperAdmin or Admin
-    if (!['SuperAdmin', 'Admin'].includes(req.user.role)) {
-        throw new AuthorizationError('Only Admins can assign tickets');
+    // Permission check: SuperAdmin, Admin, or TeamMember assigning to self
+    const isSelfAssignment = req.user.role === 'TeamMember' && assignedTo === req.user._id.toString();
+
+    console.log('DEBUG ASSIGN:', {
+        role: req.user.role,
+        assignedTo,
+        userId: req.user._id.toString(),
+        isSelfAssignment
+    });
+
+    if (!['SuperAdmin', 'Admin'].includes(req.user.role) && !isSelfAssignment) {
+        throw new AuthorizationError('Only Admins can assign tickets to others');
     }
 
     ticket.assignedTo = assignedTo;
@@ -394,18 +409,15 @@ const assignTicket = asyncHandler(async (req, res) => {
     // Notify assignee
     const assignee = await User.findById(assignedTo);
     if (assignee) {
-        await Notification.create({
+        const notification = await Notification.create({
             userId: assignedTo,
             ticketId: ticket._id,
             type: 'TicketAssigned',
             message: `You have been assigned to ticket: ${ticket.ticketId}`
         });
 
-        // Socket: Notify assignee
-        socketService.emitToUser(assignedTo, 'notification', {
-            type: 'TicketAssigned',
-            message: `You have been assigned to ticket: ${ticket.ticketId}`
-        });
+        // Socket: Notify assignee with full notification object
+        socketService.emitToUser(assignedTo, 'notification', notification);
     }
 
     res.status(200).json({
@@ -498,6 +510,90 @@ const rateTicket = asyncHandler(async (req, res) => {
         success: true,
         message: 'Thank you for your feedback',
         data: { rating, feedback }
+    });
+});
+
+/**
+ * @desc    Submit feedback and decide to close or reopen ticket
+ * @route   POST /api/tickets/:id/submit-feedback
+ * @access  Private (Creator only)
+ */
+const submitFeedback = asyncHandler(async (req, res) => {
+    const { rating, feedback, action } = req.body; // action: 'close' or 'reopen'
+
+    if (!['close', 'reopen'].includes(action)) {
+        throw new ValidationError('Action must be either "close" or "reopen"');
+    }
+
+    const ticket = await Ticket.findById(req.params.id);
+
+    if (!ticket) throw new NotFoundError('Ticket not found');
+
+    // Only creator can submit feedback
+    if (ticket.createdBy.toString() !== req.user._id.toString()) {
+        throw new AuthorizationError('Only the ticket creator can submit feedback');
+    }
+
+    if (ticket.status !== 'Completed') {
+        throw new ValidationError('Feedback can only be submitted for completed tickets');
+    }
+
+    // Update ticket with feedback
+    ticket.rating = rating;
+    ticket.feedback = feedback;
+    ticket.feedbackGiven = true;
+    ticket.feedbackGivenAt = new Date();
+
+    // Handle action
+    if (action === 'close') {
+        // Close the ticket
+        ticket.status = 'Closed';
+        ticket.closedAt = new Date();
+        ticket.addStatusHistory('Closed', req.user._id, 'Ticket closed based on creator feedback');
+    } else if (action === 'reopen') {
+        // Reopen the ticket - change to InProgress
+        ticket.status = 'InProgress';
+        ticket.addStatusHistory('InProgress', req.user._id, 'Ticket reopened by creator - not satisfied with completion');
+    }
+
+    await ticket.save();
+
+    // Notify assignee of the action
+    if (ticket.assignedTo) {
+        await ticket.populate('assignedTo', 'name email');
+        const Notification = require('../models/Notification');
+
+        const notificationType = action === 'close' ? 'FeedbackSubmitted' : 'TicketReopened';
+        const message = action === 'close'
+            ? `Creator has submitted feedback and closed ticket ${ticket.ticketId}`
+            : `Creator has reopened ticket ${ticket.ticketId} - not satisfied with completion`;
+
+        await Notification.create({
+            userId: ticket.assignedTo._id,
+            ticketId: ticket._id,
+            type: notificationType,
+            message
+        });
+
+        // Socket: Notify assignee
+        const socketService = require('../services/socket.service');
+        socketService.emitToUser(ticket.assignedTo._id, 'notification', {
+            type: notificationType,
+            message,
+            ticketId: ticket._id
+        });
+    }
+
+    res.status(200).json({
+        success: true,
+        message: action === 'close' ? 'Feedback submitted and ticket closed' : 'Ticket reopened for further work',
+        data: {
+            ticketId: ticket._id,
+            status: ticket.status,
+            rating,
+            feedback,
+            action
+        }
     });
 });
 
@@ -756,6 +852,7 @@ module.exports = {
     assignTicket,
     addComment,
     rateTicket,
+    submitFeedback,
     uploadAttachment,
     deleteAttachment,
     getTicketHistory,

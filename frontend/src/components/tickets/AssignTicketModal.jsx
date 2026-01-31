@@ -43,7 +43,9 @@ export default function AssignTicketModal({ isOpen, onClose, onAssign, isLoading
 
             // Filter to show only Admins (heads) and TeamMembers
             const assignableUsers = usersData.filter(user =>
-                user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.TEAM_MEMBER
+                user.role === USER_ROLES.ADMIN ||
+                user.role === USER_ROLES.TEAM_MEMBER ||
+                user.role === USER_ROLES.SUPER_ADMIN
             );
 
             setUsers(assignableUsers);
@@ -120,11 +122,10 @@ export default function AssignTicketModal({ isOpen, onClose, onAssign, isLoading
                                     <button
                                         key={user._id}
                                         onClick={() => setSelectedUser(user)}
-                                        className={`w-full p-3 rounded-lg flex items-center gap-3 text-left transition-colors ${
-                                            selectedUser?._id === user._id
-                                                ? 'bg-primary/10 border border-primary'
-                                                : 'hover:bg-muted border border-transparent'
-                                        }`}
+                                        className={`w-full p-3 rounded-lg flex items-center gap-3 text-left transition-colors ${selectedUser?._id === user._id
+                                            ? 'bg-primary/10 border border-primary'
+                                            : 'hover:bg-muted border border-transparent'
+                                            }`}
                                     >
                                         <Avatar className="h-8 w-8">
                                             <AvatarFallback className={`text-xs ${getAvatarColor(user.name)}`}>
@@ -135,7 +136,8 @@ export default function AssignTicketModal({ isOpen, onClose, onAssign, isLoading
                                             <div className="flex items-center gap-2">
                                                 <p className="font-medium text-sm truncate">{user.name}</p>
                                                 <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary whitespace-nowrap">
-                                                    {user.role === USER_ROLES.ADMIN ? 'Head' : 'Team Member'}
+                                                    {user.role === USER_ROLES.SUPER_ADMIN ? 'Super Admin' :
+                                                        user.role === USER_ROLES.ADMIN ? 'Head' : 'Team Member'}
                                                 </span>
                                             </div>
                                             <p className="text-xs text-muted-foreground truncate">{user.email}</p>

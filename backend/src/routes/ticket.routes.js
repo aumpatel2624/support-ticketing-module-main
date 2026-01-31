@@ -9,6 +9,7 @@ const {
     assignTicket,
     addComment,
     rateTicket,
+    submitFeedback,
     uploadAttachment,
     deleteAttachment,
     getTicketHistory,
@@ -16,7 +17,7 @@ const {
     getAssignedTickets
 } = require('../controllers/ticket.controller');
 const { authenticate } = require('../middleware/auth');
-const { requireAdmin, requireSuperAdmin } = require('../middleware/rbac');
+const { requireAdmin, requireSuperAdmin, requireTeamMember } = require('../middleware/rbac');
 const { uploadSingle, handleUploadError } = require('../middleware/upload');
 const { validateBody, validateParams, validateQuery } = require('../middleware/validate');
 const {
@@ -26,6 +27,7 @@ const {
     assignTicketSchema,
     addCommentSchema,
     rateTicketSchema,
+    submitFeedbackSchema,
     ticketListQuerySchema
 } = require('../validators/ticket.validator');
 const { objectIdSchema } = require('../validators/user.validator');
@@ -216,7 +218,7 @@ router.patch('/:id/status', authenticate, validateParams(objectIdSchema), valida
  *       200:
  *         description: Ticket assigned successfully
  */
-router.patch('/:id/assign', authenticate, requireAdmin, validateParams(objectIdSchema), validateBody(assignTicketSchema), assignTicket);
+router.patch('/:id/assign', authenticate, requireTeamMember, validateParams(objectIdSchema), validateBody(assignTicketSchema), assignTicket);
 
 /**
  * @swagger
@@ -259,6 +261,44 @@ router.post('/:id/comments', authenticate, validateParams(objectIdSchema), valid
  *         description: Feedback submitted successfully
  */
 router.post('/:id/rate', authenticate, validateParams(objectIdSchema), validateBody(rateTicketSchema), rateTicket);
+
+/**
+ * @swagger
+ * /tickets/{id}/submit-feedback:
+ *   post:
+ *     summary: Submit feedback and close or reopen ticket
+ *     description: Creator submits feedback and decides to close or reopen the ticket
+ *     tags: [Tickets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               rating:
+ *                 type: number
+ *                 minimum: 1
+ *                 maximum: 5
+ *               feedback:
+ *                 type: string
+ *                 maxLength: 500
+ *               action:
+ *                 type: string
+ *                 enum: [close, reopen]
+ *     responses:
+ *       200:
+ *         description: Feedback submitted and ticket status updated
+ */
+router.post('/:id/submit-feedback', authenticate, validateParams(objectIdSchema), validateBody(submitFeedbackSchema), submitFeedback);
 
 /**
  * @swagger

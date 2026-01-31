@@ -173,6 +173,19 @@ const ticketService = {
             commentData
         );
         return response.data;
+    },
+
+    /**
+     * Submit feedback on a completed ticket
+     * @param {string} ticketId
+     * @param {Object} feedbackData - { rating, feedback, action }
+     */
+    async submitFeedback(ticketId, feedbackData) {
+        const response = await api.post(
+            `${API_ENDPOINTS.TICKETS}/${ticketId}/submit-feedback`,
+            feedbackData
+        );
+        return response.data;
     }
 };
 

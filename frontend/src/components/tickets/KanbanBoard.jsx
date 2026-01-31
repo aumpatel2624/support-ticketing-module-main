@@ -81,21 +81,38 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
 
         if (!ticket) return;
 
-        const newStatus = over.id;
+        let newStatus = over.id;
+
+        // If dropped over another ticket, get that ticket's status
+        if (!STATUSES.includes(newStatus)) {
+            const overTicket = tickets.find((t) => t._id === newStatus);
+            if (overTicket) {
+                newStatus = overTicket.status;
+            } else {
+                // If distinct from status and not a ticket, cancel
+                return;
+            }
+        }
 
         // Validate status transition if needed
         if (ticket.status === newStatus) return;
 
-        // If dragging to "Assigned" status, show assignment modal (for assignment or reassignment)
+        // If dragging to "Assigned" status
         if (newStatus === 'Assigned') {
-            // Only admins/superadmins can assign/reassign tickets
+            // Case 1: Admin/SuperAdmin -> Show modal to choose assignee
             if (user && ['Admin', 'SuperAdmin'].includes(user.role)) {
                 setPendingTicketUpdate({ ticketId, newStatus });
                 setShowAssignModal(true);
                 return;
+            }
+            // Case 2: TeamMember -> Auto-assign to self
+            else if (user && user.role === 'TeamMember') {
+                // Auto-assign to self
+                handleAssignUser(user);
+                return;
             } else {
-                // Non-admins cannot change to Assigned status
-                toast.error('Only admins can assign tickets. Contact your administrator.');
+                // Non-staff cannot assign
+                toast.error('You do not have permission to assign tickets.');
                 return;
             }
         }
@@ -128,9 +145,20 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
     };
 
     const handleAssignUser = async (selectedUser) => {
-        if (!pendingTicketUpdate) return;
+        // Resolve ticket details either from pending state or active drag state
+        let ticketId, newStatus;
 
-        const { ticketId, newStatus } = pendingTicketUpdate;
+        if (pendingTicketUpdate) {
+            ticketId = pendingTicketUpdate.ticketId;
+            newStatus = pendingTicketUpdate.newStatus;
+        } else if (activeId) {
+            // If direct assignment (TeamMember self-assign), use active drag ID
+            ticketId = activeId;
+            newStatus = 'Assigned';
+        } else {
+            return;
+        }
+
         const ticket = tickets.find((t) => t._id === ticketId);
 
         if (!ticket) return;

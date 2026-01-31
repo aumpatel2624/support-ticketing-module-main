@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import useAuthStore from '@/store/authStore';
-import { initSocket } from '@/lib/socket';
+import { initSocket, emitSocketEvent } from '@/lib/socket';
 import { Loader2 } from 'lucide-react';
+import NotificationListener from '../common/NotificationListener';
 
 const PUBLIC_PATHS = [
     '/login',
@@ -16,20 +17,30 @@ const PUBLIC_PATHS = [
 export default function RouteGuard({ children }) {
     const router = useRouter();
     const pathname = usePathname();
-    const { isAuthenticated, token, isHydrated } = useAuthStore();
+    const { isAuthenticated, token, user, isHydrated } = useAuthStore();
     const [authorized, setAuthorized] = useState(false);
 
     // Initialize Socket.io when user is authenticated
     useEffect(() => {
-        if (isAuthenticated && token) {
+        if (isAuthenticated && token && user) {
             try {
                 initSocket(token);
                 console.log('Socket.io initialized');
+
+                // Join user's personal room
+                emitSocketEvent('join', user._id);
+
+                // Join department room if applicable
+                // Note: user.department might be an ID or an object depending on population
+                const departmentId = typeof user.department === 'object' ? user.department?._id : user.department;
+                if (departmentId) {
+                    emitSocketEvent('join_department', departmentId);
+                }
             } catch (error) {
                 console.error('Failed to initialize Socket.io:', error);
             }
         }
-    }, [isAuthenticated, token]);
+    }, [isAuthenticated, token, user]);
 
     useEffect(() => {
         if (!isHydrated) return;
@@ -98,5 +109,10 @@ export default function RouteGuard({ children }) {
         );
     }
 
-    return <>{children}</>;
+    return (
+        <>
+            <NotificationListener />
+            {children}
+        </>
+    );
 }

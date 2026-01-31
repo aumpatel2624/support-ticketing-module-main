@@ -103,7 +103,10 @@ export default function Sidebar({ isMobile = false }) {
                     <TooltipProvider delayDuration={0}>
                         {navItems.map((item, index) => {
                             const Icon = IconMap[item.icon] || Ticket;
-                            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}/`)) || (item.href === '/dashboard' && pathname === '/dashboard');
+                            // Check if current pathname matches a nav item exactly (for sibling routes)
+                            const hasExactMatch = navItems.some(navItem => pathname === navItem.href);
+                            // Only match parent routes if there's no exact match (prevents parent highlighting when child route exists)
+                            const isActive = pathname === item.href || (item.href === '/dashboard' && pathname === '/dashboard') || (!hasExactMatch && item.href !== '/dashboard' && pathname.startsWith(`${item.href}/`));
 
                             return (
                                 <Tooltip key={index}>

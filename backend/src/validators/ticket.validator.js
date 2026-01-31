@@ -84,6 +84,19 @@ const rateTicketSchema = z.object({
         .optional()
 });
 
+// Submit feedback schema
+const submitFeedbackSchema = z.object({
+    rating: z.number()
+        .min(1, 'Rating must be at least 1')
+        .max(5, 'Rating must not exceed 5'),
+    feedback: z.string()
+        .max(500, 'Feedback must not exceed 500 characters')
+        .trim(),
+    action: z.enum(['close', 'reopen'], {
+        errorMap: () => ({ message: 'Action must be either "close" or "reopen"' })
+    })
+});
+
 // Ticket list query schema
 const ticketListQuerySchema = z.object({
     page: z.string().optional().transform(val => val ? parseInt(val) : 1),
@@ -108,5 +121,6 @@ module.exports = {
     assignTicketSchema,
     addCommentSchema,
     rateTicketSchema,
+    submitFeedbackSchema,
     ticketListQuerySchema
 };

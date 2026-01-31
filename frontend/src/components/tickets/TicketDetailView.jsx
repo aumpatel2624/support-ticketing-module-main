@@ -39,6 +39,7 @@ import AttachmentList from './AttachmentList';
 import FileUpload from './FileUpload';
 import AssignTicketModal from './AssignTicketModal';
 import ActivityFeed from './ActivityFeed';
+import FeedbackDialog from './FeedbackDialog';
 import useAuth from '@/hooks/useAuth';
 import useTicketUpdates from '@/hooks/useTicketUpdates';
 import ticketService from '@/lib/services/ticketService';
@@ -55,6 +56,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
     const [isReady, setIsReady] = useState(false);
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [pendingStatus, setPendingStatus] = useState(null);
+    const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
 
     if (!ticket) return <div>Ticket not found</div>;
 
@@ -88,6 +90,19 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
     useEffect(() => {
         setIsReady(true);
     }, []);
+
+    // Show feedback dialog if ticket is completed and creator hasn't given feedback
+    useEffect(() => {
+        const isCreator = ticket?.createdBy?._id === user?._id || ticket?.createdBy === user?._id;
+        if (
+            ticket?.status === 'Completed' &&
+            isCreator &&
+            !ticket?.feedbackGiven &&
+            isReady
+        ) {
+            setShowFeedbackDialog(true);
+        }
+    }, [ticket?.status, ticket?.feedbackGiven, ticket?.createdBy, user?._id, isReady]);
 
     const handleStatusChange = async (newStatus) => {
         // Only allow status changes after component is ready (after mount)
@@ -468,6 +483,23 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                 }}
                 onAssign={handleAssignUser}
                 isLoading={isUpdatingStatus}
+            />
+
+            {/* Feedback Dialog */}
+            <FeedbackDialog
+                open={showFeedbackDialog}
+                onOpenChange={setShowFeedbackDialog}
+                ticketId={ticket._id}
+                onFeedbackSubmitted={() => {
+                    // Refetch ticket to get updated status
+                    ticketService.getTicket(ticket._id)
+                        .then((response) => {
+                            setTicket(response.data || response);
+                        })
+                        .catch((error) => {
+                            console.error('Failed to refetch ticket:', error);
+                        });
+                }}
             />
         </div>
     );

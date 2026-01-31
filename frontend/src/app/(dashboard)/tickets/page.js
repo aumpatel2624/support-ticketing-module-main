@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Loader2, LayoutGrid, Kanban, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,11 +21,14 @@ export default function TicketsPage() {
     const [tickets, setTickets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const { viewMode, setViewMode } = useTicketStore();
+    const searchParams = useSearchParams();
+    const searchQuery = searchParams.get('search') || '';
 
-    const fetchTickets = async () => {
+    const fetchTickets = async (search = '') => {
         try {
             setIsLoading(true);
-            const output = await ticketService.getTickets();
+            const params = search ? { search } : {};
+            const output = await ticketService.getTickets(params);
             const payload = output;
             if (Array.isArray(payload)) {
                 setTickets(payload);
@@ -45,8 +49,8 @@ export default function TicketsPage() {
     };
 
     useEffect(() => {
-        fetchTickets();
-    }, []);
+        fetchTickets(searchQuery);
+    }, [searchQuery]);
 
     // Listen for real-time ticket updates
     useTicketUpdates((data) => {
