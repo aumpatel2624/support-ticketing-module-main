@@ -19,7 +19,15 @@ import userService from '@/lib/services/userService';
 import toast from 'react-hot-toast';
 import { USER_ROLES } from '@/lib/constants';
 
-export default function AssignTicketModal({ isOpen, onClose, onAssign, isLoading }) {
+export default function AssignTicketModal({
+    isOpen,
+    onClose,
+    onAssign,
+    isLoading,
+    title = 'Assign Ticket',
+    description = 'Select a team member or head to assign this ticket to',
+    currentAssignee = null
+}) {
     const [searchQuery, setSearchQuery] = useState('');
     const [users, setUsers] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
@@ -91,11 +99,20 @@ export default function AssignTicketModal({ isOpen, onClose, onAssign, isLoading
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Assign Ticket</DialogTitle>
+                    <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>
-                        Select a team member or head to assign this ticket to
+                        {description}
                     </DialogDescription>
                 </DialogHeader>
+
+                {/* Current Assignee Info */}
+                {currentAssignee && (
+                    <div className="text-sm bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p className="text-blue-700">
+                            <strong>Currently assigned to:</strong> {currentAssignee.name || 'Unknown'}
+                        </p>
+                    </div>
+                )}
 
                 <div className="space-y-4">
                     {/* Search Input */}

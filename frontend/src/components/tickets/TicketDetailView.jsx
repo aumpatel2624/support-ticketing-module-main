@@ -57,6 +57,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [pendingStatus, setPendingStatus] = useState(null);
     const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+    const [assignmentMode, setAssignmentMode] = useState(null); // 'assign' or 'reassign'
 
     if (!ticket) return <div>Ticket not found</div>;
 
@@ -176,6 +177,33 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
         } finally {
             setIsUpdatingStatus(false);
             setPendingStatus(null);
+            setAssignmentMode(null);
+        }
+    };
+
+    const handleReassignUser = async (selectedUser) => {
+        try {
+            setIsUpdatingStatus(true);
+            // Use the assignTicket endpoint which doesn't change status
+            const response = await ticketService.assignTicket(
+                ticket._id,
+                selectedUser._id,
+                `Ticket reassigned from ${ticket.assignedTo?.name || 'unassigned'} to ${selectedUser.name}`
+            );
+            // Update local ticket state with the response
+            if (response.data) {
+                setTicket(response.data);
+            }
+            toast.success(`Ticket reassigned to ${selectedUser.name}`);
+            if (onTicketUpdate) {
+                onTicketUpdate();
+            }
+        } catch (error) {
+            console.error('Failed to reassign ticket:', error);
+            toast.error('Failed to reassign ticket');
+        } finally {
+            setIsUpdatingStatus(false);
+            setAssignmentMode(null);
         }
     };
 
@@ -287,7 +315,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                     </h1>
                 </div>
                 {/* Action buttons */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                     {/* Feedback button for creator when ticket is completed */}
                     {ticket.status === 'Completed' &&
                         ticket.createdBy?._id === user?._id &&
@@ -297,6 +325,20 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                             className="bg-blue-500 hover:bg-blue-600"
                         >
                             ★ Submit Feedback
+                        </Button>
+                    )}
+
+                    {/* Reassign button for Admin/SuperAdmin */}
+                    {user && ['Admin', 'SuperAdmin'].includes(user.role) && (
+                        <Button
+                            onClick={() => {
+                                setAssignmentMode('reassign');
+                                setShowAssignModal(true);
+                            }}
+                            variant="outline"
+                            className="border-purple-500 text-purple-600 hover:bg-purple-50"
+                        >
+                            ↻ Reassign
                         </Button>
                     )}
 
@@ -487,15 +529,21 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                 </div>
             </div>
 
-            {/* Assign Ticket Modal */}
+            {/* Assign/Reassign Ticket Modal */}
             <AssignTicketModal
                 isOpen={showAssignModal}
                 onClose={() => {
                     setShowAssignModal(false);
                     setPendingStatus(null);
+                    setAssignmentMode(null);
                 }}
-                onAssign={handleAssignUser}
+                onAssign={assignmentMode === 'reassign' ? handleReassignUser : handleAssignUser}
                 isLoading={isUpdatingStatus}
+                title={assignmentMode === 'reassign' ? 'Reassign Ticket' : 'Assign Ticket'}
+                description={assignmentMode === 'reassign'
+                    ? 'Select a new team member or head to reassign this ticket to'
+                    : 'Select a team member or head to assign this ticket to'}
+                currentAssignee={assignmentMode === 'reassign' ? ticket.assignedTo : null}
             />
 
             {/* Feedback Dialog */}
