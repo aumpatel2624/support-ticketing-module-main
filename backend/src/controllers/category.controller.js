@@ -12,7 +12,7 @@ const { getPaginationParams, createPaginationResponse } = require('../utils/pagi
  */
 const getCategories = asyncHandler(async (req, res) => {
     const { page, limit, skip } = getPaginationParams(req.query);
-    const { departmentId, isActive, search } = req.query;
+    const { departmentId, search } = req.query;
 
     const filter = {};
 
@@ -23,7 +23,6 @@ const getCategories = asyncHandler(async (req, res) => {
         filter.departmentId = departmentId;
     }
 
-    if (isActive !== undefined) filter.isActive = isActive;
     if (search) {
         filter.$or = [
             { name: { $regex: search, $options: 'i' } },
@@ -42,10 +41,6 @@ const getCategories = asyncHandler(async (req, res) => {
     ]);
 
     const pagination = createPaginationResponse(total, page, limit);
-
-    // DEBUG: Inject dummy data if empty
-    if (categories.length === 0 && req.user.role === 'SuperAdmin') {
-    }
 
     res.status(200).json({
         success: true,
@@ -99,8 +94,7 @@ const getCategoriesByDepartment = asyncHandler(async (req, res) => {
     }
 
     const categories = await Category.find({
-        departmentId: deptId,
-        isActive: true
+        departmentId: deptId
     }).sort({ name: 1 });
 
     res.status(200).json({
@@ -217,7 +211,7 @@ const updateCategory = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Delete category (soft delete)
+ * @desc    Delete category (permanent delete)
  * @route   DELETE /api/categories/:id
  * @access  Private (SuperAdmin or Admin with permission)
  */
@@ -256,12 +250,11 @@ const deleteCategory = asyncHandler(async (req, res) => {
         throw error;
     }
 
-    category.isActive = false;
-    await category.save();
+    await Category.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
         success: true,
-        message: 'Category deactivated successfully'
+        message: 'Category deleted successfully'
     });
 });
 

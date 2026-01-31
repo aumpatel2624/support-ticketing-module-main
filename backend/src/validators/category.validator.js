@@ -15,7 +15,8 @@ const createCategorySchema = z.object({
         .trim()
         .optional(),
     departmentId: z.string()
-        .regex(/^[0-9a-fA-F]{24}$/, 'Invalid department ID format'),
+        .regex(/^[0-9a-fA-F]{24}$/, 'Invalid department ID format')
+        .optional(),
     defaultPriority: z.enum(['Low', 'Medium', 'High', 'Urgent'])
         .optional()
         .default('Medium'),
@@ -45,8 +46,6 @@ const updateCategorySchema = z.object({
     defaultSLA: z.number()
         .min(1, 'SLA must be at least 1 hour')
         .max(720, 'SLA cannot exceed 720 hours')
-        .optional(),
-    isActive: z.boolean()
         .optional()
 });
 
@@ -57,7 +56,6 @@ const categoryListQuerySchema = z.object({
     departmentId: z.string()
         .regex(/^[0-9a-fA-F]{24}$/, 'Invalid department ID format')
         .optional(),
-    isActive: z.string().optional().transform(val => val !== undefined ? val === 'true' : undefined),
     search: z.string().optional()
 });
 
