@@ -119,13 +119,21 @@ export default function CreateTicketForm() {
     const onSubmit = async (values) => {
         setIsSubmitting(true);
         try {
-            const payload = {
-                ...values,
-                // Only include attachments if there are files
-                ...(attachments.length > 0 && { attachments })
-            };
+            // Create ticket first (without attachments)
+            const ticketResponse = await ticketService.createTicket(values);
+            const ticketId = ticketResponse.data._id;
 
-            await ticketService.createTicket(payload);
+            // Upload attachments if any were selected
+            if (attachments.length > 0) {
+                for (const file of attachments) {
+                    try {
+                        await ticketService.uploadAttachment(ticketId, file);
+                    } catch (uploadError) {
+                        console.error('Error uploading file:', file.name, uploadError);
+                        toast.error(`Failed to upload file: ${file.name}`);
+                    }
+                }
+            }
 
             toast.success('Ticket created successfully!');
             router.push('/tickets');
