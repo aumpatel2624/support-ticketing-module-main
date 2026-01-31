@@ -19,7 +19,7 @@ const mongoose = require('mongoose');
  *           description: Related ticket ID
  *         type:
  *           type: string
- *           enum: [TicketCreated, TicketAssigned, StatusUpdated, NewComment, SLAWarning, TicketRated]
+ *           enum: [TicketCreated, TicketAssigned, StatusUpdated, NewComment, SLAWarning, TicketRated, TicketEscalated, TicketReopened, FeedbackSubmitted]
  *         message:
  *           type: string
  *           description: Notification message
@@ -49,7 +49,9 @@ const notificationSchema = new mongoose.Schema({
             'NewComment',
             'SLAWarning',
             'TicketRated',
-            'TicketEscalated'
+            'TicketEscalated',
+            'TicketReopened',
+            'FeedbackSubmitted'
         ],
         required: true
     },
