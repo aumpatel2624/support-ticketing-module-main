@@ -420,8 +420,18 @@ const assignTicket = asyncHandler(async (req, res) => {
 
     ticket.assignedTo = assignedTo;
 
-    // Add assignment to status history (without changing the status itself)
-    ticket.addStatusHistory(ticket.status, req.user._id, comment || `Ticket assigned to user`);
+    // If ticket is Reopened, automatically change to InProgress when reassigned
+    const wasReopened = ticket.status === 'Reopened';
+    if (wasReopened) {
+        ticket.status = 'InProgress';
+    }
+
+    // Add assignment to status history
+    const historyComment = wasReopened
+        ? `${comment || 'Ticket assigned to user'} - status changed from Reopened to InProgress`
+        : (comment || `Ticket assigned to user`);
+
+    ticket.addStatusHistory(ticket.status, req.user._id, historyComment);
 
     await ticket.save();
 
