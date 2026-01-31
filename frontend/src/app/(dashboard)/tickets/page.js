@@ -15,14 +15,12 @@ import AdvancedFilterPanel from '@/components/tickets/AdvancedFilterPanel';
 import ticketService from '@/lib/services/ticketService';
 import useTicketStore from '@/store/ticketStore';
 import useTicketUpdates from '@/hooks/useTicketUpdates';
-import useAuth from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
 
 export default function TicketsPage() {
     const [tickets, setTickets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const { viewMode, setViewMode } = useTicketStore();
-    const { user } = useAuth();
     const searchParams = useSearchParams();
     const searchQuery = searchParams.get('search') || '';
 
@@ -60,13 +58,6 @@ export default function TicketsPage() {
         fetchTickets(searchQuery);
     });
 
-    // Prevent normal users from accessing Kanban view
-    useEffect(() => {
-        if (user?.role === 'NormalUser' && viewMode === 'kanban') {
-            setViewMode('table');
-        }
-    }, [user, viewMode, setViewMode]);
-
     return (
         <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
             <PageHeader
@@ -96,17 +87,15 @@ export default function TicketsPage() {
                     <List className="h-4 w-4" />
                     Table
                 </Button>
-                {user?.role !== 'NormalUser' && (
-                    <Button
-                        variant={viewMode === 'kanban' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setViewMode('kanban')}
-                        className="gap-2"
-                    >
-                        <Kanban className="h-4 w-4" />
-                        Kanban
-                    </Button>
-                )}
+                <Button
+                    variant={viewMode === 'kanban' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setViewMode('kanban')}
+                    className="gap-2"
+                >
+                    <Kanban className="h-4 w-4" />
+                    Kanban
+                </Button>
                 <Button
                     variant={viewMode === 'card' ? 'default' : 'outline'}
                     size="sm"
