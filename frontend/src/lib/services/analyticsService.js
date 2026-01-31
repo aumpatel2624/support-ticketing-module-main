@@ -30,11 +30,23 @@ const analyticsService = {
             slaBreached: data.overview?.atRisk || 0,
             activeAgents: data.activeAgents || 0,
             avgResolutionTime: data.overview?.avgResolutionTime || 0,
+            avgResponseTime: data.avgResponseTime || 0,
             statusStats: data.statusStats || {},
             statusDistribution,
             priorityStats: data.priorityStats || {},
             departmentStats: data.departmentStats || [],
             monthlyTrend: formattedTrend,
+            trends: data.trends || {
+                activeTickets: 0,
+                slaRisk: 0,
+                responseTime: 0,
+                resolutionTime: 0
+            },
+            teamCapacity: data.teamCapacity || { active: 0, total: 0, percentage: 0 },
+            firstContactResolution: data.firstContactResolution || { percentage: 0, totalResolved: 0, fcrCount: 0 },
+            ticketBacklog: data.ticketBacklog || 0,
+            resolutionRateToday: data.resolutionRateToday || { percentage: 0, resolvedToday: 0, createdToday: 0 },
+            slaCompliance: data.slaCompliance || 0
         };
     },
 

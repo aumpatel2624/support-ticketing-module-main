@@ -130,6 +130,20 @@ const getTicketById = asyncHandler(async (req, res) => {
         ticket.comments = ticket.comments.filter(c => !c.isInternal);
     }
 
+    // Refresh presigned URLs for S3 attachments (they expire after 24 hours)
+    if (ticket.attachments && ticket.attachments.length > 0) {
+        try {
+            for (const attachment of ticket.attachments) {
+                if (attachment.s3Key) {
+                    attachment.s3Url = await s3Service.generatePresignedUrl(attachment.s3Key, 86400); // 24 hour expiry
+                }
+            }
+        } catch (error) {
+            logger.warn(`Failed to refresh presigned URLs: ${error.message}`);
+            // Continue anyway - use existing URLs if refresh fails
+        }
+    }
+
     res.status(200).json({
         success: true,
         data: ticket
@@ -521,7 +535,14 @@ const uploadAttachment = asyncHandler(async (req, res) => {
     // S3 upload (if using S3 storage)
     if (req.file.location || req.file.key) {
         attachment.s3Key = req.file.key;
-        attachment.s3Url = req.file.location || `https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/${req.file.key}`;
+        // Generate presigned URL for S3 objects (more secure than public URLs)
+        try {
+            attachment.s3Url = await s3Service.generatePresignedUrl(req.file.key, 86400); // 24 hour expiry
+        } catch (error) {
+            logger.warn(`Failed to generate presigned URL: ${error.message}, using direct URL`);
+            // Fallback to direct URL if presigned fails
+            attachment.s3Url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
+        }
     } else {
         // Local storage fallback
         attachment.path = req.file.path;

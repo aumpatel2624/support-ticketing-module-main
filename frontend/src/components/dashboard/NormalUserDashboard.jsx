@@ -2,12 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Loader2, Calendar, MessageSquare, AlertCircle, Clock } from 'lucide-react';
+import { Plus, Loader2, Calendar, MessageSquare, AlertCircle, Clock, CheckCircle2, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import StatsCard from './StatsCard';
+import UserTicketHistoryChart from './UserTicketHistoryChart';
+import UserPriorityChart from './UserPriorityChart';
+import UserActiveTicketsTable from './UserActiveTicketsTable';
+import UserRecentResolutionsTable from './UserRecentResolutionsTable';
 import ticketService from '@/lib/services/ticketService';
 import { TICKET_STATUS, TICKET_PRIORITY } from '@/lib/constants';
 import { cn, getInitials, getAvatarColor, formatDate } from '@/lib/utils';
@@ -15,17 +20,62 @@ import { formatDistanceToNow } from 'date-fns';
 
 export default function NormalUserDashboard({ user }) {
   const [tickets, setTickets] = useState([]);
+  const [stats, setStats] = useState({
+    myOpenTickets: 0,
+    awaitingResponse: 0,
+    resolvedThisMonth: 0,
+    avgResolutionTime: '0h'
+  });
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('dashboard');
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
-        // Fetch more tickets to populate the board (limit 100)
+        // Fetch all user's tickets (limit 100)
         const ticketsData = await ticketService.getMyTickets({ limit: 100 });
 
         if (ticketsData) {
-          setTickets(Array.isArray(ticketsData.data) ? ticketsData.data : (Array.isArray(ticketsData) ? ticketsData : []));
+          const ticketArray = Array.isArray(ticketsData.data) ? ticketsData.data : (Array.isArray(ticketsData) ? ticketsData : []);
+          setTickets(ticketArray);
+
+          // Calculate stats
+          const now = new Date();
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+          const myOpenTickets = ticketArray.filter(t =>
+            t.status !== 'Completed' && t.status !== 'Closed'
+          ).length;
+
+          const awaitingResponse = ticketArray.filter(t =>
+            t.status !== 'Completed' && t.status !== 'Closed' && t.status !== 'InProgress'
+          ).length;
+
+          const resolvedThisMonth = ticketArray.filter(t =>
+            (t.status === 'Completed' || t.status === 'Closed') &&
+            t.completedAt && new Date(t.completedAt) >= monthStart
+          ).length;
+
+          // Calculate average resolution time
+          const resolvedTickets = ticketArray.filter(t => t.completedAt && t.createdAt);
+          let avgResolutionTime = '0h';
+          if (resolvedTickets.length > 0) {
+            const totalHours = resolvedTickets.reduce((sum, t) => {
+              const created = new Date(t.createdAt);
+              const completed = new Date(t.completedAt);
+              return sum + ((completed - created) / (1000 * 60 * 60));
+            }, 0);
+            const avgHours = Math.round(totalHours / resolvedTickets.length);
+            avgResolutionTime = avgHours > 24 ? `${Math.round(avgHours / 24)}d` : `${avgHours}h`;
+          }
+
+          setStats({
+            myOpenTickets,
+            awaitingResponse,
+            resolvedThisMonth,
+            avgResolutionTime
+          });
         }
 
       } catch (error) {
@@ -75,15 +125,98 @@ export default function NormalUserDashboard({ user }) {
     </div>
   );
 
-  // Define columns to display
+  // If viewing in dashboard mode, show the dashboard
+  if (viewMode === 'dashboard') {
+    return (
+      <div className="space-y-8 animate-in fade-in-50">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">My Support Tickets</h2>
+            <p className="text-muted-foreground">
+              Track and manage your service requests
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setViewMode('kanban')}>
+              <Calendar className="mr-2 h-4 w-4" />
+              Board View
+            </Button>
+            <Button asChild>
+              <Link href="/tickets/new">
+                <Plus className="mr-2 h-4 w-4" />
+                New Ticket
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* KPI Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatsCard
+            title="My Open Tickets"
+            value={stats.myOpenTickets}
+            icon={AlertCircle}
+            description="Tickets needing action"
+          />
+          <StatsCard
+            title="Awaiting Response"
+            value={stats.awaitingResponse}
+            icon={MessageSquare}
+            className="bg-blue-50/50 dark:bg-blue-900/10"
+          />
+          <StatsCard
+            title="Resolved This Month"
+            value={stats.resolvedThisMonth}
+            icon={CheckCircle2}
+            className="bg-green-50/50 dark:bg-green-900/10"
+          />
+          <StatsCard
+            title="Avg Resolution Time"
+            value={stats.avgResolutionTime}
+            icon={Clock}
+          />
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <UserTicketHistoryChart data={tickets} />
+          <UserPriorityChart data={tickets} />
+        </div>
+
+        {/* Data Tables Section */}
+        <div className="space-y-6">
+          <Card className="border-none shadow-premium overflow-hidden">
+            <CardHeader className="px-6 py-5 bg-secondary">
+              <CardTitle className="text-xl font-bold">My Active Tickets</CardTitle>
+              <CardDescription>All your open service requests</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <UserActiveTicketsTable tickets={tickets} loading={loading} />
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-premium overflow-hidden">
+            <CardHeader className="px-6 py-5 bg-secondary">
+              <CardTitle className="text-xl font-bold">Recently Resolved</CardTitle>
+              <CardDescription>Your last 3 resolved tickets</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <UserRecentResolutionsTable tickets={tickets} />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Kanban view
   const kanbanColumns = [
     { id: TICKET_STATUS.NEW, label: 'New', color: 'bg-blue-500/10 border-blue-500/20 text-blue-700' },
     { id: TICKET_STATUS.ASSIGNED, label: 'Assigned', color: 'bg-purple-500/10 border-purple-500/20 text-purple-700' },
     { id: TICKET_STATUS.IN_PROGRESS, label: 'In Progress', color: 'bg-amber-500/10 border-amber-500/20 text-amber-700' },
     { id: TICKET_STATUS.PENDING, label: 'Pending', color: 'bg-orange-500/10 border-orange-500/20 text-orange-700' },
     { id: TICKET_STATUS.COMPLETED, label: 'Resolved', color: 'bg-green-500/10 border-green-500/20 text-green-700' },
-    // Merging Closed/Completed visually or keeping separate? Let's show Resolved (Completed) + Closed maybe in one "Done" column or separate. 
-    // Let's keep separate based on usage.
     { id: TICKET_STATUS.CLOSED, label: 'Closed', color: 'bg-slate-500/10 border-slate-500/20 text-slate-700' },
   ];
 
@@ -92,15 +225,21 @@ export default function NormalUserDashboard({ user }) {
       {/* Header */}
       <div className="flex items-center justify-between px-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Tickets</h1>
+          <h1 className="text-3xl font-bold tracking-tight">My Tickets Board</h1>
           <p className="text-muted-foreground">Manage and track your service requests</p>
         </div>
-        <Button asChild>
-          <Link href="/tickets/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New Ticket
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setViewMode('dashboard')}>
+            <TrendingUp className="mr-2 h-4 w-4" />
+            Dashboard
+          </Button>
+          <Button asChild>
+            <Link href="/tickets/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New Ticket
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Kanban Board */}

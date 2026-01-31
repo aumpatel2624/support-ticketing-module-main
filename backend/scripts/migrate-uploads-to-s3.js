@@ -44,7 +44,7 @@ async function migrateUploadsToS3() {
     console.log(`📦 AWS S3 Configuration:`);
     console.log(`   Bucket: ${process.env.S3_BUCKET_NAME}`);
     console.log(`   Region: ${process.env.AWS_REGION}`);
-    console.log(`   Prefix: ${process.env.S3_FOLDER_PREFIX || 'tickets/'}\n`);
+    console.log(`   Prefix: ${process.env.S3_FOLDER_PREFIX || 'prod/tickets/'}\n`);
 
     // Connect to MongoDB
     console.log('🔌 Connecting to MongoDB...');

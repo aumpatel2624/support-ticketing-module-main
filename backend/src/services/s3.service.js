@@ -13,10 +13,11 @@ const logger = require('../utils/logger');
 class S3Service {
   constructor() {
     this.bucketName = process.env.S3_BUCKET_NAME;
+    this.region = process.env.AWS_REGION || 'ap-south-1';
     this.folderPrefix = process.env.S3_FOLDER_PREFIX || 'tickets/';
     this.presignedUrlExpiry = parseInt(process.env.PRESIGNED_URL_EXPIRY || 3600);
   }
-
+x
   /**
    * Upload file to S3
    * @param {Buffer} fileBuffer - File content
@@ -54,7 +55,7 @@ class S3Service {
       logger.info(`File uploaded to S3: ${s3Key}`);
 
       // Generate public URL (or use presigned URL)
-      const publicUrl = `https://${this.bucketName}.s3.amazonaws.com/${s3Key}`;
+      const publicUrl = `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${s3Key}`;
 
       return {
         s3Key,
@@ -128,7 +129,7 @@ class S3Service {
         return await this.generatePresignedUrl(s3Key);
       }
       // Public URL for public buckets
-      return `https://${this.bucketName}.s3.amazonaws.com/${s3Key}`;
+      return `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${s3Key}`;
     } catch (error) {
       logger.error(`Get file URL error: ${error.message}`);
       throw new Error(`Failed to get file URL: ${error.message}`);

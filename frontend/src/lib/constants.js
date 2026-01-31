@@ -170,7 +170,6 @@ export const NAVIGATION_ITEMS = {
         { name: 'All Tickets', href: '/tickets', icon: 'Ticket' },
         { name: 'Team Members', href: '/users', icon: 'Users' },
         { name: 'Categories', href: '/categories', icon: 'Tags' },
-        { name: 'Analytics', href: '/analytics', icon: 'BarChart3' },
         // { name: 'Settings', href: '/settings', icon: 'Settings' },
     ],
     [USER_ROLES.SUPER_ADMIN]: [
@@ -179,7 +178,6 @@ export const NAVIGATION_ITEMS = {
         { name: 'Departments', href: '/departments', icon: 'Building2' },
         { name: 'Categories', href: '/categories', icon: 'Tags' },
         { name: 'Users', href: '/users', icon: 'Users' },
-        { name: 'Analytics', href: '/analytics', icon: 'BarChart3' },
         // { name: 'Settings', href: '/settings', icon: 'Settings' },
     ],
 };
@@ -253,17 +251,6 @@ export const DEFAULT_SYSTEM_SETTINGS = {
     emailReplyTo: 'support@company.com',
     emailNotificationsEnabled: true,
     inAppNotificationsEnabled: true,
-    passwordPolicy: {
-        minLength: 8,
-        requireUppercase: true,
-        requireNumbers: true,
-        requireSpecialChars: true,
-        passwordExpiryDays: 90,
-    },
-    sessionTimeoutMinutes: 30,
-    maxConcurrentSessions: 5,
-    auditEnabled: true,
-    auditRetentionDays: 90,
     fileUploadMaxSize: 10,
     allowedFileTypes: ['image', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt'],
     enableReportExports: true,

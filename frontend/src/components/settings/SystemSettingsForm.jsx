@@ -15,7 +15,6 @@ import GeneralSettingsTab from './GeneralSettingsTab';
 import TicketSettingsTab from './TicketSettingsTab';
 import SLASettingsTab from './SLASettingsTab';
 import EmailSettingsTab from './EmailSettingsTab';
-import SecuritySettingsTab from './SecuritySettingsTab';
 import FileUploadSettingsTab from './FileUploadSettingsTab';
 
 // Validation Schema
@@ -62,19 +61,6 @@ const systemSettingsSchema = z.object({
   emailReplyTo: z.string().email('Invalid email address'),
   emailNotificationsEnabled: z.boolean(),
   inAppNotificationsEnabled: z.boolean(),
-
-  // Security
-  passwordPolicy: z.object({
-    minLength: z.number().int().min(6, 'Minimum 6 characters').max(32),
-    requireUppercase: z.boolean(),
-    requireNumbers: z.boolean(),
-    requireSpecialChars: z.boolean(),
-    passwordExpiryDays: z.number().int().min(0, 'Must be 0 or greater'),
-  }),
-  sessionTimeoutMinutes: z.number().int().min(5, 'Minimum 5 minutes').max(1440),
-  maxConcurrentSessions: z.number().int().min(1, 'Minimum 1 session').max(10),
-  auditEnabled: z.boolean(),
-  auditRetentionDays: z.number().int().min(7, 'Minimum 7 days').max(730),
 
   // File Upload
   fileUploadMaxSize: z.number().int().min(1, 'Minimum 1 MB').max(100),
@@ -160,12 +146,11 @@ export default function SystemSettingsForm() {
     <>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="tickets">Tickets</TabsTrigger>
             <TabsTrigger value="sla">SLA</TabsTrigger>
             <TabsTrigger value="email">Email</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="files">Files & Features</TabsTrigger>
           </TabsList>
 
@@ -183,10 +168,6 @@ export default function SystemSettingsForm() {
 
           <TabsContent value="email" className="space-y-6 mt-6">
             <EmailSettingsTab form={form} />
-          </TabsContent>
-
-          <TabsContent value="security" className="space-y-6 mt-6">
-            <SecuritySettingsTab form={form} />
           </TabsContent>
 
           <TabsContent value="files" className="space-y-6 mt-6">

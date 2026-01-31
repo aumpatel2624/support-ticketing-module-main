@@ -7,21 +7,179 @@ import {
     Ticket,
     AlertCircle,
     CheckCircle,
-    BarChart3,
     ArrowRight,
-    Search,
-    Filter
+    Clock,
+    TrendingUp,
+    TrendingDown,
+    Minus,
+    Target,
+    Inbox,
+    Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import StatsCard from './StatsCard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { formatRelativeTime } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
+import StatsCard from './StatsCard';
 import RecentTicketsList from './RecentTicketsList';
 import TicketVolumeChart from './TicketVolumeChart';
 import TicketStatusPieChart from './TicketStatusPieChart';
+import PriorityDonutChart from './PriorityDonutChart';
+import CategoryBarChart from './CategoryBarChart';
+import SLAPerformanceChart from './SLAPerformanceChart';
+import PeakHoursHeatmap from './PeakHoursHeatmap';
+import SLAComplianceGauge from './SLAComplianceGauge';
+import AgentPerformanceTable from './AgentPerformanceTable';
+import CriticalTicketsTable from './CriticalTicketsTable';
 import analyticsService from '@/lib/services/analyticsService';
 import ticketService from '@/lib/services/ticketService';
+import api from '@/lib/api';
+import { API_ENDPOINTS } from '@/lib/constants';
 import toast from 'react-hot-toast';
+
+// Secondary KPI Card Component
+function SecondaryKPICard({ title, value, subtext, icon: Icon, trend, trendDirection, alert = false, progress }) {
+    const getTrendIcon = () => {
+        if (trendDirection === 'up') return <TrendingUp className="h-3 w-3" />;
+        if (trendDirection === 'down') return <TrendingDown className="h-3 w-3" />;
+        return <Minus className="h-3 w-3" />;
+    };
+
+    const getTrendColor = () => {
+        if (alert) return 'text-destructive bg-destructive/10';
+        if (trendDirection === 'up') return 'text-success bg-success/10';
+        if (trendDirection === 'down') return 'text-destructive bg-destructive/10';
+        return 'text-muted-foreground bg-muted';
+    };
+
+    return (
+        <Card className={cn(
+            "border-none shadow-premium bg-card overflow-hidden",
+            alert && "border-l-4 border-l-destructive"
+        )}>
+            <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                    <div className="space-y-2">
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{title}</p>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-2xl font-extrabold">{value}</span>
+                            {trend !== undefined && (
+                                <span className={cn(
+                                    "flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold",
+                                    getTrendColor()
+                                )}>
+                                    {getTrendIcon()}
+                                    {trend}%
+                                </span>
+                            )}
+                        </div>
+                        {subtext && (
+                            <p className="text-xs text-muted-foreground">{subtext}</p>
+                        )}
+                        {progress !== undefined && (
+                            <div className="w-full mt-2">
+                                <Progress value={progress} className="h-1.5" />
+                            </div>
+                        )}
+                    </div>
+                    <div className="h-10 w-10 rounded-xl bg-secondary/50 flex items-center justify-center">
+                        <Icon className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+// Line Chart Component for Ticket Trends
+function TicketTrendLineChart({ data, period, onPeriodChange }) {
+    const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } = require('recharts');
+
+    // Transform data for the chart
+    const chartData = data.created?.map((item, index) => ({
+        date: item.date,
+        created: item.count,
+        resolved: data.resolved?.[index]?.count || 0
+    })) || [];
+
+    const hasData = chartData.length > 0;
+
+    return (
+        <Card className="border-none shadow-premium bg-card overflow-hidden">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle className="text-xl font-bold">Ticket Volume Trends</CardTitle>
+                    <CardDescription>Created vs Resolved tickets over time.</CardDescription>
+                </div>
+                <Tabs value={period} onValueChange={onPeriodChange} className="w-auto">
+                    <TabsList className="h-8">
+                        <TabsTrigger value="7d" className="text-xs px-3">7D</TabsTrigger>
+                        <TabsTrigger value="30d" className="text-xs px-3">30D</TabsTrigger>
+                        <TabsTrigger value="90d" className="text-xs px-3">90D</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+            </CardHeader>
+            <CardContent className="px-2 pt-4">
+                <ResponsiveContainer width="100%" height={350}>
+                    {hasData ? (
+                        <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.1} />
+                            <XAxis
+                                dataKey="date"
+                                stroke="hsl(var(--muted-foreground))"
+                                fontSize={10}
+                                tickLine={false}
+                                axisLine={false}
+                                tickFormatter={(value) => {
+                                    const date = new Date(value);
+                                    return `${date.getMonth() + 1}/${date.getDate()}`;
+                                }}
+                            />
+                            <YAxis
+                                stroke="hsl(var(--muted-foreground))"
+                                fontSize={10}
+                                tickLine={false}
+                                axisLine={false}
+                            />
+                            <Tooltip
+                                contentStyle={{
+                                    borderRadius: '12px',
+                                    backgroundColor: 'hsl(var(--background))',
+                                    borderColor: 'hsl(var(--border)/0.5)',
+                                    boxShadow: 'var(--shadow-premium)',
+                                    fontSize: '12px',
+                                    fontWeight: 'bold'
+                                }}
+                            />
+                            <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                            <Line
+                                type="monotone"
+                                dataKey="created"
+                                stroke="hsl(217, 91%, 60%)"
+                                strokeWidth={2}
+                                dot={false}
+                                name="Created"
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="resolved"
+                                stroke="hsl(142, 76%, 36%)"
+                                strokeWidth={2}
+                                dot={false}
+                                name="Resolved"
+                            />
+                        </LineChart>
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground italic animate-pulse">
+                            No trend data available...
+                        </div>
+                    )}
+                </ResponsiveContainer>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function AdminDashboard({ user }) {
     const [stats, setStats] = useState({
@@ -29,154 +187,339 @@ export default function AdminDashboard({ user }) {
         pendingTickets: 0,
         slaBreached: 0,
         activeAgents: 0,
-        avgResolution: '0h'
+        avgResolution: '0h',
+        avgResponseTime: '0h',
+        trends: {
+            activeTickets: 0,
+            slaRisk: 0,
+            responseTime: 0,
+            resolutionTime: 0
+        },
+        teamCapacity: { active: 0, total: 0, percentage: 0 },
+        firstContactResolution: { percentage: 0 },
+        ticketBacklog: 0,
+        resolutionRateToday: { percentage: 0, resolvedToday: 0, createdToday: 0 },
+        slaCompliance: 0
     });
     const [recentTickets, setRecentTickets] = useState([]);
     const [monthlyTrend, setMonthlyTrend] = useState([]);
     const [statusDistribution, setStatusDistribution] = useState([]);
+    const [priorityDistribution, setPriorityDistribution] = useState([]);
+    const [trendPeriod, setTrendPeriod] = useState('7d');
+    const [trendData, setTrendData] = useState({ created: [], resolved: [] });
+    const [categoryStats, setCategoryStats] = useState([]);
+    const [slaPerformance, setSlaPerformance] = useState([]);
+    const [peakHoursData, setPeakHoursData] = useState([]);
+    const [agentStats, setAgentStats] = useState([]);
+    const [criticalTickets, setCriticalTickets] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const statsDataPromise = analyticsService.getDashboardStats().catch(err => {
-                    console.warn('Dashboard stats failed:', err);
-                    return null;
-                });
+                setLoading(true);
 
-                const ticketsPromise = ticketService.getTickets({ limit: 5, sort: '-createdAt' }).catch(err => ({ data: [] }));
+                // Fetch all stats in parallel
+                const [
+                    dashboardStats,
+                    ticketsOutput,
+                    trendsOutput,
+                    categoriesOutput,
+                    slaOutput,
+                    peakHoursOutput,
+                    agentsOutput,
+                    criticalOutput
+                ] = await Promise.all([
+                    analyticsService.getDashboardStats().catch(err => {
+                        console.warn('Dashboard stats failed:', err);
+                        return null;
+                    }),
+                    ticketService.getTickets({ limit: 5, sort: '-createdAt' }).catch(err => ({ data: [] })),
+                    api.get(`${API_ENDPOINTS.ANALYTICS}/trends?period=${trendPeriod}`).catch(err => ({ data: { data: { created: [], resolved: [] } } })),
+                    api.get(`${API_ENDPOINTS.ANALYTICS}/categories`).catch(err => ({ data: { data: [] } })),
+                    api.get(`${API_ENDPOINTS.ANALYTICS}/sla-performance`).catch(err => ({ data: { data: { byPriority: [] } } })),
+                    api.get(`${API_ENDPOINTS.ANALYTICS}/peak-hours`).catch(err => ({ data: { data: { heatmap: [] } } })),
+                    api.get(`${API_ENDPOINTS.ANALYTICS}/agents`).catch(err => ({ data: { data: [] } })),
+                    api.get(`${API_ENDPOINTS.ANALYTICS}/critical-tickets`).catch(err => ({ data: { data: [] } }))
+                ]);
 
-                const [statsData, ticketsOutput] = await Promise.all([statsDataPromise, ticketsPromise]);
-
-                if (statsData) {
+                // Process dashboard stats
+                if (dashboardStats) {
                     setStats({
-                        totalTickets: statsData.totalTickets || 0,
-                        slaBreached: statsData.slaBreached || 0,
-                        activeAgents: statsData.activeAgents || 0,
-                        avgResolution: statsData.avgResolutionTime ? `${statsData.avgResolutionTime}h` : '0h'
+                        totalTickets: dashboardStats.totalTickets || 0,
+                        pendingTickets: dashboardStats.pendingTickets || 0,
+                        slaBreached: dashboardStats.slaBreached || 0,
+                        activeAgents: dashboardStats.activeAgents || 0,
+                        avgResolution: dashboardStats.avgResolutionTime ? `${dashboardStats.avgResolutionTime}h` : '0h',
+                        avgResponseTime: dashboardStats.avgResponseTime ? `${dashboardStats.avgResponseTime}h` : '0h',
+                        trends: dashboardStats.trends || {
+                            activeTickets: 0,
+                            slaRisk: 0,
+                            responseTime: 0,
+                            resolutionTime: 0
+                        },
+                        teamCapacity: dashboardStats.teamCapacity || { active: 0, total: 0, percentage: 0 },
+                        firstContactResolution: dashboardStats.firstContactResolution || { percentage: 0 },
+                        ticketBacklog: dashboardStats.ticketBacklog || 0,
+                        resolutionRateToday: dashboardStats.resolutionRateToday || { percentage: 0, resolvedToday: 0, createdToday: 0 },
+                        slaCompliance: dashboardStats.slaCompliance || 0
                     });
-                    setMonthlyTrend(statsData.monthlyTrend || []);
-                    setStatusDistribution(statsData.statusDistribution || []);
+                    setMonthlyTrend(dashboardStats.monthlyTrend || []);
+
+                    // Transform status distribution
+                    const statusDist = Object.entries(dashboardStats.statusStats || {}).map(([name, value]) => ({
+                        name,
+                        value
+                    }));
+                    setStatusDistribution(statusDist);
+
+                    // Transform priority distribution
+                    const priorityDist = Object.entries(dashboardStats.priorityStats || {}).map(([name, value]) => ({
+                        name,
+                        value
+                    }));
+                    setPriorityDistribution(priorityDist);
                 }
 
+                // Process tickets
                 let t_list = [];
                 if (ticketsOutput.data && Array.isArray(ticketsOutput.data)) t_list = ticketsOutput.data;
                 else if (Array.isArray(ticketsOutput)) t_list = ticketsOutput;
-
                 setRecentTickets(t_list);
+
+                // Process trends
+                if (trendsOutput.data?.data) {
+                    setTrendData(trendsOutput.data.data);
+                }
+
+                // Process categories
+                if (categoriesOutput.data?.data) {
+                    setCategoryStats(categoriesOutput.data.data);
+                }
+
+                // Process SLA performance
+                if (slaOutput.data?.data?.byPriority) {
+                    setSlaPerformance(slaOutput.data.data.byPriority);
+                }
+
+                // Process peak hours
+                if (peakHoursOutput.data?.data?.heatmap) {
+                    setPeakHoursData(peakHoursOutput.data.data.heatmap);
+                }
+
+                // Process agents
+                if (agentsOutput.data?.data) {
+                    setAgentStats(agentsOutput.data.data);
+                }
+
+                // Process critical tickets
+                if (criticalOutput.data?.data) {
+                    setCriticalTickets(criticalOutput.data.data);
+                }
 
             } catch (error) {
                 console.error('Error loading dashboard:', error);
+                toast.error('Failed to load dashboard data');
             } finally {
                 setLoading(false);
             }
         };
 
         fetchDashboardData();
-    }, []);
+    }, [trendPeriod]);
 
-    if (loading) return (
-        <div className="space-y-8">
-            <div className="grid gap-6 md:grid-cols-4">
-                {[1, 2, 3, 4].map(i => <div key={i} className="h-32 rounded-2xl animate-pulse bg-muted" />)}
+    if (loading) {
+        return (
+            <div className="space-y-8">
+                <div className="grid gap-6 md:grid-cols-4">
+                    {[1, 2, 3, 4].map(i => <div key={i} className="h-32 rounded-2xl animate-pulse bg-muted" />)}
+                </div>
+                <div className="grid gap-6 md:grid-cols-4">
+                    {[1, 2, 3, 4].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse bg-muted" />)}
+                </div>
+                <div className="grid gap-6 lg:grid-cols-7">
+                    <div className="lg:col-span-4 h-96 rounded-2xl animate-pulse bg-muted" />
+                    <div className="lg:col-span-3 h-96 rounded-2xl animate-pulse bg-muted" />
+                </div>
             </div>
-            <div className="grid gap-6 lg:grid-cols-7">
-                <div className="lg:col-span-4 h-96 rounded-2xl animate-pulse bg-muted" />
-                <div className="lg:col-span-3 h-96 rounded-2xl animate-pulse bg-muted" />
-            </div>
-        </div>
-    );
+        );
+    }
+
+    // Calculate active tickets count
+    const activeTicketsCount = stats.totalTickets - (stats.statusStats?.Closed || 0) - (stats.statusStats?.Completed || 0);
+
+    // Calculate SLA risk percentage
+    const slaRiskPercentage = activeTicketsCount > 0
+        ? Math.round((stats.slaBreached / activeTicketsCount) * 100)
+        : 0;
 
     return (
-        <div className="space-y-10">
-            {/* Page Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div className="space-y-2">
-                    <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl text-gradient">
-                        Analytics Overview
-                    </h1>
-                    <p className="text-muted-foreground text-lg max-w-[600px]">
-                        Welcome back, <span className="font-bold text-foreground">{user?.name}</span>. Here&apos;s what&apos;s happening in your department today.
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <Button variant="outline" className="rounded-xl h-12 px-6">
-                        <Filter className="mr-2 h-4 w-4" />
-                        Filter
-                    </Button>
-                    <Button className="rounded-xl h-12 px-6 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20" asChild>
-                        <Link href="/analytics">
-                            <BarChart3 className="mr-2 h-4 w-4" />
-                            Deep Insights
-                        </Link>
-                    </Button>
-                </div>
-            </div>
-
-            {/* KPI Section */}
+        <div className="space-y-8">
+            {/* Primary KPIs Section */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
                     title="Active Tickets"
-                    value={stats.totalTickets}
+                    value={activeTicketsCount}
                     icon={Ticket}
-                    trend={{ value: 12, label: "from last week" }}
-                    trendDirection="up"
+                    trend={{ value: Math.abs(stats.trends.activeTickets), label: "from last week" }}
+                    trendDirection={stats.trends.activeTickets >= 0 ? 'up' : 'down'}
+                    invertedTrend={true}
                 />
                 <StatsCard
                     title="SLA Risk"
-                    value={stats.slaBreached}
+                    value={`${stats.slaBreached} (${slaRiskPercentage}%)`}
                     icon={AlertCircle}
-                    trend={{ value: 5, label: "tickets at risk" }}
-                    trendDirection="neutral"
+                    trend={{ value: Math.abs(stats.trends.slaRisk), label: "from last week" }}
+                    trendDirection={stats.trends.slaRisk >= 0 ? 'up' : 'down'}
                     invertedTrend={true}
                     className={stats.slaBreached > 0 ? "border-l-4 border-l-destructive" : ""}
                 />
                 <StatsCard
-                    title="Response Time"
-                    value={stats.avgResolution}
-                    icon={CheckCircle}
-                    trend={{ value: 8, label: "faster than avg" }}
-                    trendDirection="up"
+                    title="Avg Response Time"
+                    value={stats.avgResponseTime}
+                    icon={Clock}
+                    trend={{ value: Math.abs(stats.trends.responseTime), label: "from last week" }}
+                    trendDirection={stats.trends.responseTime <= 0 ? 'up' : 'down'}
+                    invertedTrend={true}
                 />
                 <StatsCard
-                    title="Team Capacity"
-                    value={`${stats.activeAgents}%`}
-                    icon={Users}
-                    description="Current load status"
+                    title="Avg Resolution Time"
+                    value={stats.avgResolution}
+                    icon={CheckCircle}
+                    trend={{ value: Math.abs(stats.trends.resolutionTime), label: "from last week" }}
+                    trendDirection={stats.trends.resolutionTime <= 0 ? 'up' : 'down'}
+                    invertedTrend={true}
                 />
             </div>
 
-            {/* Charts Section */}
-            <div className="grid gap-6 lg:grid-cols-7">
-                <div className="lg:col-span-4 transition-all hover:z-10">
-                    <TicketVolumeChart data={monthlyTrend} className="border-none shadow-premium h-full" />
-                </div>
+            {/* Secondary Metrics Section */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                <SecondaryKPICard
+                    title="Team Capacity"
+                    value={`${stats.teamCapacity.active}/${stats.teamCapacity.total}`}
+                    subtext={`${stats.teamCapacity.percentage}% agents active`}
+                    icon={Users}
+                    progress={stats.teamCapacity.percentage}
+                />
+                <SecondaryKPICard
+                    title="First Contact Resolution"
+                    value={`${stats.firstContactResolution.percentage}%`}
+                    subtext={`${stats.firstContactResolution.fcrCount || 0} of ${stats.firstContactResolution.totalResolved || 0} tickets`}
+                    icon={Target}
+                    trend={5}
+                    trendDirection="up"
+                />
+                <SecondaryKPICard
+                    title="Ticket Backlog"
+                    value={stats.ticketBacklog}
+                    subtext="Tickets >48h unassigned"
+                    icon={Inbox}
+                    alert={stats.ticketBacklog > 10}
+                />
+                <SecondaryKPICard
+                    title="Resolution Rate Today"
+                    value={`${stats.resolutionRateToday.percentage}%`}
+                    subtext={`Resolved ${stats.resolutionRateToday.resolvedToday} / Created ${stats.resolutionRateToday.createdToday}`}
+                    icon={Zap}
+                    trend={stats.resolutionRateToday.percentage >= 100 ? 10 : -5}
+                    trendDirection={stats.resolutionRateToday.percentage >= 100 ? 'up' : 'down'}
+                />
+            </div>
 
-                <div className="lg:col-span-3 transition-all">
-                    <TicketStatusPieChart data={statusDistribution} className="border-none shadow-premium h-full" />
+            {/* Charts Section - Row 1 */}
+            <div className="grid gap-6 lg:grid-cols-7">
+                <div className="lg:col-span-4">
+                    <TicketTrendLineChart
+                        data={trendData}
+                        period={trendPeriod}
+                        onPeriodChange={setTrendPeriod}
+                    />
+                </div>
+                <div className="lg:col-span-3">
+                    <SLAComplianceGauge percentage={stats.slaCompliance} />
                 </div>
             </div>
 
-            {/* Recent Tickets Table Section */}
-            <div className="grid gap-6">
+            {/* Charts Section - Row 2: Distribution Charts */}
+            <div className="grid gap-6 lg:grid-cols-2">
+                <TicketStatusPieChart data={statusDistribution} />
+                <PriorityDonutChart data={priorityDistribution} />
+            </div>
+
+            {/* Charts Section - Row 3: Category & SLA */}
+            <div className="grid gap-6 lg:grid-cols-2">
+                <CategoryBarChart data={categoryStats} />
+                <SLAPerformanceChart data={slaPerformance} />
+            </div>
+
+            {/* Peak Hours Heatmap */}
+            <PeakHoursHeatmap data={peakHoursData} />
+
+            {/* Data Tables Section */}
+            <div className="grid gap-6 lg:grid-cols-2">
+                {/* Critical Tickets Table */}
                 <Card className="border-none shadow-premium overflow-hidden">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-5 bg-secondary">
                         <div>
-                            <CardTitle className="text-2xl font-bold">Priority Resolution</CardTitle>
-                            <CardDescription>Most critical tickets requiring immediate attention across all departments.</CardDescription>
+                            <CardTitle className="text-xl font-bold flex items-center gap-2">
+                                <AlertCircle className="h-5 w-5 text-destructive" />
+                                Critical Tickets
+                            </CardTitle>
+                            <CardDescription>High priority tickets requiring immediate attention.</CardDescription>
                         </div>
                         <Button variant="ghost" className="rounded-xl group" asChild>
-                            <Link href="/tickets">
-                                View Full Console
+                            <Link href="/tickets?priority=Urgent,High">
+                                View All
                                 <ArrowRight className="ml-2 h-4 w-4 transition-all group-hover:translate-x-1" />
                             </Link>
                         </Button>
                     </CardHeader>
                     <CardContent className="p-0">
-                        <RecentTicketsList tickets={recentTickets} />
+                        <CriticalTicketsTable tickets={criticalTickets} />
+                    </CardContent>
+                </Card>
+
+                {/* Agent Performance Table */}
+                <Card className="border-none shadow-premium overflow-hidden">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-5 bg-secondary">
+                        <div>
+                            <CardTitle className="text-xl font-bold flex items-center gap-2">
+                                <Users className="h-5 w-5 text-primary" />
+                                Agent Performance
+                            </CardTitle>
+                            <CardDescription>Performance metrics for all active agents.</CardDescription>
+                        </div>
+                        <Button variant="ghost" className="rounded-xl group" asChild>
+                            <Link href="/users">
+                                View All
+                                <ArrowRight className="ml-2 h-4 w-4 transition-all group-hover:translate-x-1" />
+                            </Link>
+                        </Button>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <AgentPerformanceTable agents={agentStats} />
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Recent Tickets Section */}
+            <Card className="border-none shadow-premium overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-5 bg-secondary">
+                    <div>
+                        <CardTitle className="text-2xl font-bold">Recent Activity</CardTitle>
+                        <CardDescription>Latest tickets across all departments.</CardDescription>
+                    </div>
+                    <Button variant="ghost" className="rounded-xl group" asChild>
+                        <Link href="/tickets">
+                            View Full Console
+                            <ArrowRight className="ml-2 h-4 w-4 transition-all group-hover:translate-x-1" />
+                        </Link>
+                    </Button>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <RecentTicketsList tickets={recentTickets} />
+                </CardContent>
+            </Card>
         </div>
     );
 }

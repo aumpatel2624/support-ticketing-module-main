@@ -17,6 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { getInitials, getAvatarColor } from '@/lib/utils';
 import userService from '@/lib/services/userService';
 import toast from 'react-hot-toast';
+import { USER_ROLES } from '@/lib/constants';
 
 export default function AssignTicketModal({ isOpen, onClose, onAssign, isLoading }) {
     const [searchQuery, setSearchQuery] = useState('');
@@ -39,8 +40,14 @@ export default function AssignTicketModal({ isOpen, onClose, onAssign, isLoading
             let usersData = response;
             if (response.data) usersData = response.data;
             if (response.users) usersData = response.users;
-            setUsers(usersData);
-            setFilteredUsers(usersData);
+
+            // Filter to show only Admins (heads) and TeamMembers
+            const assignableUsers = usersData.filter(user =>
+                user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.TEAM_MEMBER
+            );
+
+            setUsers(assignableUsers);
+            setFilteredUsers(assignableUsers);
         } catch (error) {
             console.error('Failed to fetch users:', error);
             toast.error('Failed to load users');
@@ -84,7 +91,7 @@ export default function AssignTicketModal({ isOpen, onClose, onAssign, isLoading
                 <DialogHeader>
                     <DialogTitle>Assign Ticket</DialogTitle>
                     <DialogDescription>
-                        Select a team member to assign this ticket to
+                        Select a team member or head to assign this ticket to
                     </DialogDescription>
                 </DialogHeader>
 
@@ -125,7 +132,12 @@ export default function AssignTicketModal({ isOpen, onClose, onAssign, isLoading
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-sm truncate">{user.name}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-medium text-sm truncate">{user.name}</p>
+                                                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary whitespace-nowrap">
+                                                    {user.role === USER_ROLES.ADMIN ? 'Head' : 'Team Member'}
+                                                </span>
+                                            </div>
                                             <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                                         </div>
                                         {selectedUser?._id === user._id && (

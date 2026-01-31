@@ -12,10 +12,11 @@ let storage;
 
 if (useS3) {
     // Configure S3 storage
+    // Note: ACL parameter removed - bucket has ACLs disabled (modern AWS best practice)
+    // Objects will use bucket policy for public access instead
     storage = multerS3({
         s3: s3Client,
         bucket: process.env.S3_BUCKET_NAME,
-        acl: process.env.S3_ACL || 'private',
         key: function (req, file, cb) {
             // Generate unique filename
             const timestamp = Date.now();

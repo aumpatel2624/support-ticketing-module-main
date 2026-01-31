@@ -3,7 +3,11 @@
     "allow": [
       "Bash(ls:*)",
       "Bash(find:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nMake email operations non-blocking to prevent request timeouts\n\n- Changed ticket assignment email to non-blocking with error handling\n- Changed ticket creation email to non-blocking \n- Changed status update email in PUT endpoint to non-blocking\n- Changed user welcome email to non-blocking\n- Added logger import to user.controller.js for error logging\n\nThis fixes timeout issues when emails are slow, allowing responses to return\nimmediately after database operations complete while emails send in the background.\n\nCo-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }
