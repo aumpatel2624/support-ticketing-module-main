@@ -56,27 +56,33 @@ export default function NotificationItem({ notification, onClose }) {
         }
     };
 
-    const href = notification.ticketId ? `/tickets/${notification.ticketId}` : '#';
+    const ticketId = typeof notification.ticketId === 'object'
+        ? notification.ticketId?._id?.toString()
+        : notification.ticketId?.toString();
+
+    const href = ticketId ? `/tickets/${ticketId}` : '#';
 
     return (
         <div
-            className={`flex gap-3 p-3 rounded-lg border transition-all ${
-                notification.isRead
-                    ? 'bg-background border-border'
-                    : 'bg-primary/5 border-primary/20'
-            } hover:bg-muted group`}
+            className={`flex gap-3 p-3 rounded-lg border transition-all cursor-pointer ${notification.isRead
+                ? 'bg-background border-border hover:border-primary/40'
+                : 'bg-primary/5 border-primary/20 hover:bg-primary/10'
+                } group`}
             onClick={handleMarkAsRead}
         >
             {/* Icon */}
-            <div className="shrink-0 mt-0.5">
+            <div className="shrink-0 mt-1">
                 {getNotificationIcon(notification.type)}
             </div>
 
             {/* Content */}
-            <div className="flex-1 min-w-0">
-                <div className="flex items-start gap-2 mb-1">
-                    <Badge variant="outline" className={`text-xs ${getTypeColor(notification.type)}`}>
-                        {notification.type}
+            <div className="flex-1 min-w-0 pr-2">
+                <div className="flex items-start gap-2 mb-1 flex-wrap">
+                    <Badge
+                        variant="outline"
+                        className={`text-xs flex-shrink-0 ${getTypeColor(notification.type)}`}
+                    >
+                        {notification.type.replace(/([A-Z])/g, ' $1').trim()}
                     </Badge>
                 </div>
 
@@ -87,17 +93,17 @@ export default function NotificationItem({ notification, onClose }) {
                             e.stopPropagation();
                             onClose?.();
                         }}
-                        className="text-sm font-medium text-foreground hover:underline break-words"
+                        className="text-sm font-medium text-foreground hover:underline break-words line-clamp-2 block"
                     >
                         {notification.message}
                     </Link>
                 ) : (
-                    <p className="text-sm font-medium text-foreground break-words">
+                    <p className="text-sm font-medium text-foreground break-words line-clamp-2">
                         {notification.message}
                     </p>
                 )}
 
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-1.5">
                     {formatDistanceToNow(new Date(notification.createdAt), {
                         addSuffix: true,
                     })}

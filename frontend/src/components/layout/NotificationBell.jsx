@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,55 +11,23 @@ import {
 import NotificationList from './NotificationList';
 import useNotificationStore from '@/store/notificationStore';
 import useAuthStore from '@/store/authStore';
-import { initSocket, onSocketEvent, offSocketEvent } from '@/lib/socket';
 
 /**
  * NotificationBell - Bell icon with notifications dropdown
  */
 export default function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false);
-    const [isInitialized, setIsInitialized] = useState(false);
-    const { unreadCount, setNotifications, addNotification } = useNotificationStore();
+    const initialized = useRef(false);
+    const { unreadCount, fetchNotifications } = useNotificationStore();
     const { user } = useAuthStore();
 
-    // Initialize Socket.io on mount
+    // Fetch notifications on mount
     useEffect(() => {
-        if (!user || isInitialized) return;
-
-        const token = localStorage.getItem('token');
-        if (!token) return;
-
-        try {
-            const socket = initSocket(token);
-
-            // Only proceed if socket was successfully initialized
-            if (!socket) return;
-
-            // Join user's notification room
-            socket.emit('join', user._id);
-
-            // Listen for real-time notifications
-            const handleNotification = (notification) => {
-                addNotification(notification);
-            };
-
-            const handleNotificationRead = (notificationId) => {
-                // Update notification read status if needed
-            };
-
-            socket.on('notification', handleNotification);
-            socket.on('notification_read', handleNotificationRead);
-
-            setIsInitialized(true);
-
-            return () => {
-                offSocketEvent('notification', handleNotification);
-                offSocketEvent('notification_read', handleNotificationRead);
-            };
-        } catch (error) {
-            console.error('Failed to initialize socket:', error);
+        if (user && !initialized.current) {
+            fetchNotifications();
+            initialized.current = true;
         }
-    }, [user, isInitialized, addNotification]);
+    }, [user, fetchNotifications]);
 
     return (
         <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -86,7 +54,7 @@ export default function NotificationBell() {
                     <span className="sr-only">Notifications</span>
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="p-0 w-[380px]" align="end">
+            <PopoverContent className="p-0 w-[400px] h-[520px]" align="end">
                 <NotificationList onClose={() => setIsOpen(false)} />
             </PopoverContent>
         </Popover>

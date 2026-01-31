@@ -13,26 +13,28 @@ export default function NotificationList({ onClose }) {
     const { notifications, unreadCount, markAllAsRead, clearNotifications } =
         useNotificationStore();
 
-    const recentNotifications = notifications.slice(0, 10);
+    const recentNotifications = notifications;
 
     return (
-        <div className="flex flex-col h-[400px] w-[380px]">
+        <div className="flex flex-col h-[500px] max-h-[500px] w-full bg-background">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-                <div>
-                    <h3 className="font-bold text-sm">Notifications</h3>
-                    {unreadCount > 0 && (
-                        <Badge variant="destructive" className="mt-1">
-                            {unreadCount} unread
-                        </Badge>
-                    )}
+            <div className="px-4 py-3 border-b flex-shrink-0">
+                <div className="flex items-center justify-between gap-2">
+                    <div>
+                        <h3 className="font-bold text-sm">Notifications</h3>
+                        {unreadCount > 0 && (
+                            <Badge variant="destructive" className="mt-2">
+                                {unreadCount} unread
+                            </Badge>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* Notifications List */}
-            <ScrollArea className="flex-1 px-3 py-3">
-                {recentNotifications.length > 0 ? (
-                    <div className="space-y-2 pr-4">
+            {/* Notifications List - Scrollable */}
+            {recentNotifications.length > 0 ? (
+                <ScrollArea className="flex-1 min-h-0 w-full">
+                    <div className="px-3 py-3 space-y-2">
                         {recentNotifications.map((notification) => (
                             <NotificationItem
                                 key={notification._id}
@@ -41,29 +43,36 @@ export default function NotificationList({ onClose }) {
                             />
                         ))}
                     </div>
-                ) : (
-                    <div className="flex items-center justify-center h-32">
-                        <p className="text-sm text-muted-foreground">No notifications</p>
+                </ScrollArea>
+            ) : (
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                        <p className="text-sm text-muted-foreground">
+                            No notifications yet
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            You&apos;re all caught up!
+                        </p>
                     </div>
-                )}
-            </ScrollArea>
+                </div>
+            )}
 
             {/* Footer Actions */}
             {notifications.length > 0 && (
-                <div className="flex gap-2 px-4 py-3 border-t">
+                <div className="px-3 py-3 border-t flex-shrink-0 flex gap-2">
                     <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1"
+                        className="flex-1 text-xs"
                         onClick={() => markAllAsRead()}
                         disabled={unreadCount === 0}
                     >
-                        Mark all as read
+                        Mark all read
                     </Button>
                     <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1"
+                        className="flex-1 text-xs"
                         onClick={() => clearNotifications()}
                     >
                         Clear all
