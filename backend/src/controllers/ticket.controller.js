@@ -551,9 +551,9 @@ const submitFeedback = asyncHandler(async (req, res) => {
         ticket.closedAt = new Date();
         ticket.addStatusHistory('Closed', req.user._id, 'Ticket closed based on creator feedback');
     } else if (action === 'reopen') {
-        // Reopen the ticket - change to InProgress
-        ticket.status = 'InProgress';
-        ticket.addStatusHistory('InProgress', req.user._id, 'Ticket reopened by creator - not satisfied with completion');
+        // Reopen the ticket - change to Reopened
+        ticket.status = 'Reopened';
+        ticket.addStatusHistory('Reopened', req.user._id, 'Ticket reopened by creator - not satisfied with completion');
     }
 
     await ticket.save();

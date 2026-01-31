@@ -120,7 +120,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
         console.log('Status change:', { newStatus, currentStatus: ticket.status, newStatusLength: newStatus?.length });
 
         // Validate that newStatus is one of the allowed values
-        const validStatuses = ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Closed', 'Escalated'];
+        const validStatuses = ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Reopened', 'Closed', 'Escalated'];
         if (!validStatuses.includes(newStatus)) {
             console.error('Invalid status:', newStatus, 'Valid statuses:', validStatuses);
             toast.error('Invalid status value');
@@ -405,6 +405,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                                 <SelectItem value="InProgress">In Progress</SelectItem>
                                                 <SelectItem value="Pending">Pending</SelectItem>
                                                 <SelectItem value="Completed">Completed</SelectItem>
+                                                <SelectItem value="Reopened">Reopened</SelectItem>
                                                 <SelectItem value="Closed">Closed</SelectItem>
                                                 <SelectItem value="Escalated">Escalated</SelectItem>
                                             </SelectContent>

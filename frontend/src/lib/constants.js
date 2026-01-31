@@ -48,6 +48,7 @@ export const TICKET_STATUS = {
     IN_PROGRESS: 'InProgress',
     PENDING: 'Pending',
     COMPLETED: 'Completed',
+    REOPENED: 'Reopened',
     CLOSED: 'Closed',
     ESCALATED: 'Escalated',
 };

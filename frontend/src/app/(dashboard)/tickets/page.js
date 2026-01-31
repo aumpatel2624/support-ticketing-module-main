@@ -55,7 +55,7 @@ export default function TicketsPage() {
     // Listen for real-time ticket updates
     useTicketUpdates((data) => {
         // Refetch tickets when any ticket is updated
-        fetchTickets();
+        fetchTickets(searchQuery);
     });
 
     return (

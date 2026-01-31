@@ -32,7 +32,7 @@ const mongoose = require('mongoose');
  *           enum: [Low, Medium, High, Urgent]
  *         status:
  *           type: string
- *           enum: [New, Assigned, InProgress, Pending, Completed, Closed, Escalated]
+ *           enum: [New, Assigned, InProgress, Pending, Completed, Reopened, Closed, Escalated]
  *         createdBy:
  *           type: string
  *           description: User who created the ticket
@@ -115,7 +115,7 @@ const attachmentSchema = new mongoose.Schema({
 const statusHistorySchema = new mongoose.Schema({
     status: {
         type: String,
-        enum: ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Closed', 'Escalated'],
+        enum: ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Reopened', 'Closed', 'Escalated'],
         required: true
     },
     changedBy: {
@@ -171,7 +171,7 @@ const ticketSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Closed', 'Escalated'],
+        enum: ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Reopened', 'Closed', 'Escalated'],
         default: 'New',
         index: true
     },
