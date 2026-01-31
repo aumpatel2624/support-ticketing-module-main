@@ -6,7 +6,6 @@ const User = require('../models/User');
 const { NotFoundError, AuthorizationError, ValidationError } = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 const { getPaginationParams, createPaginationResponse } = require('../utils/pagination');
-const emailService = require('../services/email.service');
 const socketService = require('../services/socket.service');
 const s3Service = require('../services/s3.service');
 const logger = require('../utils/logger');
@@ -182,10 +181,6 @@ const createTicket = asyncHandler(async (req, res) => {
         });
     }
 
-    // Send confirmation email to user (non-blocking)
-    emailService.sendTicketCreatedEmail(req.user, ticket).catch(err => {
-        logger.error('Failed to send ticket created email:', err);
-    });
 
     // Socket: Notify department workers
     socketService.emitToDepartment(departmentId, 'ticket_created', ticket);
@@ -248,11 +243,6 @@ const updateTicket = asyncHandler(async (req, res) => {
                 ticketId: ticket._id,
                 type: 'StatusUpdated',
                 message: `Your ticket ${ticket.ticketId} status has been updated to ${newStatus}`
-            });
-
-            // Send email notification (non-blocking)
-            emailService.sendStatusUpdateEmail(ticket.createdBy, ticket, oldStatus, newStatus).catch(err => {
-                logger.error('Failed to send status update email:', err);
             });
 
             // Socket: Notify creator
@@ -349,11 +339,6 @@ const updateStatus = asyncHandler(async (req, res) => {
             message: `Your ticket ${ticket.ticketId} status has been updated to ${status}`
         });
 
-        // Send email notification (non-blocking)
-        emailService.sendStatusUpdateEmail(ticket.createdBy, ticket, oldStatus, status).catch(err => {
-            logger.error('Failed to send status update email:', err);
-        });
-
         // Socket: Notify creator
         socketService.emitToUser(ticket.createdBy._id, 'notification', {
             type: 'StatusUpdated',
@@ -400,11 +385,6 @@ const assignTicket = asyncHandler(async (req, res) => {
             ticketId: ticket._id,
             type: 'TicketAssigned',
             message: `You have been assigned to ticket: ${ticket.ticketId}`
-        });
-
-        // Send email notification (non-blocking)
-        emailService.sendTicketAssignedEmail(assignee, ticket).catch(err => {
-            logger.error('Failed to send ticket assigned email:', err);
         });
 
         // Socket: Notify assignee

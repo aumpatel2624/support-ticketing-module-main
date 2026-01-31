@@ -119,24 +119,10 @@ const sendTestEmail = asyncHandler(async (req, res) => {
       throw new NotFoundError('User email not found');
     }
 
-    await emailService.sendEmail({
-      to: user.email,
-      subject: 'Test Email - System Settings',
-      html: `
-        <h2>System Settings Test Email</h2>
-        <p>This is a test email from your ticketing system to verify that email notifications are working correctly.</p>
-        <p>If you received this email, your SMTP configuration is properly set up.</p>
-        <hr />
-        <p style="color: #999; font-size: 12px;">
-          Sent to: ${user.email}<br />
-          Timestamp: ${new Date().toISOString()}
-        </p>
-      `
-    });
-
+    // Email service disabled - will be implemented later
     res.status(200).json({
       success: true,
-      message: `Test email sent successfully to ${user.email}`
+      message: `Email service is currently disabled. Will be implemented later.`
     });
   } catch (error) {
     logger.error('Failed to send test email:', error);

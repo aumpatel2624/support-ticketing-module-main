@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { AuthenticationError, ValidationError, NotFoundError } = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
-const emailService = require('../services/email.service');
 
 /**
  * @desc    Login user
@@ -144,9 +143,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
     await user.save();
 
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
-
-    // Send email
-    await emailService.sendPasswordResetEmail(user, resetUrl);
 
     res.status(200).json({
         success: true,
