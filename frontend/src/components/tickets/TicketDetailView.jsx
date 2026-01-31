@@ -286,10 +286,22 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                         {ticket.subject}
                     </h1>
                 </div>
-                {/* Only show action buttons for staff members */}
-                {isStaff && (
-                    <div className="flex items-center gap-2">
-                        {/* <Button variant="outline">Edit</Button> */}
+                {/* Action buttons */}
+                <div className="flex items-center gap-2">
+                    {/* Feedback button for creator when ticket is completed */}
+                    {ticket.status === 'Completed' &&
+                        ticket.createdBy?._id === user?._id &&
+                        !ticket.feedbackGiven && (
+                        <Button
+                            onClick={() => setShowFeedbackDialog(true)}
+                            className="bg-blue-500 hover:bg-blue-600"
+                        >
+                            ★ Submit Feedback
+                        </Button>
+                    )}
+
+                    {/* Only show action buttons for staff members */}
+                    {isStaff && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
@@ -305,8 +317,8 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
