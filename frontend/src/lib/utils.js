@@ -13,7 +13,10 @@ export function cn(...inputs) {
  * Get the number of days since a date
  */
 export function getDaysOld(date) {
-  return differenceInDays(new Date(), new Date(date));
+  if (!date) return 0;
+  const parsedDate = new Date(date);
+  if (isNaN(parsedDate.getTime())) return 0;
+  return differenceInDays(new Date(), parsedDate);
 }
 
 /**
@@ -79,21 +82,30 @@ export function getPriorityColor(priority) {
  * Format date to relative time (e.g., "2 hours ago")
  */
 export function formatRelativeTime(date) {
-  return formatDistanceToNow(new Date(date), { addSuffix: true });
+  if (!date) return '';
+  const parsedDate = new Date(date);
+  if (isNaN(parsedDate.getTime())) return '';
+  return formatDistanceToNow(parsedDate, { addSuffix: true });
 }
 
 /**
  * Format date to standard format
  */
 export function formatDate(date, formatString = 'MMM dd, yyyy') {
-  return format(new Date(date), formatString);
+  if (!date) return '';
+  const parsedDate = new Date(date);
+  if (isNaN(parsedDate.getTime())) return '';
+  return format(parsedDate, formatString);
 }
 
 /**
  * Format date with time
  */
 export function formatDateTime(date) {
-  return format(new Date(date), 'MMM dd, yyyy HH:mm');
+  if (!date) return '';
+  const parsedDate = new Date(date);
+  if (isNaN(parsedDate.getTime())) return '';
+  return format(parsedDate, 'MMM dd, yyyy HH:mm');
 }
 
 /**

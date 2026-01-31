@@ -168,6 +168,7 @@ export const NAVIGATION_ITEMS = {
     [USER_ROLES.ADMIN]: [
         { name: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard' },
         { name: 'All Tickets', href: '/tickets', icon: 'Ticket' },
+        { name: 'Assigned Tickets', href: '/tickets/assigned', icon: 'ClipboardList' },
         { name: 'Team Members', href: '/users', icon: 'Users' },
         { name: 'Categories', href: '/categories', icon: 'Tags' },
         // { name: 'Settings', href: '/settings', icon: 'Settings' },
