@@ -191,12 +191,12 @@ const getDashboardStats = asyncHandler(async (req, res) => {
             $match: {
                 ...match,
                 createdAt: { $gte: oneWeekAgo },
-                'comments.0': { $exists: true }
+                comments: { $exists: true, $ne: [] }
             }
         },
         {
             $project: {
-                responseTime: { $subtract: ['$comments.0.createdAt', '$createdAt'] }
+                responseTime: { $subtract: [{ $arrayElemAt: ['$comments.createdAt', 0] }, '$createdAt'] }
             }
         },
         {
@@ -212,12 +212,12 @@ const getDashboardStats = asyncHandler(async (req, res) => {
             $match: {
                 ...match,
                 createdAt: { $gte: twoWeeksAgo, $lt: oneWeekAgo },
-                'comments.0': { $exists: true }
+                comments: { $exists: true, $ne: [] }
             }
         },
         {
             $project: {
-                responseTime: { $subtract: ['$comments.0.createdAt', '$createdAt'] }
+                responseTime: { $subtract: [{ $arrayElemAt: ['$comments.createdAt', 0] }, '$createdAt'] }
             }
         },
         {
