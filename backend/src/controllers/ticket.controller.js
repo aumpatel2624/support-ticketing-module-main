@@ -182,8 +182,10 @@ const createTicket = asyncHandler(async (req, res) => {
         });
     }
 
-    // Send confirmation email to user
-    await emailService.sendTicketCreatedEmail(req.user, ticket);
+    // Send confirmation email to user (non-blocking)
+    emailService.sendTicketCreatedEmail(req.user, ticket).catch(err => {
+        logger.error('Failed to send ticket created email:', err);
+    });
 
     // Socket: Notify department workers
     socketService.emitToDepartment(departmentId, 'ticket_created', ticket);
@@ -248,8 +250,10 @@ const updateTicket = asyncHandler(async (req, res) => {
                 message: `Your ticket ${ticket.ticketId} status has been updated to ${newStatus}`
             });
 
-            // Send email notification
-            await emailService.sendStatusUpdateEmail(ticket.createdBy, ticket, oldStatus, newStatus);
+            // Send email notification (non-blocking)
+            emailService.sendStatusUpdateEmail(ticket.createdBy, ticket, oldStatus, newStatus).catch(err => {
+                logger.error('Failed to send status update email:', err);
+            });
 
             // Socket: Notify creator
             socketService.emitToUser(ticket.createdBy._id, 'notification', {
@@ -398,8 +402,10 @@ const assignTicket = asyncHandler(async (req, res) => {
             message: `You have been assigned to ticket: ${ticket.ticketId}`
         });
 
-        // Send email notification
-        await emailService.sendTicketAssignedEmail(assignee, ticket);
+        // Send email notification (non-blocking)
+        emailService.sendTicketAssignedEmail(assignee, ticket).catch(err => {
+            logger.error('Failed to send ticket assigned email:', err);
+        });
 
         // Socket: Notify assignee
         socketService.emitToUser(assignedTo, 'notification', {

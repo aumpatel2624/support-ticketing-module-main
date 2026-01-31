@@ -3,6 +3,7 @@ const { NotFoundError, ConflictError, ValidationError } = require('../utils/ApiE
 const asyncHandler = require('../utils/asyncHandler');
 const { getPaginationParams, createPaginationResponse, applyPagination } = require('../utils/pagination');
 const emailService = require('../services/email.service');
+const logger = require('../utils/logger');
 
 /**
  * @desc    Get all users (with filters and pagination)
@@ -125,8 +126,10 @@ const createUser = asyncHandler(async (req, res) => {
     // Create user
     const user = await User.create(req.body);
 
-    // Send welcome email
-    await emailService.sendWelcomeEmail(user);
+    // Send welcome email (non-blocking)
+    emailService.sendWelcomeEmail(user).catch(err => {
+        logger.error('Failed to send welcome email:', err);
+    });
 
     // Remove password from response
     const userResponse = user.toJSON();
