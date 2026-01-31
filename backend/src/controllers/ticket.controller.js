@@ -260,10 +260,17 @@ const updateTicket = asyncHandler(async (req, res) => {
 
         await ticket.save();
 
+        // Populate fields before returning
+        const populatedTicket = await Ticket.findById(ticket._id)
+            .populate('createdBy', 'name email employeeId department')
+            .populate('assignedTo', 'name email employeeId department')
+            .populate('departmentId', 'name description color headUserId')
+            .populate('categoryId', 'name')
+            .populate('comments.userId', 'name email role')
+            .populate('statusHistory.changedBy', 'name role');
+
         // Send notifications for status change
         if (req.user._id.toString() !== ticket.createdBy.toString()) {
-            await ticket.populate('createdBy', 'name email');
-
             const notification = await Notification.create({
                 userId: ticket.createdBy._id,
                 ticketId: ticket._id,
@@ -292,13 +299,24 @@ const updateTicket = asyncHandler(async (req, res) => {
             updatedBy: req.user._id,
             updatedAt: ticket.updatedAt
         });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Ticket updated successfully',
+            data: populatedTicket
+        });
     } else {
         // Just update other fields without status change
         const updatedTicket = await Ticket.findByIdAndUpdate(
             req.params.id,
             { $set: req.body },
             { new: true, runValidators: true }
-        );
+        ).populate('createdBy', 'name email employeeId department')
+            .populate('assignedTo', 'name email employeeId department')
+            .populate('departmentId', 'name description color headUserId')
+            .populate('categoryId', 'name')
+            .populate('comments.userId', 'name email role')
+            .populate('statusHistory.changedBy', 'name role');
 
         return res.status(200).json({
             success: true,
@@ -306,12 +324,6 @@ const updateTicket = asyncHandler(async (req, res) => {
             data: updatedTicket
         });
     }
-
-    res.status(200).json({
-        success: true,
-        message: 'Ticket updated successfully',
-        data: ticket
-    });
 });
 
 /**
@@ -351,10 +363,17 @@ const updateStatus = asyncHandler(async (req, res) => {
     ticket.addStatusHistory(status, req.user._id, comment);
     await ticket.save();
 
+    // Populate fields before returning
+    const populatedTicket = await Ticket.findById(ticket._id)
+        .populate('createdBy', 'name email employeeId department')
+        .populate('assignedTo', 'name email employeeId department')
+        .populate('departmentId', 'name description color headUserId')
+        .populate('categoryId', 'name')
+        .populate('comments.userId', 'name email role')
+        .populate('statusHistory.changedBy', 'name role');
+
     // Notify creator
     if (req.user._id.toString() !== ticket.createdBy.toString()) {
-        await ticket.populate('createdBy', 'name email');
-
         const notification = await Notification.create({
             userId: ticket.createdBy._id,
             ticketId: ticket._id,
@@ -364,13 +383,13 @@ const updateStatus = asyncHandler(async (req, res) => {
 
         // Socket: Notify creator with full notification object
         socketService.emitToUser(ticket.createdBy._id, 'notification', notification);
-        socketService.emitToTicket(ticket._id, 'status_updated', ticket);
+        socketService.emitToTicket(ticket._id, 'status_updated', populatedTicket);
     }
 
     res.status(200).json({
         success: true,
         message: `Status updated to ${status}`,
-        data: ticket
+        data: populatedTicket
     });
 });
 
@@ -406,6 +425,15 @@ const assignTicket = asyncHandler(async (req, res) => {
 
     await ticket.save();
 
+    // Populate fields before returning
+    const populatedTicket = await Ticket.findById(ticket._id)
+        .populate('createdBy', 'name email employeeId department')
+        .populate('assignedTo', 'name email employeeId department')
+        .populate('departmentId', 'name description color headUserId')
+        .populate('categoryId', 'name')
+        .populate('comments.userId', 'name email role')
+        .populate('statusHistory.changedBy', 'name role');
+
     // Notify assignee
     const assignee = await User.findById(assignedTo);
     if (assignee) {
@@ -423,7 +451,7 @@ const assignTicket = asyncHandler(async (req, res) => {
     res.status(200).json({
         success: true,
         message: 'Ticket assigned successfully',
-        data: ticket
+        data: populatedTicket
     });
 });
 
