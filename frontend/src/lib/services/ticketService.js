@@ -139,9 +139,9 @@ const ticketService = {
 
     /**
      * Download attachment
-     * @param {string} ticketId 
-     * @param {string} attachmentId 
-     * @param {string} filename 
+     * @param {string} ticketId
+     * @param {string} attachmentId
+     * @param {string} filename
      */
     async downloadAttachment(ticketId, attachmentId, filename) {
         const response = await api.get(
@@ -159,6 +159,19 @@ const ticketService = {
         link.remove();
         window.URL.revokeObjectURL(url);
 
+        return response.data;
+    },
+
+    /**
+     * Add comment to a ticket
+     * @param {string} ticketId
+     * @param {Object} commentData - { text, isInternal }
+     */
+    async addComment(ticketId, commentData) {
+        const response = await api.post(
+            `${API_ENDPOINTS.TICKETS}/${ticketId}/comments`,
+            commentData
+        );
         return response.data;
     }
 };

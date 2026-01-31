@@ -38,6 +38,7 @@ import PageHeader from '@/components/common/PageHeader';
 import AttachmentList from './AttachmentList';
 import FileUpload from './FileUpload';
 import AssignTicketModal from './AssignTicketModal';
+import ActivityFeed from './ActivityFeed';
 import useAuth from '@/hooks/useAuth';
 import useTicketUpdates from '@/hooks/useTicketUpdates';
 import ticketService from '@/lib/services/ticketService';
@@ -344,20 +345,13 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                         </CardContent>
                     </Card>
 
-                    {/* Activity/Comments Placeholder for now */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <MessageSquare className="h-5 w-5" />
-                                Activity
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-center py-8 text-muted-foreground">
-                                Activity feed and comments will be implemented in Phase 4.4
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* Activity Feed */}
+                    <ActivityFeed
+                        ticket={ticket}
+                        onCommentAdded={() => {
+                            // Ticket state is already updated via refetchTicket in ActivityFeed
+                        }}
+                    />
                 </div>
 
                 {/* Sidebar - Right Column */}
