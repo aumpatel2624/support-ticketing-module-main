@@ -150,19 +150,19 @@ export default function AssignTicketModal({
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                {user.department?.name && (
-                                                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 whitespace-nowrap">
-                                                        {user.department.name}
-                                                    </span>
-                                                )}
-                                                <p className="font-medium text-sm truncate">{user.name}</p>
-                                                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary whitespace-nowrap">
+                                            <p className="font-medium text-sm truncate">{user.name}</p>
+                                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                                <span className="text-xs px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
                                                     {user.role === USER_ROLES.SUPER_ADMIN ? 'Super Admin' :
                                                         user.role === USER_ROLES.ADMIN ? 'Head' : 'Team Member'}
                                                 </span>
+                                                {(user.department?.name || user.department) && (
+                                                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                                        {user.department?.name || user.department}
+                                                    </span>
+                                                )}
+                                                <span className="text-xs text-muted-foreground truncate">• {user.email}</span>
                                             </div>
-                                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                                         </div>
                                         {selectedUser?._id === user._id && (
                                             <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
@@ -187,16 +187,16 @@ export default function AssignTicketModal({
                                     {getInitials(selectedUser.name)}
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                    {selectedUser.department?.name && (
-                                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 whitespace-nowrap">
-                                            {selectedUser.department.name}
+                            <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm">{selectedUser.name}</p>
+                                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                    {(selectedUser.department?.name || selectedUser.department) && (
+                                        <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                            {selectedUser.department?.name || selectedUser.department}
                                         </span>
                                     )}
-                                    <p className="font-medium text-sm">{selectedUser.name}</p>
+                                    <span className="text-xs text-muted-foreground">• {selectedUser.email}</span>
                                 </div>
-                                <p className="text-xs text-muted-foreground">{selectedUser.email}</p>
                             </div>
                             <button
                                 onClick={() => setSelectedUser(null)}
