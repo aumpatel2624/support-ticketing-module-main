@@ -87,10 +87,17 @@ const objectIdSchema = z.object({
     id: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format')
 });
 
+// Nested resource validation (ticket and nested resource ID)
+const nestedObjectIdSchema = z.object({
+    id: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format'),
+    attachmentId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid attachment ID format')
+});
+
 module.exports = {
     createUserSchema,
     updateUserSchema,
     updateProfileSchema,
     userListQuerySchema,
-    objectIdSchema
+    objectIdSchema,
+    nestedObjectIdSchema
 };

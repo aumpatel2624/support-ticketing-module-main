@@ -31,7 +31,7 @@ const {
     submitFeedbackSchema,
     ticketListQuerySchema
 } = require('../validators/ticket.validator');
-const { objectIdSchema } = require('../validators/user.validator');
+const { objectIdSchema, nestedObjectIdSchema } = require('../validators/user.validator');
 
 /**
  * @swagger
@@ -346,7 +346,7 @@ router.post('/:id/attachments', authenticate, validateParams(objectIdSchema), up
  *       200:
  *         description: Attachment deleted successfully
  */
-router.delete('/:id/attachments/:attachmentId', authenticate, validateParams(objectIdSchema), deleteAttachment);
+router.delete('/:id/attachments/:attachmentId', authenticate, validateParams(nestedObjectIdSchema), deleteAttachment);
 
 /**
  * @swagger
@@ -372,7 +372,7 @@ router.delete('/:id/attachments/:attachmentId', authenticate, validateParams(obj
  *       200:
  *         description: File download
  */
-router.get('/:id/attachments/:attachmentId/download', authenticate, validateParams(objectIdSchema), downloadAttachment);
+router.get('/:id/attachments/:attachmentId/download', authenticate, validateParams(nestedObjectIdSchema), downloadAttachment);
 
 /**
  * @swagger

@@ -704,8 +704,30 @@ const deleteAttachment = asyncHandler(async (req, res) => {
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) throw new NotFoundError('Ticket not found');
 
-    const attachment = ticket.attachments.id(req.params.attachmentId);
-    if (!attachment) throw new NotFoundError('Attachment not found');
+    const targetId = String(req.params.attachmentId).trim();
+    const attachment = ticket.attachments.find(a => String(a._id).trim() === targetId);
+
+    if (!attachment) {
+        const availableIds = ticket.attachments.map(a => String(a._id).trim()).join(', ');
+
+        // Deep debug: Log lengths and char codes to find invisible characters
+        logger.warn(`Attachment 404 Debug:`);
+        logger.warn(`Target ID: "${targetId}" (len: ${targetId.length})`);
+
+        ticket.attachments.forEach((a, i) => {
+            const idStr = String(a._id).trim();
+            const isMatch = idStr === targetId;
+            logger.warn(`[${i}] DB ID: "${idStr}" (len: ${idStr.length}) - Match: ${isMatch}`);
+            if (!isMatch && idStr.includes(targetId)) logger.warn('   -> Partial match detected!');
+        });
+
+        const targetHex = Buffer.from(targetId).toString('hex');
+        const availableInfo = ticket.attachments.map(a => {
+            const tempId = String(a._id).trim();
+            return `${tempId} (Hex: ${Buffer.from(tempId).toString('hex')})`;
+        }).join(', ');
+        throw new NotFoundError(`Attachment not found. Target Hex: ${targetHex}. Available: ${availableInfo}`);
+    }
 
     // Permission check: creator of attachment or SuperAdmin/Admin
     const isOwner = attachment.uploadedBy.toString() === req.user._id.toString();
@@ -890,52 +912,56 @@ const getAssignedTickets = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const downloadAttachment = asyncHandler(async (req, res) => {
+    // Fetch ticket with attachment
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) throw new NotFoundError('Ticket not found');
 
+    // Get attachment by ID using Mongoose subdocument method
     const attachment = ticket.attachments.id(req.params.attachmentId);
     if (!attachment) throw new NotFoundError('Attachment not found');
 
-    // Permission check: creator, assigned, admin, or superadmin
+    // Permission check: user must have access to the ticket
     const isCreator = ticket.createdBy.toString() === req.user._id.toString();
     const isAssigned = ticket.assignedTo?.toString() === req.user._id.toString();
-    const isAdmin = ['SuperAdmin', 'Admin'].includes(req.user.role);
     const isStaff = ['SuperAdmin', 'Admin', 'TeamMember'].includes(req.user.role);
 
-    if (!isCreator && !isAssigned && !isAdmin && !isStaff) {
+    if (!isCreator && !isAssigned && !isStaff) {
         throw new AuthorizationError('You do not have permission to download this attachment');
     }
 
-    // If S3 file, redirect to presigned URL
+    // Handle S3 files
     if (attachment.s3Key) {
         try {
-            const presignedUrl = await s3Service.generatePresignedUrl(attachment.s3Key, 3600); // 1 hour expiry
+            const presignedUrl = await s3Service.generatePresignedUrl(attachment.s3Key, 3600);
             return res.redirect(presignedUrl);
         } catch (error) {
-            logger.error(`Failed to generate presigned URL for download: ${error.message}`);
-            throw new NotFoundError('File not found in storage');
+            logger.error(`S3 presigned URL generation failed: ${error.message}`);
+            throw new Error('Failed to generate download link');
         }
     }
 
-    // Local file fallback
+    // Handle local files
     if (attachment.path) {
-        const fs = require('fs');
         const path = require('path');
+        const fs = require('fs');
 
-        const filePath = path.resolve(attachment.path);
-        if (!fs.existsSync(filePath)) {
+        const resolvedPath = path.resolve(attachment.path);
+
+        // Verify file exists
+        if (!fs.existsSync(resolvedPath)) {
             throw new NotFoundError('File not found on server');
         }
 
-        res.setHeader('Content-Disposition', `attachment; filename="${attachment.originalName || attachment.filename}"`);
+        // Set response headers for download
         res.setHeader('Content-Type', attachment.mimetype || 'application/octet-stream');
+        res.setHeader('Content-Disposition', `attachment; filename="${attachment.originalName || attachment.filename}"`);
 
-        const fileStream = fs.createReadStream(filePath);
-        fileStream.pipe(res);
-        return;
+        // Send file
+        return res.sendFile(resolvedPath);
     }
 
-    throw new NotFoundError('No file storage location found');
+    // No storage location found
+    throw new NotFoundError('File storage location not configured');
 });
 
 module.exports = {

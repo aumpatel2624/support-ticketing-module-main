@@ -1,3 +1,4 @@
+import axios from 'axios';
 import api from '../api';
 import { API_ENDPOINTS } from '../constants';
 
@@ -139,27 +140,41 @@ const ticketService = {
 
     /**
      * Download attachment
+     * Opens download endpoint directly to bypass CORS issues
+     * Browser handles redirects and downloads natively
      * @param {string} ticketId
      * @param {string} attachmentId
      * @param {string} filename
      */
     async downloadAttachment(ticketId, attachmentId, filename) {
-        const response = await api.get(
-            `${API_ENDPOINTS.TICKETS}/${ticketId}/attachments/${attachmentId}/download`,
-            { responseType: 'blob' }
-        );
+        try {
+            // Get the JWT token
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
-        // Create download link
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
+            // Build download URL - include token as query param so it can be sent via simple link
+            let downloadUrl = `${api.defaults.baseURL}${API_ENDPOINTS.TICKETS}/${ticketId}/attachments/${attachmentId}/download`;
 
-        return response.data;
+            // Add token as query parameter if available
+            if (token) {
+                const separator = downloadUrl.includes('?') ? '&' : '?';
+                downloadUrl = `${downloadUrl}${separator}token=${encodeURIComponent(token)}`;
+            }
+
+            // Create and trigger download link
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = filename || 'attachment';
+            link.style.display = 'none';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            return true;
+        } catch (error) {
+            console.error('Download error:', error);
+            throw error;
+        }
     },
 
     /**

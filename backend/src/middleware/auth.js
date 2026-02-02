@@ -15,6 +15,11 @@ const authenticate = asyncHandler(async (req, res, next) => {
         token = req.headers.authorization.split(' ')[1];
     }
 
+    // Fallback: Get token from query parameter (for browser downloads)
+    if (!token && req.query.token) {
+        token = req.query.token;
+    }
+
     // Check if token exists
     if (!token) {
         throw new AuthenticationError('No token provided, authorization denied');
@@ -58,6 +63,11 @@ const optionalAuth = asyncHandler(async (req, res, next) => {
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         token = req.headers.authorization.split(' ')[1];
+    }
+
+    // Fallback: Get token from query parameter
+    if (!token && req.query.token) {
+        token = req.query.token;
     }
 
     if (token) {
