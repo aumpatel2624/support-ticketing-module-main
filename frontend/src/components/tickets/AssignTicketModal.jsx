@@ -151,6 +151,11 @@ export default function AssignTicketModal({
                                         </Avatar>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
+                                                {user.department?.name && (
+                                                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 whitespace-nowrap">
+                                                        {user.department.name}
+                                                    </span>
+                                                )}
                                                 <p className="font-medium text-sm truncate">{user.name}</p>
                                                 <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary whitespace-nowrap">
                                                     {user.role === USER_ROLES.SUPER_ADMIN ? 'Super Admin' :
@@ -183,7 +188,14 @@ export default function AssignTicketModal({
                                 </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                                <p className="font-medium text-sm">{selectedUser.name}</p>
+                                <div className="flex items-center gap-2">
+                                    {selectedUser.department?.name && (
+                                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 whitespace-nowrap">
+                                            {selectedUser.department.name}
+                                        </span>
+                                    )}
+                                    <p className="font-medium text-sm">{selectedUser.name}</p>
+                                </div>
                                 <p className="text-xs text-muted-foreground">{selectedUser.email}</p>
                             </div>
                             <button
