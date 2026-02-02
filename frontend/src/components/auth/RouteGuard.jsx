@@ -52,11 +52,11 @@ export default function RouteGuard({ children }) {
 
         function authCheck() {
             const hasAccess = isAuthenticated && !!token;
-            console.log(`AuthCheck: path=${pathname}, hasAccess=${hasAccess}`);
+            // console.log(`AuthCheck: path=${pathname}, hasAccess=${hasAccess}`);
 
             if (isPublicPath) {
                 if (hasAccess) {
-                    console.log('Redirecting to dashboard: User is already logged in.');
+                    // console.log('Redirecting to dashboard: User is already logged in.');
                     router.replace('/dashboard');
                     // We don't setAuthorized(false) here to avoid showing a loader
                     // during the brief redirection to dashboard
@@ -65,7 +65,7 @@ export default function RouteGuard({ children }) {
                 }
             } else {
                 if (!hasAccess) {
-                    console.log('Redirecting to login: User is not authenticated.');
+                    // console.log('Redirecting to login: User is not authenticated.');
                     setAuthorized(false);
                     router.replace('/login');
                 } else {

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -8,6 +9,8 @@ const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 export default function PeakHoursHeatmap({ data = [], className }) {
+    const [selectedCell, setSelectedCell] = useState(null); // { day, hour, count }
+
     // Transform data into a 7x24 grid
     // data format: [{ day: 'Monday', dayIndex: 0, hour: 0, count: 5 }, ...]
 
@@ -38,27 +41,31 @@ export default function PeakHoursHeatmap({ data = [], className }) {
         return `${hour - 12}p`;
     };
 
+    const handleCellClick = (day, dayIndex, hour, count) => {
+        setSelectedCell({ day, dayIndex, hour, count });
+    };
+
     const hasData = data && data.length > 0;
 
     return (
         <Card className={cn("border-none shadow-premium bg-card", className)}>
             <CardHeader className="pb-2">
                 <CardTitle className="text-xl font-bold">Peak Hours</CardTitle>
-                <CardDescription>Ticket creation patterns by day and hour.</CardDescription>
+                <CardDescription>Ticket creation patterns by day and hour. Tap a cell to view details.</CardDescription>
             </CardHeader>
             <CardContent>
                 {hasData ? (
                     <TooltipProvider>
-                        <div className="overflow-x-auto">
-                            <div className="min-w-[600px]">
+                        <div className="overflow-x-auto -mx-2 px-2 pb-2">
+                            <div className="min-w-[320px] md:min-w-[600px]">
                                 {/* Hour labels */}
                                 <div className="flex mb-1">
-                                    <div className="w-10 flex-shrink-0" /> {/* Day label spacer */}
-                                    {HOURS.filter(h => h % 3 === 0).map(hour => (
+                                    <div className="w-8 md:w-10 flex-shrink-0" /> {/* Day label spacer */}
+                                    {HOURS.filter(h => h % 4 === 0).map(hour => (
                                         <div
                                             key={hour}
-                                            className="flex-1 text-[9px] text-muted-foreground text-center"
-                                            style={{ minWidth: '20px' }}
+                                            className="flex-1 text-[8px] md:text-[9px] text-muted-foreground text-center"
+                                            style={{ minWidth: '16px' }}
                                         >
                                             {formatHour(hour)}
                                         </div>
@@ -66,24 +73,27 @@ export default function PeakHoursHeatmap({ data = [], className }) {
                                 </div>
 
                                 {/* Heatmap grid */}
-                                <div className="space-y-1">
+                                <div className="space-y-0.5 sm:space-y-1">
                                     {DAYS.map((day, dayIndex) => (
                                         <div key={day} className="flex items-center">
-                                            <div className="w-10 text-[10px] font-medium text-muted-foreground flex-shrink-0">
+                                            <div className="w-8 md:w-10 text-[8px] sm:text-[9px] md:text-[10px] font-medium text-muted-foreground flex-shrink-0">
                                                 {day}
                                             </div>
-                                            <div className="flex-1 flex gap-0.5">
+                                            <div className="flex-1 flex gap-px sm:gap-0.5">
                                                 {HOURS.map(hour => {
                                                     const count = getCellData(dayIndex, hour);
+                                                    const isSelected = selectedCell?.dayIndex === dayIndex && selectedCell?.hour === hour;
                                                     return (
                                                         <Tooltip key={hour}>
                                                             <TooltipTrigger asChild>
                                                                 <div
+                                                                    onClick={() => handleCellClick(day, dayIndex, hour, count)}
                                                                     className={cn(
-                                                                        "flex-1 h-6 rounded-sm cursor-pointer transition-all hover:ring-2 hover:ring-primary/50",
-                                                                        getCellColor(count)
+                                                                        "flex-1 h-4 sm:h-5 md:h-6 rounded-[2px] sm:rounded-sm cursor-pointer transition-all",
+                                                                        getCellColor(count),
+                                                                        isSelected ? "ring-2 ring-primary ring-offset-1" : "hover:ring-2 hover:ring-primary/50"
                                                                     )}
-                                                                    style={{ minWidth: '6px' }}
+                                                                    style={{ minWidth: '4px' }}
                                                                 />
                                                             </TooltipTrigger>
                                                             <TooltipContent>
@@ -97,6 +107,14 @@ export default function PeakHoursHeatmap({ data = [], className }) {
                                         </div>
                                     ))}
                                 </div>
+
+                                {/* Selected Cell Stats - for mobile tap */}
+                                {selectedCell && (
+                                    <div className="mt-3 p-2 bg-muted/50 rounded-lg text-center sm:hidden">
+                                        <p className="text-sm font-medium">{selectedCell.day} at {formatHour(selectedCell.hour)}</p>
+                                        <p className="text-xs text-muted-foreground">{selectedCell.count} tickets created</p>
+                                    </div>
+                                )}
 
                                 {/* Legend */}
                                 <div className="flex items-center justify-end gap-2 mt-4 text-[10px] text-muted-foreground">

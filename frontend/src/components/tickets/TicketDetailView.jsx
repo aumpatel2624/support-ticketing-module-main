@@ -224,7 +224,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                 newProgress[file.name] = 0;
                 setUploadProgress({ ...newProgress });
 
-                const response = await ticketService.uploadAttachment(
+                await ticketService.uploadAttachment(
                     ticket._id,
                     file,
                     (progress) => {
@@ -233,14 +233,14 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                     }
                 );
 
-                // Update local ticket state with the response
-                if (response.data) {
-                    setTicket(response.data);
-                }
-
                 newProgress[file.name] = 100;
                 setUploadProgress({ ...newProgress });
             }
+
+            // Refetch the full ticket to get updated attachments
+            const response = await ticketService.getTicket(ticket._id);
+            const updatedTicket = response.data || response;
+            setTicket(updatedTicket);
 
             toast.success('Files uploaded successfully');
             setShowUpload(false);
@@ -320,13 +320,13 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                     {ticket.status === 'Completed' &&
                         ticket.createdBy?._id === user?._id &&
                         !ticket.feedbackGiven && (
-                        <Button
-                            onClick={() => setShowFeedbackDialog(true)}
-                            className="bg-blue-500 hover:bg-blue-600"
-                        >
-                            ★ Submit Feedback
-                        </Button>
-                    )}
+                            <Button
+                                onClick={() => setShowFeedbackDialog(true)}
+                                className="bg-blue-500 hover:bg-blue-600"
+                            >
+                                ★ Submit Feedback
+                            </Button>
+                        )}
 
                     {/* Reassign button for Admin/SuperAdmin */}
                     {user && ['Admin', 'SuperAdmin'].includes(user.role) && (

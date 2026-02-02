@@ -108,8 +108,42 @@ export default function TeamMemberDashboard({ user }) {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="space-y-8">
+                {/* Header skeleton */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-2">
+                        <div className="h-8 w-48 rounded-lg animate-pulse bg-muted" />
+                        <div className="h-4 w-64 rounded-lg animate-pulse bg-muted" />
+                    </div>
+                    <div className="h-10 w-36 rounded-lg animate-pulse bg-muted" />
+                </div>
+
+                {/* Row 1 - Primary KPIs */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {[1, 2, 3, 4].map(i => <div key={i} className="h-32 rounded-2xl animate-pulse bg-muted" />)}
+                </div>
+
+                {/* Row 2 - Secondary KPIs */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {[1, 2, 3, 4].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse bg-muted" />)}
+                </div>
+
+                {/* Row 3 - Tertiary KPIs */}
+                <div className="grid gap-4 md:grid-cols-2">
+                    <div className="h-24 rounded-2xl animate-pulse bg-muted" />
+                    <div className="h-24 rounded-2xl animate-pulse bg-muted" />
+                </div>
+
+                {/* Charts skeleton */}
+                <div className="grid gap-6 lg:grid-cols-3">
+                    {[1, 2, 3].map(i => <div key={i} className="h-64 rounded-2xl animate-pulse bg-muted" />)}
+                </div>
+
+                {/* Trend chart skeleton */}
+                <div className="h-80 rounded-2xl animate-pulse bg-muted" />
+
+                {/* Tables skeleton */}
+                <div className="h-64 rounded-2xl animate-pulse bg-muted" />
             </div>
         );
     }

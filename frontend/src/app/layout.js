@@ -25,12 +25,15 @@ export const metadata = {
   },
 };
 
+import PageTitleUpdater from "@/components/common/PageTitleUpdater";
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
         className={`${inter.variable} ${outfit.variable} antialiased`}
       >
+        <PageTitleUpdater />
         <RouteGuard>
           {children}
         </RouteGuard>

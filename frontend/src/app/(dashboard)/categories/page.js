@@ -87,7 +87,7 @@ export default function CategoriesPage() {
     );
 
     return (
-        <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
+        <div className="h-full flex-1 flex-col space-y-6 p-4 sm:p-6 md:p-8 md:flex">
             <PageHeader
                 heading="Category Management"
                 text="Manage ticket categories for departments."
@@ -95,16 +95,18 @@ export default function CategoriesPage() {
                 <CreateCategoryDialog onCategoryCreated={handleCategoryCreated} />
             </PageHeader>
 
-            <div className="flex-1">
+            <div className="flex-1 overflow-x-auto">
                 {isLoading ? (
                     <div className="flex items-center justify-center h-64">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
                 ) : (
-                    <DataTable
-                        data={categories}
-                        columns={columns}
-                    />
+                    <div className="min-w-[320px]">
+                        <DataTable
+                            data={categories}
+                            columns={columns}
+                        />
+                    </div>
                 )}
             </div>
 

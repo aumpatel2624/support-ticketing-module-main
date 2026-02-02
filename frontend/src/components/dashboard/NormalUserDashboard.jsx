@@ -119,11 +119,37 @@ export default function NormalUserDashboard({ user }) {
     }
   };
 
-  if (loading) return (
-    <div className="flex items-center justify-center h-[calc(100vh-100px)]">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        {/* Header skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-8 w-48 rounded-lg animate-pulse bg-muted" />
+            <div className="h-4 w-64 rounded-lg animate-pulse bg-muted" />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-10 w-32 rounded-lg animate-pulse bg-muted" />
+            <div className="h-10 w-32 rounded-lg animate-pulse bg-muted" />
+          </div>
+        </div>
+
+        {/* KPI Cards skeleton */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-32 rounded-2xl animate-pulse bg-muted" />)}
+        </div>
+
+        {/* Charts skeleton */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="h-80 rounded-2xl animate-pulse bg-muted" />
+          <div className="h-80 rounded-2xl animate-pulse bg-muted" />
+        </div>
+
+        {/* Tables skeleton */}
+        <div className="h-96 rounded-2xl animate-pulse bg-muted" />
+      </div>
+    );
+  }
 
   // If viewing in dashboard mode, show the dashboard
   if (viewMode === 'dashboard') {

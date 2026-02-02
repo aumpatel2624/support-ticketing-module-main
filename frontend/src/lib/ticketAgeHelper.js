@@ -1,26 +1,31 @@
-import { differenceInDays } from 'date-fns';
+import { differenceInMinutes, differenceInDays } from 'date-fns';
 
 /**
- * Ticket age thresholds (in days)
+ * ⚠️ TESTING MODE - Using MINUTES instead of days!
+ * TODO: Revert to days after testing
+ * 
+ * Ticket age thresholds (in MINUTES for testing)
+ * Original values were in days: FRESH: 1, RECENT: 4, AGING: 8, OLD: 15
  */
 export const AGE_THRESHOLDS = {
-  FRESH: 1,      // 0-24 hours
-  RECENT: 4,     // 1-3 days
-  AGING: 8,      // 4-7 days
-  OLD: 15,       // 8-14 days
-  CRITICAL: 15,  // 15+ days
+  FRESH: 1,      // 0-1 minute
+  RECENT: 2,     // 1-2 minutes  
+  AGING: 3,      // 2-3 minutes
+  OLD: 4,        // 3-4 minutes
+  CRITICAL: 5,   // 4+ minutes
 };
 
 /**
- * Get age category based on days old
+ * Get age category based on MINUTES old (TESTING MODE)
+ * TODO: Revert to differenceInDays after testing
  */
 export function getAgeCategory(createdAt) {
-  const daysOld = differenceInDays(new Date(), new Date(createdAt));
+  const minutesOld = differenceInMinutes(new Date(), new Date(createdAt));
 
-  if (daysOld < 1) return 'fresh';
-  if (daysOld < 4) return 'recent';
-  if (daysOld < 8) return 'aging';
-  if (daysOld < 15) return 'old';
+  if (minutesOld < 1) return 'fresh';
+  if (minutesOld < 2) return 'recent';
+  if (minutesOld < 3) return 'aging';
+  if (minutesOld < 4) return 'old';
   return 'critical';
 }
 
@@ -60,27 +65,29 @@ export function getAgeBadgeColor(createdAt) {
 }
 
 /**
- * Get human-readable age label
+ * Get human-readable age label (TESTING MODE - uses minutes)
+ * TODO: Revert to differenceInDays after testing
  */
 export function getAgeLabel(createdAt) {
-  const daysOld = differenceInDays(new Date(), new Date(createdAt));
+  const minutesOld = differenceInMinutes(new Date(), new Date(createdAt));
 
-  if (daysOld < 1) return 'Fresh';
-  if (daysOld < 4) return 'Recent';
-  if (daysOld < 8) return 'Aging';
-  if (daysOld < 15) return 'Old';
+  if (minutesOld < 1) return 'Fresh';
+  if (minutesOld < 2) return 'Recent';
+  if (minutesOld < 3) return 'Aging';
+  if (minutesOld < 4) return 'Old';
   return 'Critical';
 }
 
 /**
- * Get age description for tooltip
+ * Get age description for tooltip (TESTING MODE - uses minutes)
+ * TODO: Revert to differenceInDays after testing
  */
 export function getAgeDescription(createdAt) {
-  const daysOld = differenceInDays(new Date(), new Date(createdAt));
+  const minutesOld = differenceInMinutes(new Date(), new Date(createdAt));
 
-  if (daysOld === 0) return 'Created today';
-  if (daysOld === 1) return 'Created 1 day ago';
-  return `Created ${daysOld} days ago`;
+  if (minutesOld === 0) return 'Created just now';
+  if (minutesOld === 1) return 'Created 1 minute ago';
+  return `Created ${minutesOld} minutes ago`;
 }
 
 /**

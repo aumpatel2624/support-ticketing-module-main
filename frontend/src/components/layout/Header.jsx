@@ -51,7 +51,7 @@ export default function Header() {
     // Handle Cmd/Ctrl+K shortcut
     useEffect(() => {
         const handleShortcut = (e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 's' || e.key === 'S')) {
                 e.preventDefault();
                 document.getElementById('global-search-input')?.focus();
             }
@@ -129,15 +129,9 @@ export default function Header() {
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator className="opacity-50" />
                         <DropdownMenuItem asChild className="rounded-xl py-2.5 my-0.5 focus:bg-primary/5 focus:text-primary cursor-pointer">
-                            <Link href="/settings" className="flex items-center">
-                                <CircleUser className="mr-3 h-4 w-4" />
-                                <span className="font-medium">Account Settings</span>
-                            </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild className="rounded-xl py-2.5 my-0.5 focus:bg-primary/5 focus:text-primary cursor-pointer">
-                            <Link href="/settings/profile" className="flex items-center">
+                            <Link href="/settings/system" className="flex items-center">
                                 <Settings className="mr-3 h-4 w-4" />
-                                <span className="font-medium">Privacy Settings</span>
+                                <span className="font-medium">Settings</span>
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="opacity-50" />

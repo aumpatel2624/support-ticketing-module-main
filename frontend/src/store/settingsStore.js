@@ -48,6 +48,27 @@ const useSettingsStore = create((set, get) => ({
   },
 
   /**
+   * Fetch public settings (Unauthenticated)
+   */
+  fetchPublicSettings: async () => {
+    // Don't set global loading state to avoid flickering admin forms
+    try {
+      // Dynamic import to avoid circular dependencies if any
+      const { getPublicSettings } = await import('../lib/services/settingsService');
+      const settings = await getPublicSettings();
+
+      // Update store but preserve existing keys if we have full settings
+      set((state) => ({
+        systemSettings: state.systemSettings ? { ...state.systemSettings, ...settings } : settings
+      }));
+      return settings;
+    } catch (error) {
+      console.warn('Failed to fetch public settings:', error);
+      return null;
+    }
+  },
+
+  /**
    * Update system settings
    */
   updateSystemSettings: async (settings) => {

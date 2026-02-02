@@ -217,9 +217,8 @@ const systemSettingsSchema = new mongoose.Schema({
 });
 
 // Update the updatedAt field before saving
-systemSettingsSchema.pre('save', function(next) {
+systemSettingsSchema.pre('save', function () {
   this.updatedAt = new Date();
-  next();
 });
 
 module.exports = mongoose.model('SystemSettings', systemSettingsSchema);

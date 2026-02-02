@@ -14,6 +14,7 @@ import TicketCardView from '@/components/tickets/TicketCardView';
 import AdvancedFilterPanel from '@/components/tickets/AdvancedFilterPanel';
 import ticketService from '@/lib/services/ticketService';
 import useTicketStore from '@/store/ticketStore';
+import useSettingsStore from '@/store/settingsStore';
 import useTicketUpdates from '@/hooks/useTicketUpdates';
 import toast from 'react-hot-toast';
 
@@ -21,8 +22,20 @@ export default function TicketsPage() {
     const [tickets, setTickets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const { viewMode, setViewMode } = useTicketStore();
+    const { systemSettings, fetchSystemSettings } = useSettingsStore();
     const searchParams = useSearchParams();
     const searchQuery = searchParams.get('search') || '';
+
+    // Feature toggles from SystemSettings (default to true if not loaded)
+    const features = systemSettings?.features || {};
+    const showTableView = features.tableView !== false;
+    const showKanbanView = features.kanbanView !== false;
+    const showCardView = features.cardView !== false;
+
+    // Fetch system settings on mount
+    useEffect(() => {
+        fetchSystemSettings().catch(() => { });
+    }, []);
 
     const fetchTickets = async (search = '') => {
         try {
@@ -78,33 +91,39 @@ export default function TicketsPage() {
             {/* View Mode Toggle */}
             <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-muted-foreground">View:</span>
-                <Button
-                    variant={viewMode === 'table' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setViewMode('table')}
-                    className="gap-2"
-                >
-                    <List className="h-4 w-4" />
-                    Table
-                </Button>
-                <Button
-                    variant={viewMode === 'kanban' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setViewMode('kanban')}
-                    className="gap-2"
-                >
-                    <Kanban className="h-4 w-4" />
-                    Kanban
-                </Button>
-                <Button
-                    variant={viewMode === 'card' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setViewMode('card')}
-                    className="gap-2"
-                >
-                    <LayoutGrid className="h-4 w-4" />
-                    Card
-                </Button>
+                {showTableView && (
+                    <Button
+                        variant={viewMode === 'table' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setViewMode('table')}
+                        className="gap-2"
+                    >
+                        <List className="h-4 w-4" />
+                        Table
+                    </Button>
+                )}
+                {showKanbanView && (
+                    <Button
+                        variant={viewMode === 'kanban' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setViewMode('kanban')}
+                        className="gap-2"
+                    >
+                        <Kanban className="h-4 w-4" />
+                        Kanban
+                    </Button>
+                )}
+                {showCardView && (
+                    <Button
+                        variant={viewMode === 'card' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setViewMode('card')}
+                        className="gap-2"
+                    >
+                        <LayoutGrid className="h-4 w-4" />
+                        Card
+                    </Button>
+                )}
             </div>
 
             {/* Content */}

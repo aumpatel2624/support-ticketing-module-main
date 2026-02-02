@@ -685,10 +685,13 @@ const uploadAttachment = asyncHandler(async (req, res) => {
     ticket.attachments.push(attachment);
     await ticket.save();
 
+    // Get the saved attachment with the _id assigned by MongoDB
+    const savedAttachment = ticket.attachments[ticket.attachments.length - 1];
+
     res.status(201).json({
         success: true,
         message: 'File uploaded successfully',
-        data: attachment
+        data: savedAttachment
     });
 });
 
@@ -881,6 +884,60 @@ const getAssignedTickets = asyncHandler(async (req, res) => {
     });
 });
 
+/**
+ * @desc    Download attachment from ticket
+ * @route   GET /api/tickets/:id/attachments/:attachmentId/download
+ * @access  Private
+ */
+const downloadAttachment = asyncHandler(async (req, res) => {
+    const ticket = await Ticket.findById(req.params.id);
+    if (!ticket) throw new NotFoundError('Ticket not found');
+
+    const attachment = ticket.attachments.id(req.params.attachmentId);
+    if (!attachment) throw new NotFoundError('Attachment not found');
+
+    // Permission check: creator, assigned, admin, or superadmin
+    const isCreator = ticket.createdBy.toString() === req.user._id.toString();
+    const isAssigned = ticket.assignedTo?.toString() === req.user._id.toString();
+    const isAdmin = ['SuperAdmin', 'Admin'].includes(req.user.role);
+    const isStaff = ['SuperAdmin', 'Admin', 'TeamMember'].includes(req.user.role);
+
+    if (!isCreator && !isAssigned && !isAdmin && !isStaff) {
+        throw new AuthorizationError('You do not have permission to download this attachment');
+    }
+
+    // If S3 file, redirect to presigned URL
+    if (attachment.s3Key) {
+        try {
+            const presignedUrl = await s3Service.generatePresignedUrl(attachment.s3Key, 3600); // 1 hour expiry
+            return res.redirect(presignedUrl);
+        } catch (error) {
+            logger.error(`Failed to generate presigned URL for download: ${error.message}`);
+            throw new NotFoundError('File not found in storage');
+        }
+    }
+
+    // Local file fallback
+    if (attachment.path) {
+        const fs = require('fs');
+        const path = require('path');
+
+        const filePath = path.resolve(attachment.path);
+        if (!fs.existsSync(filePath)) {
+            throw new NotFoundError('File not found on server');
+        }
+
+        res.setHeader('Content-Disposition', `attachment; filename="${attachment.originalName || attachment.filename}"`);
+        res.setHeader('Content-Type', attachment.mimetype || 'application/octet-stream');
+
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+        return;
+    }
+
+    throw new NotFoundError('No file storage location found');
+});
+
 module.exports = {
     getTickets,
     getTicketById,
@@ -893,6 +950,7 @@ module.exports = {
     submitFeedback,
     uploadAttachment,
     deleteAttachment,
+    downloadAttachment,
     getTicketHistory,
     getMyTickets,
     getAssignedTickets

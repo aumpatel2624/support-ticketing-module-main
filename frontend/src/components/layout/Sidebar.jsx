@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -29,6 +30,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import useAuthStore from '@/store/authStore';
 import useUIStore from '@/store/uiStore';
+import useSettingsStore from '@/store/settingsStore';
 import { NAVIGATION_ITEMS } from '@/lib/constants';
 
 // Map icon strings to components
@@ -50,9 +52,18 @@ export default function Sidebar({ isMobile = false }) {
     const pathname = usePathname();
     const { user, logout } = useAuthStore();
     const { sidebarCollapsed, toggleSidebar } = useUIStore();
+    const { systemSettings, fetchSystemSettings } = useSettingsStore();
+
+    // Fetch system settings on mount
+    useEffect(() => {
+        fetchSystemSettings().catch(() => { });
+    }, []);
 
     // Force expanded if mobile, otherwise use store state
     const isCollapsed = isMobile ? false : sidebarCollapsed;
+
+    // Get company name from settings
+    const companyName = systemSettings?.companyName || 'Support';
 
     // Get navigation items based on user role
     const navItems = user?.role && NAVIGATION_ITEMS[user.role]
@@ -68,15 +79,21 @@ export default function Sidebar({ isMobile = false }) {
         >
             {/* Sidebar Header */}
             <div className="flex items-center justify-between px-6 h-20 border-b/50 shrink-0">
-                <div className={cn("flex items-center justify-center transition-all duration-300", isCollapsed ? "h-12 w-12" : "h-12 w-full max-w-[180px]")}>
+                <div className={cn("flex flex-col items-center justify-center transition-all duration-300", isCollapsed ? "h-12 w-12" : "h-12 w-full max-w-[180px]")}>
                     <Image
-                        src="/logo.webp"
-                        alt="Apidel Logo"
+                        src={systemSettings?.companyLogo || "/logo.webp"}
+                        alt={`${companyName} Logo`}
                         width={180}
                         height={40}
                         className="object-contain"
                         priority
+                        unoptimized
                     />
+                    {!isCollapsed && companyName !== 'Support' && (
+                        <span className="mt-1 text-xs font-semibold text-muted-foreground tracking-wide truncate max-w-full">
+                            {companyName}
+                        </span>
+                    )}
                 </div>
                 {!isMobile && (
                     <Button

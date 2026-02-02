@@ -297,18 +297,32 @@ ticketSchema.pre('save', async function () {
 });
 
 /**
- * Calculate SLA deadline based on category
+ * Calculate SLA deadline based on priority using SystemSettings
+ * Falls back to default hours if settings not configured
  */
 ticketSchema.methods.calculateSLA = async function () {
-    const Category = mongoose.model('Category');
-    const category = await Category.findById(this.categoryId);
+    const SystemSettings = mongoose.model('SystemSettings');
 
-    if (category && category.defaultSLA) {
-        const slaHours = category.defaultSLA;
-        // Use current date if createdAt is not set (document not yet saved)
-        const baseDate = this.createdAt || new Date();
-        this.slaDeadline = new Date(baseDate.getTime() + (slaHours * 60 * 60 * 1000));
+    // Fetch system settings
+    let settings;
+    try {
+        settings = await SystemSettings.findOne();
+    } catch (err) {
+        console.warn('Could not fetch SystemSettings for SLA:', err.message);
     }
+
+    // SLA hours by priority from SystemSettings or defaults
+    const slaHours = {
+        Low: settings?.slaDefaults?.lowPriority || 72,
+        Medium: settings?.slaDefaults?.mediumPriority || 48,
+        High: settings?.slaDefaults?.highPriority || 24,
+        Critical: settings?.slaDefaults?.criticalPriority || 4
+    };
+
+    const hours = slaHours[this.priority] || 48; // Default to Medium if unknown priority
+    const baseDate = this.createdAt || new Date();
+
+    this.slaDeadline = new Date(baseDate.getTime() + (hours * 60 * 60 * 1000));
 };
 
 /**

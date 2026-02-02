@@ -12,6 +12,7 @@ const {
     submitFeedback,
     uploadAttachment,
     deleteAttachment,
+    downloadAttachment,
     getTicketHistory,
     getMyTickets,
     getAssignedTickets
@@ -346,6 +347,32 @@ router.post('/:id/attachments', authenticate, validateParams(objectIdSchema), up
  *         description: Attachment deleted successfully
  */
 router.delete('/:id/attachments/:attachmentId', authenticate, validateParams(objectIdSchema), deleteAttachment);
+
+/**
+ * @swagger
+ * /tickets/{id}/attachments/{attachmentId}/download:
+ *   get:
+ *     summary: Download attachment
+ *     description: Download an attachment from the ticket
+ *     tags: [Tickets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: attachmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: File download
+ */
+router.get('/:id/attachments/:attachmentId/download', authenticate, validateParams(objectIdSchema), downloadAttachment);
 
 /**
  * @swagger

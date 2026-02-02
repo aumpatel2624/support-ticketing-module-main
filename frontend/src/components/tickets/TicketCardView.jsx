@@ -181,7 +181,7 @@ export default function TicketCardView({ tickets, onTicketUpdate }) {
                         placeholder="Search tickets..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full sm:w-[200px]"
+                        className="w-full sm:w-[200px] text-foreground placeholder:text-muted-foreground"
                     />
 
                     {/* Quick Filters */}

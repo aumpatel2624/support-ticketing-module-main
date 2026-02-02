@@ -400,12 +400,50 @@ const disable2FA = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * @desc    Upload company logo
+ * @route   POST /api/admin/settings/logo
+ * @access  Private - SuperAdmin only
+ */
+const uploadLogo = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new ValidationError('Please upload a file');
+  }
+
+  const s3Service = require('../services/s3.service');
+  let logoUrl = '';
+
+  // S3 upload (if using S3 storage)
+  if (req.file.location || req.file.key) {
+    try {
+      // Generate presigned URL for secure access (matches ticket attachment logic)
+      logoUrl = await s3Service.generatePresignedUrl(req.file.key, 86400); // 24 hour expiry
+    } catch (error) {
+      console.warn(`Failed to generate presigned URL: ${error.message}, using direct URL`);
+      logoUrl = req.file.location || `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${req.file.key}`;
+    }
+  } else {
+    // Local storage
+    logoUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/uploads/${req.file.filename}`;
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Logo uploaded successfully',
+    data: {
+      url: logoUrl,
+      key: req.file.key // Return key for potential future use
+    }
+  });
+});
+
 module.exports = {
   // System Settings (SuperAdmin)
   getSystemSettings,
   updateSystemSettings,
   getPublicSettings,
   sendTestEmail,
+  uploadLogo, // Export new method
 
   // User Preferences
   getUserPreferences,

@@ -16,7 +16,7 @@ export default function NotificationList({ onClose }) {
     const recentNotifications = notifications;
 
     return (
-        <div className="flex flex-col h-[500px] max-h-[500px] w-full bg-background">
+        <div className="flex flex-col h-[min(500px,75vh)] max-h-[500px] w-full bg-background">
             {/* Header */}
             <div className="px-4 py-3 border-b flex-shrink-0">
                 <div className="flex items-center justify-between gap-2">

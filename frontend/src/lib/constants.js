@@ -224,37 +224,14 @@ export const FILE_TYPE_OPTIONS = [
 ];
 
 // Default System Settings
+// Default System Settings
 export const DEFAULT_SYSTEM_SETTINGS = {
     companyName: 'My Company',
     companyLogo: '',
-    brandColor: '#0066cc',
-    brandSecondaryColor: '#00ccff',
-    timezone: 'America/New_York',
-    dateFormat: 'MM/DD/YYYY',
-    timeFormat: '12h',
-    maintenanceMode: false,
-    maintenanceMessage: '',
-    ticketAutoCloseAfterDays: 30,
-    allowReopeningClosedTickets: true,
-    requireResolutionCommentOnClose: false,
-    enableKanbanView: true,
-    enableCardView: true,
-    enableTableView: true,
-    enableAdvancedFilters: true,
-    enableBulkOperations: true,
-    slaDefaults: {
-        lowPriority: 168,
-        mediumPriority: 48,
-        highPriority: 24,
-        criticalPriority: 4,
-    },
-    escalationRules: [],
     emailFrom: 'noreply@company.com',
-    emailReplyTo: 'support@company.com',
+    emailReplyTo: '',
     emailNotificationsEnabled: true,
     inAppNotificationsEnabled: true,
-    fileUploadMaxSize: 10,
-    allowedFileTypes: ['image', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt'],
-    enableReportExports: true,
-    enableDarkMode: true,
+    fileUploadMaxSize: 5,
+    allowedFileTypes: ['image/jpeg', 'image/png', 'application/pdf'],
 };

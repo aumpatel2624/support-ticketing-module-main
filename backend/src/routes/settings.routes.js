@@ -5,6 +5,7 @@ const {
   updateSystemSettings,
   getPublicSettings,
   sendTestEmail,
+  uploadLogo, // Import uploadLogo
 
   // User Preferences
   getUserPreferences,
@@ -23,6 +24,7 @@ const {
 
 const { authenticate } = require('../middleware/auth');
 const { requireSuperAdmin } = require('../middleware/rbac');
+const { uploadSingle } = require('../middleware/upload'); // Import uploadSingle middleware
 
 const router = express.Router();
 
@@ -68,6 +70,30 @@ router.put('/admin/settings', authenticate, requireSuperAdmin, updateSystemSetti
  *         description: Test email sent successfully
  */
 router.post('/admin/settings/test-email', authenticate, requireSuperAdmin, sendTestEmail);
+
+/**
+ * @swagger
+ * /api/admin/settings/logo:
+ *   post:
+ *     summary: Upload company logo
+ *     tags: [Settings]
+ *     security:
+ *       - Bearer: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Logo uploaded successfully
+ */
+router.post('/admin/settings/logo', authenticate, requireSuperAdmin, uploadSingle, uploadLogo);
 
 /**
  * @swagger
