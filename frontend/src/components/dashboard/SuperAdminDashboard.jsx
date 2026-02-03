@@ -63,9 +63,7 @@ export default function SuperAdminDashboard({ user }) {
         totalUsers: 0,
         totalDepartments: 0,
         totalCategories: 0,
-        systemUptime: '99.9%',
-        activeSessions: 0,
-        storageUsed: 0
+        activeSessions: 0
     });
     const [loading, setLoading] = useState(true);
 
@@ -80,9 +78,7 @@ export default function SuperAdminDashboard({ user }) {
                         totalUsers: database?.users || 0,
                         totalDepartments: database?.departments || 0,
                         totalCategories: database?.categories || 0,
-                        systemUptime: '99.9%',
-                        activeSessions: users?.onlineAgents || 0,
-                        storageUsed: 45 // Mock data
+                        activeSessions: users?.onlineAgents || 0
                     });
                 }
             } catch (error) {

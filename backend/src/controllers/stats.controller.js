@@ -151,7 +151,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         status: { $nin: ['Closed', 'Completed'] },
         $or: [
             { slaBreach: true },
-            { slaDeadline: { $lte: new Date(now.getTime() + 2 * 60 * 1000) } } // ⚠️ TESTING: 2 minutes instead of 4 hours
+            { slaDeadline: { $lte: new Date(now.getTime() + 4 * 60 * 60 * 1000) } } // SLA deadline within 4 hours
         ]
     });
 
@@ -168,7 +168,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         createdAt: { $gte: twoWeeksAgo, $lt: oneWeekAgo },
         $or: [
             { slaBreach: true },
-            { slaDeadline: { $lte: new Date(oneWeekAgo.getTime() + 2 * 60 * 1000) } } // ⚠️ TESTING: 2 minutes instead of 4 hours
+            { slaDeadline: { $lte: new Date(oneWeekAgo.getTime() + 4 * 60 * 60 * 1000) } } // SLA deadline within 4 hours
         ]
     });
 
@@ -610,7 +610,7 @@ const getCriticalTickets = asyncHandler(async (req, res) => {
 
         if (ticket.slaBreach) {
             slaStatus = 'Breached';
-        } else if (slaDeadline && slaDeadline < new Date(now.getTime() + 2 * 60 * 1000)) { // ⚠️ TESTING: 2 minutes instead of 4 hours
+        } else if (slaDeadline && slaDeadline < new Date(now.getTime() + 4 * 60 * 60 * 1000)) { // SLA deadline within 4 hours
             slaStatus = 'At Risk';
         }
 
@@ -725,7 +725,7 @@ const getSLAPerformance = asyncHandler(async (req, res) => {
                                 $and: [
                                     { $eq: ['$slaBreach', false] },
                                     { $ne: ['$slaDeadline', null] },
-                                    { $lt: ['$slaDeadline', { $add: [new Date(), 2 * 60 * 1000] }] } // ⚠️ TESTING: 2 minutes instead of 4 hours
+                                    { $lt: ['$slaDeadline', { $add: [new Date(), 4 * 60 * 60 * 1000] }] } // SLA deadline within 4 hours
                                 ]
                             },
                             1,
