@@ -17,9 +17,10 @@ const STATUS_COLORS = {
     'New': 'hsl(217, 91%, 60%)',
     'Assigned': 'hsl(262, 80%, 50%)',
     'InProgress': 'hsl(24, 95%, 50%)',
-    'Pending': 'hsl(38, 92%, 50%)',
     'Completed': 'hsl(142, 76%, 36%)',
+    'Reopened': 'hsl(38, 92%, 50%)',
     'Closed': 'hsl(215, 14%, 34%)',
+    'Escalated': 'hsl(0, 84.2%, 60.2%)',
 };
 
 export default function MyTicketsStatusChart({ data = [], className }) {

@@ -169,7 +169,24 @@ const analyticsService = {
         window.URL.revokeObjectURL(url);
 
         return response.data;
+    },
+
+    /**
+     * Get department breakdown stats (SuperAdmin only)
+     */
+    async getDepartmentBreakdown() {
+        const response = await api.get(`${API_ENDPOINTS.ANALYTICS}/department-breakdown`);
+        return response.data?.data || { departments: [], totals: {} };
+    },
+
+    /**
+     * Get personal performance stats (TeamMember/Admin)
+     */
+    async getMyPerformance() {
+        const response = await api.get(`${API_ENDPOINTS.ANALYTICS}/my-performance`);
+        return response.data?.data || {};
     }
 };
 
 export default analyticsService;
+

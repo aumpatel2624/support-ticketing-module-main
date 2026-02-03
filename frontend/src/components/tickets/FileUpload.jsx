@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
-import { Upload, X, File, Image, FileText, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { Upload, X, File, Image as ImageIcon, FileText, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn, formatFileSize } from '@/lib/utils';
 import { FILE_UPLOAD } from '@/lib/constants';
 import toast from 'react-hot-toast';
+import useSettingsStore from '@/store/settingsStore';
 
 /**
  * FileUpload component - Drag-and-drop file upload with validation and progress
@@ -21,6 +22,24 @@ export default function FileUpload({
     disabled = false,
     uploadProgress = {}
 }) {
+    const { systemSettings, fetchPublicSettings } = useSettingsStore();
+
+    useEffect(() => {
+        if (!systemSettings) {
+            fetchPublicSettings();
+        }
+    }, [systemSettings, fetchPublicSettings]);
+
+    // effective limits based on system settings or props/defaults
+    const effectiveMaxSize = systemSettings?.fileUploadMaxSize
+        ? systemSettings.fileUploadMaxSize * 1024 * 1024
+        : maxSize;
+
+    // Check if systemSettings.allowedFileTypes is array before using it
+    const effectiveAllowedTypes = Array.isArray(systemSettings?.allowedFileTypes) && systemSettings.allowedFileTypes.length > 0
+        ? systemSettings.allowedFileTypes
+        : allowedTypes;
+
     const [isDragging, setIsDragging] = useState(false);
     const [errors, setErrors] = useState([]);
     const inputRef = useRef(null);
@@ -29,12 +48,12 @@ export default function FileUpload({
         const errors = [];
 
         // Check file size
-        if (file.size > maxSize) {
-            errors.push(`${file.name}: File size exceeds ${formatFileSize(maxSize)}`);
+        if (file.size > effectiveMaxSize) {
+            errors.push(`${file.name}: File size exceeds ${formatFileSize(effectiveMaxSize)}`);
         }
 
         // Check file type
-        if (!allowedTypes.includes(file.type)) {
+        if (!effectiveAllowedTypes.includes(file.type)) {
             errors.push(`${file.name}: File type not allowed`);
         }
 
@@ -109,12 +128,12 @@ export default function FileUpload({
                 const fileErrors = [];
 
                 // Check file size
-                if (file.size > maxSize) {
-                    fileErrors.push(`${file.name}: File size exceeds ${formatFileSize(maxSize)}`);
+                if (file.size > effectiveMaxSize) {
+                    fileErrors.push(`${file.name}: File size exceeds ${formatFileSize(effectiveMaxSize)}`);
                 }
 
                 // Check file type
-                if (!allowedTypes.includes(file.type)) {
+                if (!effectiveAllowedTypes.includes(file.type)) {
                     fileErrors.push(`${file.name}: File type not allowed`);
                 }
 
@@ -134,7 +153,7 @@ export default function FileUpload({
                 onFilesSelected(validFiles);
             }
         }
-    }, [disabled, files.length, maxFiles, maxSize, allowedTypes, onFilesSelected]);
+    }, [disabled, files.length, maxFiles, effectiveMaxSize, effectiveAllowedTypes, onFilesSelected]);
 
     const handleInputChange = (e) => {
         const selectedFiles = e.target.files;
@@ -153,7 +172,7 @@ export default function FileUpload({
 
     const getFileIcon = (file) => {
         if (file.type?.startsWith('image/')) {
-            return <Image className="h-5 w-5 text-blue-500" />;
+            return <ImageIcon className="h-5 w-5 text-blue-500" />;
         }
         if (file.type?.includes('pdf')) {
             return <FileText className="h-5 w-5 text-red-500" />;
@@ -168,6 +187,22 @@ export default function FileUpload({
         if (progress === -1) return <AlertCircle className="h-4 w-4 text-red-500" />;
         return <Loader2 className="h-4 w-4 animate-spin text-primary" />;
     };
+
+    // Format allowed types for display
+    const formattedAllowedTypes = effectiveAllowedTypes.map(type => {
+        const mimeMap = {
+            'image/jpeg': 'JPG',
+            'image/png': 'PNG',
+            'image/gif': 'GIF',
+            'application/pdf': 'PDF',
+            'application/msword': 'DOC',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
+            'application/vnd.ms-excel': 'XLS',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
+            'text/plain': 'TXT'
+        };
+        return mimeMap[type] || type.split('/')[1]?.toUpperCase() || type;
+    }).join(', ');
 
     return (
         <div className="space-y-4">
@@ -190,7 +225,7 @@ export default function FileUpload({
                     type="file"
                     multiple
                     onChange={handleInputChange}
-                    accept={allowedTypes.join(',')}
+                    accept={effectiveAllowedTypes.join(',')}
                     className="hidden"
                     disabled={disabled}
                 />
@@ -217,8 +252,8 @@ export default function FileUpload({
 
                     <div className="text-xs text-muted-foreground space-y-1">
                         <p>Maximum {maxFiles} files</p>
-                        <p>Max size: {formatFileSize(maxSize)} per file</p>
-                        <p>Allowed: Images, PDF, DOC, DOCX, XLS, XLSX, TXT</p>
+                        <p>Max size: {formatFileSize(effectiveMaxSize)} per file</p>
+                        <p>Allowed: {formattedAllowedTypes}</p>
                     </div>
                 </div>
             </div>

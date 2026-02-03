@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowDownRight, ArrowUpRight, Minus, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import Link from 'next/link';
 
 export default function StatsCard({
   title,
@@ -13,6 +14,7 @@ export default function StatsCard({
   invertedTrend = false,
   loading = false,
   className,
+  href,
 }) {
   let trendColor = 'text-muted-foreground';
   let TrendIcon = Minus;
@@ -28,9 +30,10 @@ export default function StatsCard({
     trendColor = invertedTrend ? 'text-success' : 'text-destructive';
   }
 
-  return (
+  const cardContent = (
     <Card className={cn(
       "group relative overflow-hidden border-none shadow-premium transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 bg-card",
+      href && "cursor-pointer",
       className
     )}>
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -77,4 +80,11 @@ export default function StatsCard({
       <div className="absolute -bottom-6 -right-6 h-24 w-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors" />
     </Card>
   );
+
+  if (href) {
+    return <Link href={href} className="block">{cardContent}</Link>;
+  }
+
+  return cardContent;
 }
+

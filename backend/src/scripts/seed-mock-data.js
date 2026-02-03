@@ -377,7 +377,7 @@ const seedDB = async () => {
         console.log('\n--- Creating Tickets ---');
 
         const priorities = ['Low', 'Medium', 'High', 'Urgent'];
-        const statuses = ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Closed'];
+        const statuses = ['New', 'Assigned', 'InProgress', 'Completed', 'Closed', 'Escalated'];
         const ticketSubjects = {
             'IT': [
                 'Cannot access email on new laptop',

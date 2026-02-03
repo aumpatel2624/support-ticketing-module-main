@@ -364,6 +364,7 @@ export default function AdminDashboard({ user }) {
                     trend={{ value: Math.abs(stats.trends.activeTickets), label: "from last week" }}
                     trendDirection={stats.trends.activeTickets >= 0 ? 'up' : 'down'}
                     invertedTrend={true}
+                    href="/tickets?status=New,Assigned,InProgress"
                 />
                 <StatsCard
                     title="SLA Risk"
@@ -373,6 +374,7 @@ export default function AdminDashboard({ user }) {
                     trendDirection={stats.trends.slaRisk >= 0 ? 'up' : 'down'}
                     invertedTrend={true}
                     className={stats.slaBreached > 0 ? "border-l-4 border-l-destructive" : ""}
+                    href="/tickets?slaStatus=AtRisk,Breached"
                 />
                 <StatsCard
                     title="Avg Response Time"
@@ -389,6 +391,7 @@ export default function AdminDashboard({ user }) {
                     trend={{ value: Math.abs(stats.trends.resolutionTime), label: "from last week" }}
                     trendDirection={stats.trends.resolutionTime <= 0 ? 'up' : 'down'}
                     invertedTrend={true}
+                    href="/tickets?status=Completed,Closed"
                 />
             </div>
 

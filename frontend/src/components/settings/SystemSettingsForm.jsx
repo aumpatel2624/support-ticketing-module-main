@@ -6,12 +6,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import LogoUpload from './LogoUpload';
 import useSettingsStore from '@/store/settingsStore';
-import { useToast } from '@/hooks/use-toast';
+import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Loader2 } from 'lucide-react';
+
 import {
   FormField,
   FormItem,
@@ -29,15 +30,15 @@ import api from '@/lib/api';
 
 // Allowed MIME types for file uploads
 const ALLOWED_MIME_TYPES = [
-  { value: 'image/jpeg', label: 'JPEG Images' },
-  { value: 'image/png', label: 'PNG Images' },
-  { value: 'image/gif', label: 'GIF Images' },
-  { value: 'application/pdf', label: 'PDF Documents' },
-  { value: 'application/msword', label: 'Word Documents (.doc)' },
-  { value: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', label: 'Word Documents (.docx)' },
-  { value: 'application/vnd.ms-excel', label: 'Excel Files (.xls)' },
-  { value: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', label: 'Excel Files (.xlsx)' },
-  { value: 'text/plain', label: 'Text Files' },
+  { value: 'image/jpeg', label: '.jpg' },
+  { value: 'image/png', label: '.png' },
+  { value: 'image/gif', label: '.gif' },
+  { value: 'application/pdf', label: '.pdf' },
+  { value: 'application/msword', label: '.doc' },
+  { value: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', label: '.docx' },
+  { value: 'application/vnd.ms-excel', label: '.xls' },
+  { value: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', label: '.xlsx' },
+  { value: 'text/plain', label: '.txt' },
 ];
 
 // Default settings values
@@ -70,7 +71,6 @@ const systemSettingsSchema = z.object({
 });
 
 export default function SystemSettingsForm() {
-  const { toast } = useToast();
   const {
     systemSettings: settings,
     fetchSystemSettings,
@@ -93,16 +93,12 @@ export default function SystemSettingsForm() {
       try {
         await fetchSystemSettings();
       } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to load system settings',
-          variant: 'destructive',
-        });
+        toast.error('Failed to load system settings');
       }
     };
 
     loadSettings();
-  }, []);
+  }, [fetchSystemSettings]);
 
   // Update form when settings are loaded
   useEffect(() => {
@@ -116,18 +112,11 @@ export default function SystemSettingsForm() {
       setIsSubmitting(true);
       await updateSystemSettings(data);
 
-      toast({
-        title: 'Success',
-        description: 'System settings have been updated successfully.',
-      });
+      toast.success('System settings have been updated successfully.');
 
       form.reset(data);
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to save settings',
-        variant: 'destructive',
-      });
+      toast.error(error.message || 'Failed to save settings');
     } finally {
       setIsSubmitting(false);
     }
@@ -137,10 +126,7 @@ export default function SystemSettingsForm() {
     setShowResetDialog(false);
     form.reset(DEFAULT_SETTINGS);
 
-    toast({
-      title: 'Settings Reset',
-      description: 'All settings have been reset to defaults. Click Save to apply changes.',
-    });
+    toast.success('All settings have been reset to defaults. Click Save to apply changes.', { duration: 5000 });
   };
 
   const handleSendTestEmail = async () => {
@@ -148,16 +134,9 @@ export default function SystemSettingsForm() {
       setIsSendingTestEmail(true);
       await api.post('/admin/settings/test-email');
 
-      toast({
-        title: 'Success',
-        description: 'Test email sent successfully. Check your inbox.',
-      });
+      toast.success('Test email sent successfully. Check your inbox.');
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error.response?.data?.error || 'Failed to send test email',
-        variant: 'destructive',
-      });
+      toast.error(error.response?.data?.error || 'Failed to send test email');
     } finally {
       setIsSendingTestEmail(false);
     }

@@ -1426,6 +1426,322 @@ const getDetailedReports = asyncHandler(async (req, res) => {
     });
 });
 
+/**
+ * @desc    Get department-wise statistics breakdown
+ * @route   GET /api/stats/department-breakdown
+ * @access  Private (SuperAdmin only)
+ */
+const getDepartmentBreakdown = asyncHandler(async (req, res) => {
+    const { role } = req.user;
+
+    if (role !== 'SuperAdmin') {
+        throw new AuthorizationError('Only SuperAdmin can access department breakdown');
+    }
+
+    // Get all departments
+    const departments = await Department.find({ isActive: true }).select('name _id');
+
+    // Calculate stats for each department
+    const departmentStats = await Promise.all(
+        departments.map(async (dept) => {
+            const deptId = dept._id;
+
+            // Total tickets
+            const totalTickets = await Ticket.countDocuments({ departmentId: deptId });
+
+            // Open tickets
+            const openTickets = await Ticket.countDocuments({
+                departmentId: deptId,
+                status: { $nin: ['Closed', 'Completed'] }
+            });
+
+            // Resolved tickets
+            const resolvedTickets = await Ticket.countDocuments({
+                departmentId: deptId,
+                status: { $in: ['Closed', 'Completed'] }
+            });
+
+            // SLA compliance
+            const slaStats = await Ticket.aggregate([
+                {
+                    $match: {
+                        departmentId: deptId,
+                        status: { $in: ['Completed', 'Closed'] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        total: { $sum: 1 },
+                        breached: { $sum: { $cond: [{ $eq: ['$slaBreach', true] }, 1, 0] } }
+                    }
+                }
+            ]);
+
+            const slaCompliance = slaStats.length > 0 && slaStats[0].total > 0
+                ? Math.round(((slaStats[0].total - slaStats[0].breached) / slaStats[0].total) * 100)
+                : 100;
+
+            // Average resolution time
+            const resolutionStats = await Ticket.aggregate([
+                {
+                    $match: {
+                        departmentId: deptId,
+                        status: { $in: ['Completed', 'Closed'] },
+                        resolvedAt: { $ne: null }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        avgTime: { $avg: { $subtract: ['$resolvedAt', '$createdAt'] } }
+                    }
+                }
+            ]);
+
+            const avgResolutionHours = resolutionStats.length > 0
+                ? Math.round(resolutionStats[0].avgTime / (1000 * 60 * 60))
+                : 0;
+
+            // Active agents in department
+            const activeAgents = await User.countDocuments({
+                department: deptId,
+                role: { $in: ['Admin', 'TeamMember'] },
+                isActive: true
+            });
+
+            return {
+                departmentId: deptId.toString(),
+                departmentName: dept.name,
+                totalTickets,
+                openTickets,
+                resolvedTickets,
+                slaCompliance,
+                avgResolutionHours,
+                activeAgents
+            };
+        })
+    );
+
+    // Calculate totals
+    const totals = departmentStats.reduce((acc, dept) => ({
+        totalTickets: acc.totalTickets + dept.totalTickets,
+        openTickets: acc.openTickets + dept.openTickets,
+        resolvedTickets: acc.resolvedTickets + dept.resolvedTickets,
+        activeAgents: acc.activeAgents + dept.activeAgents
+    }), { totalTickets: 0, openTickets: 0, resolvedTickets: 0, activeAgents: 0 });
+
+    // Overall SLA compliance
+    const overallSLA = await Ticket.aggregate([
+        {
+            $match: {
+                status: { $in: ['Completed', 'Closed'] }
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                total: { $sum: 1 },
+                breached: { $sum: { $cond: [{ $eq: ['$slaBreach', true] }, 1, 0] } }
+            }
+        }
+    ]);
+
+    totals.slaCompliance = overallSLA.length > 0 && overallSLA[0].total > 0
+        ? Math.round(((overallSLA[0].total - overallSLA[0].breached) / overallSLA[0].total) * 100)
+        : 100;
+
+    res.status(200).json({
+        success: true,
+        data: {
+            departments: departmentStats,
+            totals
+        }
+    });
+});
+
+/**
+ * @desc    Get personal performance stats for team member
+ * @route   GET /api/stats/my-performance
+ * @access  Private (TeamMember/Admin)
+ */
+const getMyPerformance = asyncHandler(async (req, res) => {
+    const { _id: userId, role } = req.user;
+
+    if (!['TeamMember', 'Admin', 'SuperAdmin'].includes(role)) {
+        throw new AuthorizationError('Not authorized to access personal performance stats');
+    }
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekStart = new Date(now);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+
+    // Total tickets assigned
+    const totalAssigned = await Ticket.countDocuments({ assignedTo: userId });
+
+    // Tickets resolved
+    const totalResolved = await Ticket.countDocuments({
+        assignedTo: userId,
+        status: { $in: ['Completed', 'Closed'] }
+    });
+
+    // Current active tickets
+    const activeTickets = await Ticket.countDocuments({
+        assignedTo: userId,
+        status: { $nin: ['Closed', 'Completed'] }
+    });
+
+    // Tickets completed today
+    const completedToday = await Ticket.countDocuments({
+        assignedTo: userId,
+        status: { $in: ['Completed', 'Closed'] },
+        resolvedAt: { $gte: todayStart }
+    });
+
+    // Tickets completed this week
+    const completedThisWeek = await Ticket.countDocuments({
+        assignedTo: userId,
+        status: { $in: ['Completed', 'Closed'] },
+        resolvedAt: { $gte: weekStart }
+    });
+
+    // Average response time (time to first comment)
+    const responseTimeStats = await Ticket.aggregate([
+        {
+            $match: {
+                assignedTo: new mongoose.Types.ObjectId(userId),
+                comments: { $exists: true, $ne: [] }
+            }
+        },
+        {
+            $project: {
+                responseTime: { $subtract: [{ $arrayElemAt: ['$comments.createdAt', 0] }, '$createdAt'] }
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                avgResponseTime: { $avg: '$responseTime' }
+            }
+        }
+    ]);
+
+    const avgResponseHours = responseTimeStats.length > 0
+        ? Math.round(responseTimeStats[0].avgResponseTime / (1000 * 60 * 60))
+        : 0;
+
+    // Average resolution time
+    const resolutionStats = await Ticket.aggregate([
+        {
+            $match: {
+                assignedTo: new mongoose.Types.ObjectId(userId),
+                status: { $in: ['Completed', 'Closed'] },
+                resolvedAt: { $ne: null }
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                avgTime: { $avg: { $subtract: ['$resolvedAt', '$createdAt'] } }
+            }
+        }
+    ]);
+
+    const avgResolutionHours = resolutionStats.length > 0
+        ? Math.round(resolutionStats[0].avgTime / (1000 * 60 * 60))
+        : 0;
+
+    // SLA compliance
+    const slaStats = await Ticket.aggregate([
+        {
+            $match: {
+                assignedTo: new mongoose.Types.ObjectId(userId),
+                status: { $in: ['Completed', 'Closed'] }
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                total: { $sum: 1 },
+                breached: { $sum: { $cond: [{ $eq: ['$slaBreach', true] }, 1, 0] } }
+            }
+        }
+    ]);
+
+    const slaCompliance = slaStats.length > 0 && slaStats[0].total > 0
+        ? Math.round(((slaStats[0].total - slaStats[0].breached) / slaStats[0].total) * 100)
+        : 100;
+
+    // First Contact Resolution
+    const fcrStats = await Ticket.aggregate([
+        {
+            $match: {
+                assignedTo: new mongoose.Types.ObjectId(userId),
+                status: { $in: ['Completed', 'Closed'] }
+            }
+        },
+        {
+            $project: {
+                commentCount: { $size: { $ifNull: ['$comments', []] } }
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                total: { $sum: 1 },
+                fcrCount: { $sum: { $cond: [{ $lte: ['$commentCount', 1] }, 1, 0] } }
+            }
+        }
+    ]);
+
+    const fcrPercentage = fcrStats.length > 0 && fcrStats[0].total > 0
+        ? Math.round((fcrStats[0].fcrCount / fcrStats[0].total) * 100)
+        : 0;
+
+    // Tickets by priority (current active)
+    const priorityBreakdown = await Ticket.aggregate([
+        {
+            $match: {
+                assignedTo: new mongoose.Types.ObjectId(userId),
+                status: { $nin: ['Closed', 'Completed'] }
+            }
+        },
+        {
+            $group: {
+                _id: '$priority',
+                count: { $sum: 1 }
+            }
+        }
+    ]);
+
+    const priorityStats = priorityBreakdown.reduce((acc, curr) => {
+        acc[curr._id] = curr.count;
+        return acc;
+    }, {});
+
+    // Calculate workload percentage (based on 10 tickets = 100% capacity)
+    const workloadPercentage = Math.min(Math.round((activeTickets / 10) * 100), 100);
+
+    res.status(200).json({
+        success: true,
+        data: {
+            totalAssigned,
+            totalResolved,
+            activeTickets,
+            completedToday,
+            completedThisWeek,
+            avgResponseHours,
+            avgResolutionHours,
+            slaCompliance,
+            fcrPercentage,
+            priorityStats,
+            workloadPercentage
+        }
+    });
+});
+
 // Import mongoose for ObjectId
 // const mongoose = require('mongoose');
 
@@ -1442,5 +1758,7 @@ module.exports = {
     getLeaderboard,
     getUserStats,
     getSystemHealth,
-    getAuditLog
+    getAuditLog,
+    getDepartmentBreakdown,
+    getMyPerformance
 };

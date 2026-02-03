@@ -16,6 +16,7 @@ import ticketService from '@/lib/services/ticketService';
 import useTicketStore from '@/store/ticketStore';
 import useSettingsStore from '@/store/settingsStore';
 import useTicketUpdates from '@/hooks/useTicketUpdates';
+import useAuth from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
 
 export default function TicketsPage() {
@@ -26,6 +27,8 @@ export default function TicketsPage() {
     const searchParams = useSearchParams();
     const searchQuery = searchParams.get('search') || '';
 
+    const { user } = useAuth();
+
     // Feature toggles from SystemSettings (default to true if not loaded)
     const features = systemSettings?.features || {};
     const showTableView = features.tableView !== false;
@@ -35,7 +38,41 @@ export default function TicketsPage() {
     // Fetch system settings on mount
     useEffect(() => {
         fetchSystemSettings().catch(() => { });
-    }, []);
+    }, [fetchSystemSettings]);
+
+    // Initialize filters from URL parameters
+    useEffect(() => {
+        const paramsFilter = {};
+        let hasParams = false;
+
+        const statusParam = searchParams.get('status');
+        if (statusParam) {
+            paramsFilter.status = statusParam.split(',');
+            hasParams = true;
+        }
+
+        const priorityParam = searchParams.get('priority');
+        if (priorityParam) {
+            paramsFilter.priority = priorityParam.split(',');
+            hasParams = true;
+        }
+
+        const slaStatusParam = searchParams.get('slaStatus');
+        if (slaStatusParam) {
+            paramsFilter.slaStatus = slaStatusParam.split(',');
+            hasParams = true;
+        }
+
+        const assignedToMe = searchParams.get('assignedToMe');
+        if (assignedToMe === 'true' && user?._id) {
+            paramsFilter.assignedTo = user._id;
+            hasParams = true;
+        }
+
+        if (hasParams) {
+            useTicketStore.getState().setFilters(paramsFilter);
+        }
+    }, [searchParams, user]);
 
     const fetchTickets = async (search = '', appliedFilters = {}) => {
         try {
@@ -68,6 +105,9 @@ export default function TicketsPage() {
             }
             if (appliedFilters.dateRange?.to) {
                 params.dateTo = appliedFilters.dateRange.to;
+            }
+            if (appliedFilters.slaStatus && appliedFilters.slaStatus.length > 0) {
+                params.slaStatus = appliedFilters.slaStatus.join(',');
             }
 
             const output = await ticketService.getTickets(params);

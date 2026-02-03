@@ -158,7 +158,7 @@ const seedDB = async () => {
         const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
         // Ticket Data Generators
-        const statuses = ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Closed'];
+        const statuses = ['New', 'Assigned', 'InProgress', 'Completed', 'Closed', 'Escalated'];
         const priorities = ['Low', 'Medium', 'High', 'Urgent'];
 
         const ticketsToCreate = [];
@@ -167,8 +167,7 @@ const seedDB = async () => {
         const activeCounts = {
             'New': 5,
             'Assigned': 8,
-            'InProgress': 12,
-            'Pending': 3
+            'InProgress': 15
         };
 
         for (const [status, count] of Object.entries(activeCounts)) {
@@ -252,7 +251,7 @@ const seedDB = async () => {
 
         for (const item of ticketsToCreate) {
             const creator = random(normalUsers);
-            const assignee = ['New', 'Pending'].includes(item.status) ? null : random(staffUsers);
+            const assignee = item.status === 'New' ? null : random(staffUsers);
             const categoryKey = random(Object.keys(catMap));
             const category = catMap[categoryKey];
             const dept = await Department.findById(category.departmentId); // Simplified fetch

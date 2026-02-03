@@ -31,6 +31,8 @@ export const API_ENDPOINTS = {
 
     // Analytics
     ANALYTICS: '/stats',
+
+
 };
 
 // User Roles
@@ -46,7 +48,6 @@ export const TICKET_STATUS = {
     NEW: 'New',
     ASSIGNED: 'Assigned',
     IN_PROGRESS: 'InProgress',
-    PENDING: 'Pending',
     COMPLETED: 'Completed',
     REOPENED: 'Reopened',
     CLOSED: 'Closed',

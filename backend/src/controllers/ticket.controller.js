@@ -1000,6 +1000,125 @@ const downloadAttachment = asyncHandler(async (req, res) => {
     throw new NotFoundError('File storage location not configured');
 });
 
+/**
+ * @desc    Escalate a ticket to higher authority
+ * @route   POST /api/tickets/:id/escalate
+ * @access  Private (TeamMember, Admin, SuperAdmin)
+ */
+const escalateTicket = asyncHandler(async (req, res) => {
+    const { reason, escalateTo } = req.body;
+
+    if (!reason) {
+        throw new ValidationError('Escalation reason is required');
+    }
+
+    const ticket = await Ticket.findById(req.params.id)
+        .populate('departmentId', 'name headUserId');
+
+    if (!ticket) throw new NotFoundError('Ticket not found');
+
+    // Permission check: must be assigned to ticket, or be Admin/SuperAdmin
+    const isAssigned = ticket.assignedTo?.toString() === req.user._id.toString();
+    const isStaff = ['SuperAdmin', 'Admin', 'TeamMember'].includes(req.user.role);
+
+    if (!isAssigned && !isStaff) {
+        throw new AuthorizationError('You do not have permission to escalate this ticket');
+    }
+
+    // Cannot escalate closed tickets
+    if (ticket.status === 'Closed') {
+        throw new ValidationError('Cannot escalate a closed ticket');
+    }
+
+    // Store previous assignee
+    const previousAssignee = ticket.assignedTo;
+
+    // Determine escalation target
+    let newAssignee = null;
+    let escalationTarget = escalateTo || 'supervisor';
+
+    if (escalateTo) {
+        // If specific user ID provided, use it
+        const targetUser = await User.findById(escalateTo);
+        if (targetUser) {
+            newAssignee = targetUser._id;
+        }
+    }
+
+    // If no specific target, escalate to department head
+    if (!newAssignee && ticket.departmentId?.headUserId) {
+        newAssignee = ticket.departmentId.headUserId;
+        escalationTarget = 'Department Head';
+    }
+
+    // Update ticket
+    ticket.status = 'Escalated';
+    ticket.escalatedAt = new Date();
+    ticket.escalatedBy = req.user._id;
+    ticket.escalationReason = reason;
+    ticket.escalationLevel = (ticket.escalationLevel || 0) + 1;
+    ticket.previousAssignee = previousAssignee;
+
+    if (newAssignee) {
+        ticket.assignedTo = newAssignee;
+    }
+
+    // Add to status history
+    ticket.addStatusHistory('Escalated', req.user._id, `Escalated to ${escalationTarget}: ${reason}`);
+
+    await ticket.save();
+
+    // Populate before returning
+    const populatedTicket = await Ticket.findById(ticket._id)
+        .populate('createdBy', 'name email employeeId department')
+        .populate('assignedTo', 'name email employeeId department')
+        .populate('previousAssignee', 'name email')
+        .populate('escalatedBy', 'name email')
+        .populate('departmentId', 'name description color headUserId')
+        .populate('categoryId', 'name')
+        .populate('comments.userId', 'name email role')
+        .populate('statusHistory.changedBy', 'name role');
+
+    // Notify new assignee
+    if (newAssignee) {
+        const notification = await Notification.create({
+            userId: newAssignee,
+            ticketId: ticket._id,
+            type: 'TicketEscalated',
+            message: `Ticket ${ticket.ticketId} has been escalated to you: ${reason}`
+        });
+
+        socketService.emitToUser(newAssignee, 'notification', notification);
+    }
+
+    // Notify ticket creator
+    if (ticket.createdBy.toString() !== req.user._id.toString()) {
+        const creatorNotification = await Notification.create({
+            userId: ticket.createdBy,
+            ticketId: ticket._id,
+            type: 'TicketEscalated',
+            message: `Your ticket ${ticket.ticketId} has been escalated for faster resolution`
+        });
+
+        socketService.emitToUser(ticket.createdBy, 'notification', creatorNotification);
+    }
+
+    // Broadcast update
+    socketService.emitToAll('ticketUpdated', {
+        ticketId: ticket._id,
+        status: 'Escalated',
+        assignedTo: ticket.assignedTo,
+        updatedBy: req.user._id,
+        updatedAt: ticket.updatedAt
+    });
+
+    res.status(200).json({
+        success: true,
+        message: 'Ticket escalated successfully',
+        data: populatedTicket
+    });
+});
+
 module.exports = {
     getTickets,
     getTicketById,
@@ -1015,5 +1134,6 @@ module.exports = {
     downloadAttachment,
     getTicketHistory,
     getMyTickets,
-    getAssignedTickets
+    getAssignedTickets,
+    escalateTicket
 };

@@ -96,7 +96,9 @@ const getPublicSettings = asyncHandler(async (req, res) => {
     timeFormat: settings.timeFormat,
     features: settings.features,
     maintenanceMode: settings.maintenanceMode,
-    maintenanceMessage: settings.maintenanceMode ? settings.maintenanceMessage : null
+    maintenanceMessage: settings.maintenanceMode ? settings.maintenanceMessage : null,
+    fileUploadMaxSize: settings.fileUploadMaxSize,
+    allowedFileTypes: settings.allowedFileTypes
   };
 
   res.status(200).json({

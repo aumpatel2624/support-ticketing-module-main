@@ -15,8 +15,8 @@ const STATUS_COLORS = {
     'New': 'hsl(217, 91%, 60%)',
     'Assigned': 'hsl(199, 89%, 48%)',
     'InProgress': 'hsl(38, 92%, 50%)',
-    'Pending': 'hsl(24, 95%, 50%)',
     'Completed': 'hsl(142, 76%, 36%)',
+    'Reopened': 'hsl(24, 95%, 50%)',
     'Closed': 'hsl(220, 13%, 40%)',
     'Escalated': 'hsl(0, 84.2%, 60.2%)',
 };

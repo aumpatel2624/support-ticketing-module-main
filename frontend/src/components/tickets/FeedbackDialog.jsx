@@ -15,20 +15,24 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import StarRating from './StarRating';
+import ConfirmStatusChangeModal from './ConfirmStatusChangeModal';
 import ticketService from '@/lib/services/ticketService';
 
 export default function FeedbackDialog({
     open,
     onOpenChange,
     ticketId,
+    ticketSubject,
     onFeedbackSubmitted
 }) {
     const [rating, setRating] = useState(0);
     const [feedback, setFeedback] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [action, setAction] = useState('close'); // 'close' or 'reopen'
+    const [showStatusConfirmModal, setShowStatusConfirmModal] = useState(false);
+    const [pendingFeedbackSubmit, setPendingFeedbackSubmit] = useState(null);
 
-    const handleSubmit = async (selectedAction) => {
+    const handleSubmitClick = (selectedAction) => {
         if (!rating) {
             toast.error('Please select a rating');
             return;
@@ -38,6 +42,16 @@ export default function FeedbackDialog({
             toast.error('Please provide feedback');
             return;
         }
+
+        // Show confirmation modal
+        setPendingFeedbackSubmit(selectedAction);
+        setShowStatusConfirmModal(true);
+    };
+
+    const handleSubmit = async () => {
+        if (!pendingFeedbackSubmit) return;
+
+        const selectedAction = pendingFeedbackSubmit;
 
         setIsSubmitting(true);
         try {
@@ -67,6 +81,8 @@ export default function FeedbackDialog({
             toast.error(error.message || 'Failed to submit feedback');
         } finally {
             setIsSubmitting(false);
+            setShowStatusConfirmModal(false);
+            setPendingFeedbackSubmit(null);
         }
     };
 
@@ -162,7 +178,7 @@ export default function FeedbackDialog({
                     </AlertDialogCancel>
                     <AlertDialogAction
                         disabled={isSubmitting || !rating || !feedback.trim()}
-                        onClick={() => handleSubmit(action)}
+                        onClick={() => handleSubmitClick(action)}
                         className={action === 'reopen' ? 'bg-orange-500 hover:bg-orange-600' : ''}
                     >
                         {isSubmitting && (
@@ -172,6 +188,20 @@ export default function FeedbackDialog({
                     </AlertDialogAction>
                 </div>
             </AlertDialogContent>
+
+            {/* Status Change Confirmation Modal */}
+            <ConfirmStatusChangeModal
+                isOpen={showStatusConfirmModal}
+                onClose={() => {
+                    setShowStatusConfirmModal(false);
+                    setPendingFeedbackSubmit(null);
+                }}
+                onConfirm={handleSubmit}
+                isLoading={isSubmitting}
+                ticketSubject={ticketSubject}
+                currentStatus="Completed"
+                newStatus={pendingFeedbackSubmit === 'close' ? 'Closed' : 'Reopened'}
+            />
         </AlertDialog>
     );
 }

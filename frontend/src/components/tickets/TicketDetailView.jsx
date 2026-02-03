@@ -38,8 +38,10 @@ import PageHeader from '@/components/common/PageHeader';
 import AttachmentList from './AttachmentList';
 import FileUpload from './FileUpload';
 import AssignTicketModal from './AssignTicketModal';
+import ConfirmStatusChangeModal from './ConfirmStatusChangeModal';
 import ActivityFeed from './ActivityFeed';
 import FeedbackDialog from './FeedbackDialog';
+import EscalateTicketDialog from './EscalateTicketDialog';
 import useAuth from '@/hooks/useAuth';
 import useTicketUpdates from '@/hooks/useTicketUpdates';
 import ticketService from '@/lib/services/ticketService';
@@ -57,7 +59,10 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [pendingStatus, setPendingStatus] = useState(null);
     const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+    const [showStatusConfirmModal, setShowStatusConfirmModal] = useState(false);
+    const [pendingStatusChange, setPendingStatusChange] = useState(null);
     const [assignmentMode, setAssignmentMode] = useState(null); // 'assign' or 'reassign'
+    const [showEscalateDialog, setShowEscalateDialog] = useState(false);
 
     if (!ticket) return <div>Ticket not found</div>;
 
@@ -105,7 +110,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
         }
     }, [ticket?.status, ticket?.feedbackGiven, ticket?.createdBy, user?._id, isReady]);
 
-    const handleStatusChange = async (newStatus) => {
+    const handleStatusChange = (newStatus) => {
         // Only allow status changes after component is ready (after mount)
         if (!isReady) {
             return;
@@ -117,28 +122,33 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
             return;
         }
 
-        // Debug: Log the status value being sent
-        console.log('Status change:', { newStatus, currentStatus: ticket.status, newStatusLength: newStatus?.length });
-
         // Validate that newStatus is one of the allowed values
-        const validStatuses = ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Reopened', 'Closed', 'Escalated'];
+        const validStatuses = ['New', 'Assigned', 'InProgress', 'Completed', 'Reopened', 'Closed', 'Escalated'];
         if (!validStatuses.includes(newStatus)) {
-            console.error('Invalid status:', newStatus, 'Valid statuses:', validStatuses);
             toast.error('Invalid status value');
             return;
         }
 
-        // If changing to "Assigned" and ticket is unassigned, show assign modal
+        // If changing to "Assigned" and ticket is unassigned, show assign modal instead
         if (newStatus === 'Assigned' && !ticket.assignedTo) {
             setPendingStatus(newStatus);
             setShowAssignModal(true);
             return;
         }
 
+        // Show confirmation modal
+        setPendingStatusChange({ newStatus });
+        setShowStatusConfirmModal(true);
+    };
+
+    const handleConfirmStatusChange = async () => {
+        if (!pendingStatusChange?.newStatus) return;
+
+        const newStatus = pendingStatusChange.newStatus;
+
         try {
             setIsUpdatingStatus(true);
             const updateData = { status: newStatus };
-            console.log('Sending status update:', updateData);
             const response = await ticketService.updateTicket(ticket._id, updateData);
             // Update local ticket state with the response
             if (response.data) {
@@ -153,6 +163,8 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
             toast.error('Failed to update ticket status');
         } finally {
             setIsUpdatingStatus(false);
+            setShowStatusConfirmModal(false);
+            setPendingStatusChange(null);
         }
     };
 
@@ -208,7 +220,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
     };
 
     const handleEscalate = () => {
-        handleStatusChange('Escalated');
+        setShowEscalateDialog(true);
     };
 
     const handleCloseTicket = () => {
@@ -445,7 +457,6 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                                 <SelectItem value="New">New</SelectItem>
                                                 <SelectItem value="Assigned">Assigned</SelectItem>
                                                 <SelectItem value="InProgress">In Progress</SelectItem>
-                                                <SelectItem value="Pending">Pending</SelectItem>
                                                 <SelectItem value="Completed">Completed</SelectItem>
                                                 <SelectItem value="Reopened">Reopened</SelectItem>
                                                 <SelectItem value="Closed">Closed</SelectItem>
@@ -529,6 +540,20 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                 </div>
             </div>
 
+            {/* Status Change Confirmation Modal */}
+            <ConfirmStatusChangeModal
+                isOpen={showStatusConfirmModal}
+                onClose={() => {
+                    setShowStatusConfirmModal(false);
+                    setPendingStatusChange(null);
+                }}
+                onConfirm={handleConfirmStatusChange}
+                isLoading={isUpdatingStatus}
+                ticketSubject={ticket.subject}
+                currentStatus={ticket.status}
+                newStatus={pendingStatusChange?.newStatus}
+            />
+
             {/* Assign/Reassign Ticket Modal */}
             <AssignTicketModal
                 isOpen={showAssignModal}
@@ -551,7 +576,25 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                 open={showFeedbackDialog}
                 onOpenChange={setShowFeedbackDialog}
                 ticketId={ticket._id}
+                ticketSubject={ticket.subject}
                 onFeedbackSubmitted={() => {
+                    // Refetch ticket to get updated status
+                    ticketService.getTicket(ticket._id)
+                        .then((response) => {
+                            setTicket(response.data || response);
+                        })
+                        .catch((error) => {
+                            console.error('Failed to refetch ticket:', error);
+                        });
+                }}
+            />
+
+            {/* Escalate Ticket Dialog */}
+            <EscalateTicketDialog
+                open={showEscalateDialog}
+                onOpenChange={setShowEscalateDialog}
+                ticket={ticket}
+                onSuccess={() => {
                     // Refetch ticket to get updated status
                     ticketService.getTicket(ticket._id)
                         .then((response) => {

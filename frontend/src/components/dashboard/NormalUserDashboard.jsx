@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Plus, Loader2, Calendar, MessageSquare, AlertCircle, Clock, CheckCircle2, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,10 @@ export default function NormalUserDashboard({ user }) {
   });
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('dashboard');
+
+  // Pan-to-scroll state
+  const scrollContainerRef = useRef(null);
+  const panStateRef = useRef({ isPanning: false, startX: 0, scrollLeft: 0 });
 
   useEffect(() => {
     const loadData = async () => {
@@ -92,8 +96,8 @@ export default function NormalUserDashboard({ user }) {
     [TICKET_STATUS.NEW]: [],
     [TICKET_STATUS.ASSIGNED]: [],
     [TICKET_STATUS.IN_PROGRESS]: [],
-    [TICKET_STATUS.PENDING]: [],
     [TICKET_STATUS.COMPLETED]: [],
+    [TICKET_STATUS.ESCALATED]: [],
     [TICKET_STATUS.CLOSED]: [],
     // catch-all for others if needed, using a generic 'Other' or sticking to main flow
   };
@@ -118,6 +122,60 @@ export default function NormalUserDashboard({ user }) {
       default: return 'text-slate-600 bg-slate-100';
     }
   };
+
+  // Handle pan-to-scroll on container mouse down
+  const handleContainerMouseDown = useCallback((e) => {
+    // Ignore if target is an interactive element (button, link, input, etc.)
+    if (
+      e.target.tagName === 'BUTTON' ||
+      e.target.tagName === 'A' ||
+      e.target.tagName === 'INPUT' ||
+      e.target.closest('button') ||
+      e.target.closest('a') ||
+      e.target.closest('[role="button"]')
+    ) {
+      return;
+    }
+
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    panStateRef.current.isPanning = true;
+    panStateRef.current.startX = e.clientX;
+    panStateRef.current.scrollLeft = container.scrollLeft;
+  }, []);
+
+  // Handle pan-to-scroll mouse move globally
+  const handlePanMouseMove = useCallback((e) => {
+    if (!panStateRef.current.isPanning) return;
+
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const deltaX = e.clientX - panStateRef.current.startX;
+    container.scrollLeft = panStateRef.current.scrollLeft - deltaX;
+  }, []);
+
+  // Handle pan-to-scroll mouse up globally
+  const handlePanMouseUp = useCallback(() => {
+    panStateRef.current.isPanning = false;
+  }, []);
+
+  // Setup pan-to-scroll event listeners
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener('mousedown', handleContainerMouseDown);
+    document.addEventListener('mousemove', handlePanMouseMove);
+    document.addEventListener('mouseup', handlePanMouseUp);
+
+    return () => {
+      container.removeEventListener('mousedown', handleContainerMouseDown);
+      document.removeEventListener('mousemove', handlePanMouseMove);
+      document.removeEventListener('mouseup', handlePanMouseUp);
+    };
+  }, [handleContainerMouseDown, handlePanMouseMove, handlePanMouseUp]);
 
   if (loading) {
     return (
@@ -241,8 +299,8 @@ export default function NormalUserDashboard({ user }) {
     { id: TICKET_STATUS.NEW, label: 'New', color: 'bg-blue-500/10 border-blue-500/20 text-blue-700' },
     { id: TICKET_STATUS.ASSIGNED, label: 'Assigned', color: 'bg-purple-500/10 border-purple-500/20 text-purple-700' },
     { id: TICKET_STATUS.IN_PROGRESS, label: 'In Progress', color: 'bg-amber-500/10 border-amber-500/20 text-amber-700' },
-    { id: TICKET_STATUS.PENDING, label: 'Pending', color: 'bg-orange-500/10 border-orange-500/20 text-orange-700' },
     { id: TICKET_STATUS.COMPLETED, label: 'Resolved', color: 'bg-green-500/10 border-green-500/20 text-green-700' },
+    { id: TICKET_STATUS.ESCALATED, label: 'Escalated', color: 'bg-red-500/10 border-red-500/20 text-red-700' },
     { id: TICKET_STATUS.CLOSED, label: 'Closed', color: 'bg-slate-500/10 border-slate-500/20 text-slate-700' },
   ];
 
@@ -269,8 +327,12 @@ export default function NormalUserDashboard({ user }) {
       </div>
 
       {/* Kanban Board */}
-      <div className="flex-1 overflow-x-auto pb-4">
-        <div className="flex h-full gap-6 min-w-max px-2">
+      <div className="flex flex-col-reverse flex-1">
+        <div
+          ref={scrollContainerRef}
+          className="flex overflow-x-auto pb-4 h-full gap-6 min-w-max px-2 cursor-grab active:cursor-grabbing select-none"
+          data-scrollable="true"
+        >
           {kanbanColumns.map(col => (
             <div key={col.id} className="w-80 flex flex-col gap-4">
               {/* Column Header */}

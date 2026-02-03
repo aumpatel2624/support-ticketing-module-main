@@ -5,51 +5,71 @@ import Link from 'next/link';
 import {
     Users,
     Settings,
-    Database,
-    Activity,
     Server,
     Shield,
-    BarChart3
+    Building2,
+    Ticket,
+    CheckCircle,
+    AlertCircle,
+    Clock,
+    TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import AdminDashboard from './AdminDashboard';
-import StatsCard from './StatsCard';
+import analyticsService from '@/lib/services/analyticsService';
 import api from '@/lib/api';
 import { API_ENDPOINTS } from '@/lib/constants';
 import toast from 'react-hot-toast';
 
-// Platform Stats Card Component
-function PlatformStatCard({ title, value, subtext, icon: Icon, trend, trendDirection, alert = false, className }) {
+// Department Stats Card Component
+function DepartmentCard({ department }) {
+    const slaColor = department.slaCompliance >= 90 ? 'text-success' :
+        department.slaCompliance >= 70 ? 'text-warning' : 'text-destructive';
+
     return (
-        <Card className={cn(
-            "border-none shadow-premium bg-card overflow-hidden",
-            alert && "border-l-4 border-l-destructive",
-            className
-        )}>
+        <Card className="border-none shadow-premium bg-card overflow-hidden hover:shadow-lg transition-shadow">
             <CardContent className="p-5">
-                <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{title}</p>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-extrabold">{value}</span>
-                            {trend !== undefined && (
-                                <span className={cn(
-                                    "flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold",
-                                    trendDirection === 'up' ? "text-success bg-success/10" : "text-destructive bg-destructive/10"
-                                )}>
-                                    {trendDirection === 'up' ? '↑' : '↓'} {trend}%
-                                </span>
-                            )}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                <Building2 className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg">{department.departmentName}</h3>
+                                <p className="text-xs text-muted-foreground">{department.activeAgents} agents</p>
+                            </div>
                         </div>
-                        {subtext && (
-                            <p className="text-xs text-muted-foreground">{subtext}</p>
-                        )}
                     </div>
-                    <div className="h-10 w-10 rounded-xl bg-secondary/50 flex items-center justify-center">
-                        <Icon className="h-5 w-5 text-muted-foreground" />
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">Total</p>
+                            <p className="text-xl font-bold">{department.totalTickets}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">Open</p>
+                            <p className="text-xl font-bold text-blue-500">{department.openTickets}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">Resolved</p>
+                            <p className="text-xl font-bold text-success">{department.resolvedTickets}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">Avg Resolution</p>
+                            <p className="text-xl font-bold">{department.avgResolutionHours}h</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">SLA Compliance</span>
+                            <span className={cn("font-bold", slaColor)}>{department.slaCompliance}%</span>
+                        </div>
+                        <Progress value={department.slaCompliance} className="h-2" />
                     </div>
                 </div>
             </CardContent>
@@ -57,38 +77,95 @@ function PlatformStatCard({ title, value, subtext, icon: Icon, trend, trendDirec
     );
 }
 
+// Platform Totals Banner Component
+function PlatformTotalsBanner({ totals, loading }) {
+    if (loading) {
+        return (
+            <Card className="border-none shadow-premium bg-gradient-to-r from-primary/5 via-background to-primary/5">
+                <CardContent className="p-6">
+                    <div className="grid gap-4 md:grid-cols-5">
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <div key={i} className="h-16 rounded-lg animate-pulse bg-muted" />
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <Card className="border-none shadow-premium bg-gradient-to-r from-primary/5 via-background to-primary/5">
+            <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    Platform-Wide Statistics
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+                <div className="grid gap-4 md:grid-cols-5">
+                    <Link href="/tickets" className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
+                        <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                            <Ticket className="h-5 w-5 text-blue-500" />
+                        </div>
+                        <div>
+                            <p className="text-2xl font-extrabold">{totals.totalTickets}</p>
+                            <p className="text-xs text-muted-foreground">Total Tickets</p>
+                        </div>
+                    </Link>
+
+                    <Link href="/tickets?status=New,Assigned,InProgress" className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
+                        <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                            <Clock className="h-5 w-5 text-warning" />
+                        </div>
+                        <div>
+                            <p className="text-2xl font-extrabold">{totals.openTickets}</p>
+                            <p className="text-xs text-muted-foreground">Open Tickets</p>
+                        </div>
+                    </Link>
+
+                    <Link href="/tickets?status=Completed,Closed" className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
+                        <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
+                            <CheckCircle className="h-5 w-5 text-success" />
+                        </div>
+                        <div>
+                            <p className="text-2xl font-extrabold">{totals.resolvedTickets}</p>
+                            <p className="text-xs text-muted-foreground">Resolved</p>
+                        </div>
+                    </Link>
+
+                    <Link href="/users" className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
+                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Users className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                            <p className="text-2xl font-extrabold">{totals.activeAgents}</p>
+                            <p className="text-xs text-muted-foreground">Active Agents</p>
+                        </div>
+                    </Link>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function SuperAdminDashboard({ user }) {
-    const [platformStats, setPlatformStats] = useState({
-        totalUsers: 0,
-        totalDepartments: 0,
-        totalCategories: 0,
-        activeSessions: 0
-    });
+    const [departmentBreakdown, setDepartmentBreakdown] = useState({ departments: [], totals: {} });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchPlatformStats = async () => {
+        const fetchDepartmentStats = async () => {
             try {
                 setLoading(true);
-                const response = await api.get(`${API_ENDPOINTS.ANALYTICS}/system/health`);
-                if (response.data?.success) {
-                    const { database, users, system } = response.data.data;
-                    setPlatformStats({
-                        totalUsers: database?.users || 0,
-                        totalDepartments: database?.departments || 0,
-                        totalCategories: database?.categories || 0,
-                        activeSessions: users?.onlineAgents || 0
-                    });
-                }
+                const data = await analyticsService.getDepartmentBreakdown();
+                setDepartmentBreakdown(data);
             } catch (error) {
-                console.error('Error fetching platform stats:', error);
-                // Don't show error toast, as SystemHealthBanner will handle it
+                console.error('Error fetching department breakdown:', error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchPlatformStats();
+        fetchDepartmentStats();
     }, []);
 
     return (
@@ -107,7 +184,7 @@ export default function SuperAdminDashboard({ user }) {
                         </div>
                     </div>
                     <p className="text-muted-foreground text-lg max-w-[600px]">
-                        Welcome back, <span className="font-bold text-foreground">{user?.name}</span>. 
+                        Welcome back, <span className="font-bold text-foreground">{user?.name}</span>.
                         Complete platform oversight and system management.
                     </p>
                 </div>
@@ -121,6 +198,46 @@ export default function SuperAdminDashboard({ user }) {
                 </div>
             </div>
 
+            {/* Platform Totals Banner */}
+            <PlatformTotalsBanner totals={departmentBreakdown.totals} loading={loading} />
+
+            {/* Department Breakdown Section */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold">Department Overview</h2>
+                        <p className="text-muted-foreground">Statistics breakdown by department</p>
+                    </div>
+                    <Button variant="outline" className="rounded-xl" asChild>
+                        <Link href="/departments">
+                            <Building2 className="mr-2 h-4 w-4" />
+                            Manage Departments
+                        </Link>
+                    </Button>
+                </div>
+
+                {loading ? (
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="h-64 rounded-2xl animate-pulse bg-muted" />
+                        ))}
+                    </div>
+                ) : departmentBreakdown.departments.length > 0 ? (
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {departmentBreakdown.departments.map((dept) => (
+                            <DepartmentCard key={dept.departmentId} department={dept} />
+                        ))}
+                    </div>
+                ) : (
+                    <Card className="border-none shadow-premium">
+                        <CardContent className="p-12 text-center">
+                            <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                            <h3 className="text-lg font-bold">No Departments Found</h3>
+                            <p className="text-muted-foreground">Create departments to see statistics here.</p>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
 
             {/* Admin Dashboard Content - Inherited */}
             <AdminDashboard user={user} />

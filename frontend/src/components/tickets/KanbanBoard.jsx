@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
     DndContext,
     closestCorners,
@@ -18,8 +18,9 @@ import ticketService from '@/lib/services/ticketService';
 import KanbanColumn from './KanbanColumn';
 import KanbanCard from './KanbanCard';
 import AssignTicketModal from './AssignTicketModal';
+import ConfirmStatusChangeModal from './ConfirmStatusChangeModal';
 
-const STATUSES = ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Reopened', 'Closed', 'Escalated'];
+const STATUSES = ['New', 'Assigned', 'InProgress', 'Completed', 'Reopened', 'Closed', 'Escalated'];
 
 /**
  * KanbanBoard - Main Kanban view component with drag-and-drop ticket management
@@ -31,6 +32,12 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
     const [activeId, setActiveId] = useState(null);
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [pendingTicketUpdate, setPendingTicketUpdate] = useState(null);
+    const [showStatusConfirmModal, setShowStatusConfirmModal] = useState(false);
+    const [pendingStatusChange, setPendingStatusChange] = useState(null);
+
+    // Pan-to-scroll state
+    const scrollContainerRef = useRef(null);
+    const panStateRef = useRef({ isPanning: false, startX: 0, scrollLeft: 0 });
 
     // Check if current user is staff (can drag and modify)
     const isStaff = user && ['Admin', 'TeamMember', 'SuperAdmin'].includes(user.role);
@@ -69,8 +76,8 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
         // Optional: Add visual feedback when dragging over columns
     };
 
-    // Handle drag end (status update)
-    const handleDragEnd = async (event) => {
+    // Handle drag end (show confirmation modal)
+    const handleDragEnd = (event) => {
         const { active, over } = event;
         setActiveId(null);
 
@@ -89,32 +96,50 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
             if (overTicket) {
                 newStatus = overTicket.status;
             } else {
-                // If distinct from status and not a ticket, cancel
                 return;
             }
         }
 
-        // Validate status transition if needed
+        // Validate status transition
         if (ticket.status === newStatus) return;
 
-        // If dragging to "Assigned" status
+        // If dragging to "Assigned" status, show assign modal first
         if (newStatus === 'Assigned') {
-            // Case 1: Admin/SuperAdmin -> Show modal to choose assignee
             if (user && ['Admin', 'SuperAdmin'].includes(user.role)) {
                 setPendingTicketUpdate({ ticketId, newStatus });
                 setShowAssignModal(true);
                 return;
-            }
-            // Case 2: TeamMember -> Auto-assign to self
-            else if (user && user.role === 'TeamMember') {
-                // Auto-assign to self
-                handleAssignUser(user);
+            } else if (user && user.role === 'TeamMember') {
+                // Show confirmation for TeamMember self-assign
+                setPendingStatusChange({ ticketId, ticketSubject: ticket.subject, currentStatus: ticket.status, newStatus });
+                setShowStatusConfirmModal(true);
                 return;
             } else {
-                // Non-staff cannot assign
                 toast.error('You do not have permission to assign tickets.');
                 return;
             }
+        }
+
+        // Show confirmation modal for other status changes
+        setPendingStatusChange({ ticketId, ticketSubject: ticket.subject, currentStatus: ticket.status, newStatus });
+        setShowStatusConfirmModal(true);
+    };
+
+    // Handle confirmed status change
+    const handleConfirmStatusChange = async () => {
+        if (!pendingStatusChange) return;
+
+        const { ticketId, newStatus } = pendingStatusChange;
+        const ticket = tickets.find((t) => t._id === ticketId);
+
+        if (!ticket) return;
+
+        // If it's an Assigned status and user is TeamMember, auto-assign to self
+        if (newStatus === 'Assigned' && user && user.role === 'TeamMember') {
+            await handleAssignUser(user);
+            setShowStatusConfirmModal(false);
+            setPendingStatusChange(null);
+            return;
         }
 
         // Optimistic update
@@ -128,7 +153,7 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
         setIsUpdating(ticketId);
         try {
             await ticketService.updateTicketStatus(ticketId, newStatus);
-            toast.success('Ticket status updated');
+            toast.success('Ticket status updated successfully');
         } catch (error) {
             console.error('Failed to update ticket status:', error);
             toast.error('Failed to update ticket status');
@@ -141,6 +166,8 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
             );
         } finally {
             setIsUpdating(null);
+            setShowStatusConfirmModal(false);
+            setPendingStatusChange(null);
         }
     };
 
@@ -217,6 +244,60 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
         }
     };
 
+    // Handle pan-to-scroll on container mouse down
+    const handleContainerMouseDown = useCallback((e) => {
+        // Ignore if target is an interactive element (button, link, input, etc.)
+        if (
+            e.target.tagName === 'BUTTON' ||
+            e.target.tagName === 'A' ||
+            e.target.tagName === 'INPUT' ||
+            e.target.closest('button') ||
+            e.target.closest('a') ||
+            e.target.closest('[role="button"]')
+        ) {
+            return;
+        }
+
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        panStateRef.current.isPanning = true;
+        panStateRef.current.startX = e.clientX;
+        panStateRef.current.scrollLeft = container.scrollLeft;
+    }, []);
+
+    // Handle pan-to-scroll mouse move globally
+    const handlePanMouseMove = useCallback((e) => {
+        if (!panStateRef.current.isPanning) return;
+
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const deltaX = e.clientX - panStateRef.current.startX;
+        container.scrollLeft = panStateRef.current.scrollLeft - deltaX;
+    }, []);
+
+    // Handle pan-to-scroll mouse up globally
+    const handlePanMouseUp = useCallback(() => {
+        panStateRef.current.isPanning = false;
+    }, []);
+
+    // Setup pan-to-scroll event listeners
+    useEffect(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        container.addEventListener('mousedown', handleContainerMouseDown);
+        document.addEventListener('mousemove', handlePanMouseMove);
+        document.addEventListener('mouseup', handlePanMouseUp);
+
+        return () => {
+            container.removeEventListener('mousedown', handleContainerMouseDown);
+            document.removeEventListener('mousemove', handlePanMouseMove);
+            document.removeEventListener('mouseup', handlePanMouseUp);
+        };
+    }, [handleContainerMouseDown, handlePanMouseMove, handlePanMouseUp]);
+
     // Get active ticket for drag overlay
     const activeTicket = activeId ? tickets.find((t) => t._id === activeId) : null;
 
@@ -239,16 +320,22 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-200px)]">
-                {STATUSES.map((status) => (
-                    <KanbanColumn
-                        key={status}
-                        status={status}
-                        tickets={getTicketsByStatus(status)}
-                        onMenuAction={handleMenuAction}
-                        isStaff={isStaff}
-                    />
-                ))}
+            <div className="flex flex-col-reverse gap-4 h-[calc(100vh-200px)]">
+                <div
+                    ref={scrollContainerRef}
+                    className="flex gap-4 overflow-x-auto pb-4 cursor-grab active:cursor-grabbing select-none"
+                    data-scrollable="true"
+                >
+                    {STATUSES.map((status) => (
+                        <KanbanColumn
+                            key={status}
+                            status={status}
+                            tickets={getTicketsByStatus(status)}
+                            onMenuAction={handleMenuAction}
+                            isStaff={isStaff}
+                        />
+                    ))}
+                </div>
             </div>
             <DragOverlay dropAnimation={dropAnimation}>
                 {activeTicket ? (
@@ -259,6 +346,20 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
                     />
                 ) : null}
             </DragOverlay>
+
+            {/* Status Change Confirmation Modal */}
+            <ConfirmStatusChangeModal
+                isOpen={showStatusConfirmModal}
+                onClose={() => {
+                    setShowStatusConfirmModal(false);
+                    setPendingStatusChange(null);
+                }}
+                onConfirm={handleConfirmStatusChange}
+                isLoading={isUpdating === pendingStatusChange?.ticketId}
+                ticketSubject={pendingStatusChange?.ticketSubject}
+                currentStatus={pendingStatusChange?.currentStatus}
+                newStatus={pendingStatusChange?.newStatus}
+            />
 
             {/* Assignment Modal */}
             <AssignTicketModal

@@ -15,7 +15,8 @@ const {
     downloadAttachment,
     getTicketHistory,
     getMyTickets,
-    getAssignedTickets
+    getAssignedTickets,
+    escalateTicket
 } = require('../controllers/ticket.controller');
 const { authenticate } = require('../middleware/auth');
 const { requireAdmin, requireSuperAdmin, requireTeamMember } = require('../middleware/rbac');
@@ -29,7 +30,8 @@ const {
     addCommentSchema,
     rateTicketSchema,
     submitFeedbackSchema,
-    ticketListQuerySchema
+    ticketListQuerySchema,
+    escalateTicketSchema
 } = require('../validators/ticket.validator');
 const { objectIdSchema, nestedObjectIdSchema } = require('../validators/user.validator');
 
@@ -394,5 +396,41 @@ router.get('/:id/attachments/:attachmentId/download', authenticate, validatePara
  *         description: Ticket history retrieved
  */
 router.get('/:id/history', authenticate, validateParams(objectIdSchema), getTicketHistory);
+
+/**
+ * @swagger
+ * /tickets/{id}/escalate:
+ *   post:
+ *     summary: Escalate ticket
+ *     description: Escalate a ticket to higher authority (Department Head, Admin)
+ *     tags: [Tickets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reason
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 description: Reason for escalation
+ *               escalateTo:
+ *                 type: string
+ *                 description: User ID to escalate to (optional)
+ *     responses:
+ *       200:
+ *         description: Ticket escalated successfully
+ */
+router.post('/:id/escalate', authenticate, requireTeamMember, validateParams(objectIdSchema), validateBody(escalateTicketSchema), escalateTicket);
 
 module.exports = router;

@@ -32,7 +32,7 @@ const mongoose = require('mongoose');
  *           enum: [Low, Medium, High, Urgent]
  *         status:
  *           type: string
- *           enum: [New, Assigned, InProgress, Pending, Completed, Reopened, Closed, Escalated]
+ *           enum: [New, Assigned, InProgress, Completed, Reopened, Closed, Escalated]
  *         createdBy:
  *           type: string
  *           description: User who created the ticket
@@ -115,7 +115,7 @@ const attachmentSchema = new mongoose.Schema({
 const statusHistorySchema = new mongoose.Schema({
     status: {
         type: String,
-        enum: ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Reopened', 'Closed', 'Escalated'],
+        enum: ['New', 'Assigned', 'InProgress', 'Completed', 'Reopened', 'Closed', 'Escalated'],
         required: true
     },
     changedBy: {
@@ -171,7 +171,7 @@ const ticketSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Reopened', 'Closed', 'Escalated'],
+        enum: ['New', 'Assigned', 'InProgress', 'Completed', 'Reopened', 'Closed', 'Escalated'],
         default: 'New',
         index: true
     },
@@ -223,6 +223,30 @@ const ticketSchema = new mongoose.Schema({
     },
     closedAt: {
         type: Date,
+        default: null
+    },
+    // Escalation tracking
+    escalatedAt: {
+        type: Date,
+        default: null
+    },
+    escalatedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    escalationReason: {
+        type: String,
+        trim: true,
+        default: null
+    },
+    escalationLevel: {
+        type: Number,
+        default: 0
+    },
+    previousAssignee: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
         default: null
     }
 }, {
@@ -354,9 +378,9 @@ ticketSchema.methods.canTransitionTo = function (newStatus) {
     const transitions = {
         'New': ['Assigned', 'Closed'],
         'Assigned': ['InProgress', 'New', 'Closed'],
-        'InProgress': ['Pending', 'Completed', 'Escalated', 'Closed'],
-        'Pending': ['InProgress', 'Completed', 'Closed'],
-        'Completed': ['Closed', 'InProgress'],
+        'InProgress': ['Completed', 'Escalated', 'Closed'],
+        'Completed': ['Closed', 'Reopened'],
+        'Reopened': ['InProgress', 'Assigned', 'Closed'],
         'Closed': [],
         'Escalated': ['Assigned', 'InProgress', 'Closed']
     };

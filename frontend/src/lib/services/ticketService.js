@@ -201,7 +201,21 @@ const ticketService = {
             feedbackData
         );
         return response.data;
+    },
+
+    /**
+     * Escalate a ticket to higher authority
+     * @param {string} ticketId
+     * @param {Object} escalationData - { reason, escalateTo? }
+     */
+    async escalateTicket(ticketId, escalationData) {
+        const response = await api.post(
+            `${API_ENDPOINTS.TICKETS}/${ticketId}/escalate`,
+            escalationData
+        );
+        return response.data;
     }
 };
 
 export default ticketService;
+

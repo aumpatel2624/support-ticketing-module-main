@@ -23,7 +23,7 @@ export default function TeamMemberDashboard({ user }) {
         completedToday: 0,
         currentWorkload: 0,
         firstResponseTime: '0h',
-        reopenRate: 0,
+        fcrPercentage: 0,
         weeklyTarget: 0,
         slaCompliance: 0
     });
@@ -33,63 +33,36 @@ export default function TeamMemberDashboard({ user }) {
         const loadDashboardData = async () => {
             try {
                 setLoading(true);
-                const [statsData, ticketsData] = await Promise.all([
-                    analyticsService.getDashboardStats(),
-                    ticketService.getAssignedTickets({ limit: 100 })
+
+                // Fetch personal performance stats and tickets in parallel
+                const [performanceData, ticketsData] = await Promise.all([
+                    analyticsService.getMyPerformance().catch(err => {
+                        console.warn('Failed to load personal performance:', err);
+                        return null;
+                    }),
+                    ticketService.getAssignedTickets({ limit: 100 }).catch(err => {
+                        console.warn('Failed to load tickets:', err);
+                        return { data: [] };
+                    })
                 ]);
 
-                if (statsData) {
-                    // Calculate additional metrics from tickets
+                // Set stats from the dedicated my-performance API
+                if (performanceData) {
+                    // Calculate in-progress from tickets
                     const ticketArray = Array.isArray(ticketsData?.data) ? ticketsData.data : (Array.isArray(ticketsData) ? ticketsData : []);
-
-                    const now = new Date();
-                    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                    const weekStart = new Date(now);
-                    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-
-                    const completedToday = ticketArray.filter(t =>
-                        t.completedAt && new Date(t.completedAt) >= todayStart
-                    ).length;
-
-                    const completedThisWeek = ticketArray.filter(t =>
-                        t.completedAt && new Date(t.completedAt) >= weekStart
-                    ).length;
-
-                    const reopenedTickets = ticketArray.filter(t =>
-                        t.statusHistory && t.statusHistory.filter(h => h.newStatus === 'Completed' || h.newStatus === 'Closed').length > 1
-                    ).length;
-
-                    const reopenRate = ticketArray.length > 0
-                        ? Math.round((reopenedTickets / ticketArray.length) * 100)
-                        : 0;
-
-                    const activeTickets = ticketArray.filter(t =>
-                        t.status !== 'Completed' && t.status !== 'Closed'
-                    ).length;
-
-                    const currentWorkload = activeTickets > 0
-                        ? Math.min(Math.round((activeTickets / 10) * 100), 100)
-                        : 0;
-
-                    const slaBreached = ticketArray.filter(t =>
-                        t.slaStatus === 'Breached'
-                    ).length;
-
-                    const slaCompliance = ticketArray.length > 0
-                        ? Math.round(((ticketArray.length - slaBreached) / ticketArray.length) * 100)
-                        : 100;
+                    const inProgressCount = ticketArray.filter(t => t.status === 'InProgress').length;
 
                     setStats({
-                        assigned: statsData.totalTickets || 0,
-                        inProgress: statsData.statusStats?.['InProgress'] || 0,
-                        completed: statsData.resolvedTickets || 0,
-                        avgResolution: statsData.avgResolutionTime ? `${statsData.avgResolutionTime}h` : '0h',
-                        completedToday,
-                        currentWorkload,
-                        firstResponseTime: statsData.avgResponseTime ? `${statsData.avgResponseTime}h` : '0h',
-                        reopenRate,
-                        weeklyTarget: completedThisWeek,
-                        slaCompliance
+                        assigned: performanceData.totalAssigned || 0,
+                        inProgress: inProgressCount,
+                        completed: performanceData.totalResolved || 0,
+                        avgResolution: performanceData.avgResolutionHours ? `${performanceData.avgResolutionHours}h` : '0h',
+                        completedToday: performanceData.completedToday || 0,
+                        currentWorkload: performanceData.workloadPercentage || 0,
+                        firstResponseTime: performanceData.avgResponseHours ? `${performanceData.avgResponseHours}h` : '0h',
+                        fcrPercentage: performanceData.fcrPercentage || 0,
+                        weeklyTarget: performanceData.completedThisWeek || 0,
+                        slaCompliance: performanceData.slaCompliance || 100
                     });
                 }
 
@@ -175,18 +148,21 @@ export default function TeamMemberDashboard({ user }) {
                     value={stats.assigned}
                     icon={ClipboardList}
                     description="Total active tickets"
+                    href="/tickets?assignedToMe=true"
                 />
                 <StatsCard
                     title="In Progress"
                     value={stats.inProgress}
                     icon={PlayCircle}
                     className="bg-blue-50/50 dark:bg-blue-900/10"
+                    href="/tickets?status=InProgress&assignedToMe=true"
                 />
                 <StatsCard
                     title="Completed"
                     value={stats.completed}
                     icon={CheckCircle2}
                     className="bg-green-50/50 dark:bg-green-900/10"
+                    href="/tickets?status=Completed,Closed&assignedToMe=true"
                 />
                 <StatsCard
                     title="Avg Resolution"
@@ -253,14 +229,14 @@ export default function TeamMemberDashboard({ user }) {
                     <CardContent className="p-5">
                         <div className="flex items-start justify-between">
                             <div className="space-y-2">
-                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Reopen Rate</p>
+                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">First Contact Resolution</p>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-2xl font-extrabold">{stats.reopenRate}%</span>
+                                    <span className="text-2xl font-extrabold">{stats.fcrPercentage}%</span>
                                 </div>
-                                <p className="text-xs text-muted-foreground">of completed tickets</p>
+                                <p className="text-xs text-muted-foreground">resolved on first response</p>
                             </div>
-                            <div className="h-10 w-10 rounded-xl bg-orange/10 flex items-center justify-center">
-                                <AlertCircle className="h-5 w-5 text-orange-500" />
+                            <div className="h-10 w-10 rounded-xl bg-success/10 flex items-center justify-center">
+                                <Target className="h-5 w-5 text-success" />
                             </div>
                         </div>
                     </CardContent>

@@ -35,7 +35,7 @@ const updateTicketSchema = z.object({
         .optional(),
     priority: z.enum(['Low', 'Medium', 'High', 'Urgent'])
         .optional(),
-    status: z.enum(['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Reopened', 'Closed', 'Escalated'])
+    status: z.enum(['New', 'Assigned', 'InProgress', 'Completed', 'Reopened', 'Closed', 'Escalated'])
         .optional(),
     assignedTo: z.string()
         .regex(/^[0-9a-fA-F]{24}$/, 'Invalid user ID format')
@@ -45,7 +45,7 @@ const updateTicketSchema = z.object({
 
 // Update status schema
 const updateStatusSchema = z.object({
-    status: z.enum(['New', 'Assigned', 'InProgress', 'Pending', 'Completed', 'Reopened', 'Closed', 'Escalated']),
+    status: z.enum(['New', 'Assigned', 'InProgress', 'Completed', 'Reopened', 'Closed', 'Escalated']),
     comment: z.string()
         .max(500, 'Comment must not exceed 500 characters')
         .trim()
@@ -114,6 +114,17 @@ const ticketListQuerySchema = z.object({
     dateTo: z.string().optional()
 });
 
+// Escalate ticket schema
+const escalateTicketSchema = z.object({
+    reason: z.string()
+        .min(5, 'Escalation reason must be at least 5 characters')
+        .max(500, 'Reason must not exceed 500 characters')
+        .trim(),
+    escalateTo: z.string()
+        .regex(/^[0-9a-fA-F]{24}$/, 'Invalid user ID format')
+        .optional()
+});
+
 module.exports = {
     createTicketSchema,
     updateTicketSchema,
@@ -122,5 +133,6 @@ module.exports = {
     addCommentSchema,
     rateTicketSchema,
     submitFeedbackSchema,
-    ticketListQuerySchema
+    ticketListQuerySchema,
+    escalateTicketSchema
 };
