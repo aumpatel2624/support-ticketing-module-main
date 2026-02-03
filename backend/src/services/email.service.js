@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const emailTemplateService = require('./emailTemplateService');
+const logger = require('../utils/logger');
 
 /**
  * Email Service using Nodemailer
@@ -32,10 +33,10 @@ class EmailService {
 
         try {
             const info = await this.transporter.sendMail(mailOptions);
-            console.log('Email sent: %s', info.messageId);
+            logger.info(`Email sent: ${info.messageId}`);
             return info;
         } catch (error) {
-            console.error('Error sending email:', error);
+            logger.error(`Error sending email: ${error}`);
             // Don't throw error to not interrupt main flow, just log it
             return null;
         }

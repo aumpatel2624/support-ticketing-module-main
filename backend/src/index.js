@@ -1,4 +1,5 @@
 require('dotenv').config();
+const logger = require('./utils/logger');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -14,6 +15,8 @@ const app = express();
 
 // Connect to database
 connectDB();
+// Initialize Redis
+require('./config/redis');
 
 // Security middleware
 app.use(helmet());
@@ -79,8 +82,10 @@ socketService.init(server);
 
 if (process.env.NODE_ENV !== 'test') {
   server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`API Docs available at http://localhost:${PORT}/api-docs`);
+    const logger = require('./utils/logger'); // Ensure this is required if not already
+    // ... inside server.listen
+    logger.info(`Server running on port ${PORT}`);
+    logger.info(`API Docs available at http://localhost:${PORT}/api-docs`);
   });
 }
 

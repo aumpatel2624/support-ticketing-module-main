@@ -23,12 +23,12 @@ export function useNotifications() {
             socket.emit('join', user._id);
 
             // Handle new notification
-            const unsubscribeNotification = onSocketEvent('notification', (notification) => {
+            const cleanupNotification = onSocketEvent('notification', (notification) => {
                 addNotification(notification);
             });
 
             // Handle notification read status update
-            const unsubscribeNotificationRead = onSocketEvent(
+            const cleanupNotificationRead = onSocketEvent(
                 'notification_read',
                 (notificationId) => {
                     markAsRead(notificationId);
@@ -36,8 +36,8 @@ export function useNotifications() {
             );
 
             return () => {
-                unsubscribeNotification?.();
-                unsubscribeNotificationRead?.();
+                cleanupNotification?.();
+                cleanupNotificationRead?.();
             };
         } catch (error) {
             console.error('Failed to initialize notifications:', error);

@@ -116,14 +116,14 @@ const NotificationListener = () => {
             });
         };
 
-        // Listen for events
-        onSocketEvent('notification', handleNotification);
-        onSocketEvent('ticket_created', handleTicketCreated);
+        // Listen for events - now returns cleanup functions
+        const cleanupNotification = onSocketEvent('notification', handleNotification);
+        const cleanupTicketCreated = onSocketEvent('ticket_created', handleTicketCreated);
 
         // Cleanup
         return () => {
-            offSocketEvent('notification', handleNotification);
-            offSocketEvent('ticket_created', handleTicketCreated);
+            cleanupNotification?.();
+            cleanupTicketCreated?.();
         };
     }, [addNotification]);
 

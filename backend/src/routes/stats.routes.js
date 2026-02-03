@@ -19,7 +19,7 @@ const {
 } = require('../controllers/stats.controller');
 const { authenticate } = require('../middleware/auth');
 const { requireAdmin, requireSuperAdmin, requireTeamMember } = require('../middleware/rbac');
-
+const cache = require('../middleware/cache');
 /**
  * @swagger
  * tags:
@@ -40,7 +40,7 @@ const { requireAdmin, requireSuperAdmin, requireTeamMember } = require('../middl
  *       200:
  *         description: Dashboard statistics retrieved
  */
-router.get('/dashboard', authenticate, getDashboardStats);
+router.get('/dashboard', authenticate, cache(60), getDashboardStats);
 
 /**
  * @swagger
@@ -62,7 +62,7 @@ router.get('/dashboard', authenticate, getDashboardStats);
  *       200:
  *         description: Trends data retrieved
  */
-router.get('/trends', authenticate, requireAdmin, getTicketTrends);
+router.get('/trends', authenticate, requireAdmin, cache(300), getTicketTrends);
 
 /**
  * @swagger
@@ -77,7 +77,7 @@ router.get('/trends', authenticate, requireAdmin, getTicketTrends);
  *       200:
  *         description: Agent stats retrieved
  */
-router.get('/agents', authenticate, requireAdmin, getAgentStats);
+router.get('/agents', authenticate, requireAdmin, cache(60), getAgentStats);
 
 /**
  * @swagger
@@ -92,7 +92,7 @@ router.get('/agents', authenticate, requireAdmin, getAgentStats);
  *       200:
  *         description: Critical tickets retrieved
  */
-router.get('/critical-tickets', authenticate, requireTeamMember, getCriticalTickets);
+router.get('/critical-tickets', authenticate, requireTeamMember, cache(60), getCriticalTickets);
 
 /**
  * @swagger
@@ -107,7 +107,7 @@ router.get('/critical-tickets', authenticate, requireTeamMember, getCriticalTick
  *       200:
  *         description: Category stats retrieved
  */
-router.get('/categories', authenticate, requireAdmin, getCategoryStats);
+router.get('/categories', authenticate, requireAdmin, cache(300), getCategoryStats);
 
 /**
  * @swagger
@@ -122,7 +122,7 @@ router.get('/categories', authenticate, requireAdmin, getCategoryStats);
  *       200:
  *         description: SLA performance data retrieved
  */
-router.get('/sla-performance', authenticate, requireAdmin, getSLAPerformance);
+router.get('/sla-performance', authenticate, requireAdmin, cache(60), getSLAPerformance);
 
 /**
  * @swagger
@@ -137,7 +137,7 @@ router.get('/sla-performance', authenticate, requireAdmin, getSLAPerformance);
  *       200:
  *         description: Peak hours data retrieved
  */
-router.get('/peak-hours', authenticate, requireAdmin, getPeakHours);
+router.get('/peak-hours', authenticate, requireAdmin, cache(300), getPeakHours);
 
 /**
  * @swagger

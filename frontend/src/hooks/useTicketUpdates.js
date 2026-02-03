@@ -15,7 +15,6 @@ export default function useTicketUpdates(onUpdate) {
 
         // Listen for ticket updates
         const unsubscribe = onSocketEvent('ticketUpdated', (data) => {
-            console.log('Ticket updated via socket:', data);
             onUpdate(data);
         });
 

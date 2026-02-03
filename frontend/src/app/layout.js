@@ -26,6 +26,7 @@ export const metadata = {
 };
 
 import PageTitleUpdater from "@/components/common/PageTitleUpdater";
+import LogSuppressor from "@/components/common/LogSuppressor";
 
 export default function RootLayout({ children }) {
   return (
@@ -33,6 +34,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${inter.variable} ${outfit.variable} antialiased`}
       >
+        <LogSuppressor />
         <PageTitleUpdater />
         <RouteGuard>
           {children}

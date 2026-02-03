@@ -28,20 +28,20 @@ export const initSocket = (token) => {
         });
 
         socket.on('connect', () => {
-            console.log('Socket connected:', socket.id);
+            // Socket connected
         });
 
         socket.on('connect_error', (error) => {
-            console.error('Socket connection error:', error);
+            // Silent error for socket connection
         });
 
         socket.on('disconnect', () => {
-            console.log('Socket disconnected');
+            // Socket disconnected
         });
 
         return socket;
     } catch (error) {
-        console.error('Failed to initialize socket:', error);
+        // Silent initialization error
         socket = null;
         return null;
     }
@@ -79,7 +79,9 @@ export const emitSocketEvent = (event, data) => {
 export const onSocketEvent = (event, callback) => {
     if (socket) {
         socket.on(event, callback);
+        return () => socket.off(event, callback);
     }
+    return () => {};
 };
 
 /**

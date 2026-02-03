@@ -5,6 +5,7 @@ let io;
  */
 const init = (server) => {
     const { Server } = require('socket.io');
+    const logger = require('../utils/logger');
 
     // Parse origins from environment variable (comma-separated)
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -20,37 +21,36 @@ const init = (server) => {
 
     // Add logging middleware
     io.use((socket, next) => {
-        console.log(`Socket attempting connection: ${socket.id} (handshake: ${JSON.stringify(socket.handshake.query)})`);
+        // Removed sensitive handshake query log
         next();
     });
 
     io.on('connection', (socket) => {
-        console.log('User connected:', socket.id);
-        console.log('Socket Handshake Auth:', socket.handshake.auth);
-        console.log('Socket Handshake Headers:', socket.handshake.headers);
+        logger.info(`User connected: ${socket.id}`);
+        // Removed sensitive auth and headers logs
 
         // Join room based on user role/id if needed
         socket.on('join', (userId) => {
             socket.join(userId);
-            console.log(`User ${userId} joined their personal room`);
+            logger.info(`User ${userId} joined their personal room`);
         });
 
         socket.on('join_department', (deptId) => {
             socket.join(`dept_${deptId}`);
-            console.log(`User joined department room: dept_${deptId}`);
+            logger.info(`User joined department room: dept_${deptId}`);
         });
 
         socket.on('join_ticket', (ticketId) => {
             socket.join(`ticket_${ticketId}`);
-            console.log(`User joined ticket room: ticket_${ticketId}`);
+            logger.info(`User joined ticket room: ticket_${ticketId}`);
         });
 
         socket.on('disconnect', (reason) => {
-            console.log(`User disconnected: ${socket.id}. Reason: ${reason}`);
+            logger.info(`User disconnected: ${socket.id}. Reason: ${reason}`);
         });
 
         socket.on('error', (err) => {
-            console.error(`Socket error for ${socket.id}:`, err);
+            logger.error(`Socket error for ${socket.id}: ${err}`);
         });
     });
 

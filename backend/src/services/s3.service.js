@@ -17,7 +17,7 @@ class S3Service {
     this.folderPrefix = process.env.S3_FOLDER_PREFIX || 'tickets/';
     this.presignedUrlExpiry = parseInt(process.env.PRESIGNED_URL_EXPIRY || 3600);
   }
-x
+
   /**
    * Upload file to S3
    * @param {Buffer} fileBuffer - File content

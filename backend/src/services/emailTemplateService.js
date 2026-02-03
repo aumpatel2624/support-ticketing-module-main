@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const logger = require('../utils/logger');
 
 /**
  * Email Template Service
@@ -29,7 +30,7 @@ class EmailTemplateService {
             this.cache.set(templateName, content);
             return content;
         } catch (error) {
-            console.error(`Failed to load template: ${templateName}`, error);
+            logger.error(`Failed to load template: ${templateName} - ${error}`);
             throw new Error(`Template not found: ${templateName}`);
         }
     }
@@ -120,7 +121,7 @@ class EmailTemplateService {
                 .filter(file => file.endsWith('.html'))
                 .map(file => file.replace('.html', ''));
         } catch (error) {
-            console.error('Failed to list templates:', error);
+            logger.error(`Failed to list templates: ${error}`);
             return [];
         }
     }

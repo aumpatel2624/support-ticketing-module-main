@@ -127,11 +127,9 @@ export default function TicketCardView({ tickets, onTicketUpdate }) {
         switch (action) {
             case 'assign':
                 // TODO: Open assign dialog
-                console.log('Assign ticket:', ticket._id);
                 break;
             case 'priority':
                 // TODO: Open priority change dialog
-                console.log('Change priority:', ticket._id);
                 break;
             case 'copy':
                 navigator.clipboard.writeText(ticket);

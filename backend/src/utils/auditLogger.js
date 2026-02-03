@@ -1,4 +1,5 @@
 const AuditLog = require('../models/AuditLog');
+const logger = require('./logger');
 
 /**
  * Log a system action
@@ -37,7 +38,7 @@ const logAudit = async ({
 
         await AuditLog.create(auditData);
     } catch (error) {
-        console.error('Audit Logging Error:', error);
+        logger.error(`Audit Logging Error: ${error}`);
         // Silent fail to not interrupt main flow
     }
 };

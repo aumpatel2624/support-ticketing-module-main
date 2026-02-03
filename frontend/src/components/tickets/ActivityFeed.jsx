@@ -100,7 +100,7 @@ export default function ActivityFeed({ ticket, onCommentAdded }) {
             setTimeline(newTimeline);
             setUsersMap(newUsersMap);
         } catch (error) {
-            console.error('Failed to refetch ticket:', error);
+            toast.error('Failed to refetch ticket updates');
         } finally {
             setIsRefetching(false);
         }
@@ -114,10 +114,8 @@ export default function ActivityFeed({ ticket, onCommentAdded }) {
         emitSocketEvent('join_ticket', ticket._id);
 
         // Listen for new comments
-        const handleNewComment = () => {
-            console.log('New comment received');
+            // New comment received
             refetchTicketAsync();
-        };
 
         onSocketEvent('new_comment', handleNewComment);
 

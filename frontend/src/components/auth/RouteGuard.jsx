@@ -25,7 +25,7 @@ export default function RouteGuard({ children }) {
         if (isAuthenticated && token && user) {
             try {
                 initSocket(token);
-                console.log('Socket.io initialized');
+                // console.log('Socket.io initialized');
 
                 // Join user's personal room
                 emitSocketEvent('join', user._id);
