@@ -60,8 +60,14 @@ const getTickets = asyncHandler(async (req, res) => {
     // SuperAdmin sees everything (no filter added)
 
     // Query-based filters
-    if (status) filter.status = status;
-    if (priority) filter.priority = priority;
+    if (status) {
+        const statuses = Array.isArray(status) ? status : status.split(',');
+        filter.status = statuses.length === 1 ? statuses[0] : { $in: statuses };
+    }
+    if (priority) {
+        const priorities = Array.isArray(priority) ? priority : priority.split(',');
+        filter.priority = priorities.length === 1 ? priorities[0] : { $in: priorities };
+    }
     if (departmentId) filter.departmentId = departmentId;
     if (categoryId) filter.categoryId = categoryId;
     if (assignedTo) filter.assignedTo = assignedTo;
@@ -803,8 +809,14 @@ const getMyTickets = asyncHandler(async (req, res) => {
     };
 
     // Optional filters
-    if (status) filter.status = status;
-    if (priority) filter.priority = priority;
+    if (status) {
+        const statuses = Array.isArray(status) ? status : status.split(',');
+        filter.status = statuses.length === 1 ? statuses[0] : { $in: statuses };
+    }
+    if (priority) {
+        const priorities = Array.isArray(priority) ? priority : priority.split(',');
+        filter.priority = priorities.length === 1 ? priorities[0] : { $in: priorities };
+    }
 
     // Search filter
     if (search) {
@@ -862,8 +874,14 @@ const getAssignedTickets = asyncHandler(async (req, res) => {
     };
 
     // Optional filters
-    if (status) filter.status = status;
-    if (priority) filter.priority = priority;
+    if (status) {
+        const statuses = Array.isArray(status) ? status : status.split(',');
+        filter.status = statuses.length === 1 ? statuses[0] : { $in: statuses };
+    }
+    if (priority) {
+        const priorities = Array.isArray(priority) ? priority : priority.split(',');
+        filter.priority = priorities.length === 1 ? priorities[0] : { $in: priorities };
+    }
 
     // Search filter
     if (search) {

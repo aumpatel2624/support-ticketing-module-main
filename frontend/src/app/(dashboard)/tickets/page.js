@@ -49,10 +49,10 @@ export default function TicketsPage() {
 
             // Add filter parameters
             if (appliedFilters.status && appliedFilters.status.length > 0) {
-                params.status = appliedFilters.status[0]; // API accepts single status
+                params.status = appliedFilters.status.join(',');
             }
             if (appliedFilters.priority && appliedFilters.priority.length > 0) {
-                params.priority = appliedFilters.priority[0]; // API accepts single priority
+                params.priority = appliedFilters.priority.join(',');
             }
             if (appliedFilters.department) {
                 params.departmentId = appliedFilters.department;

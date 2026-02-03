@@ -7,6 +7,7 @@ const Category = require('../models/Category');
 const Ticket = require('../models/Ticket');
 const Notification = require('../models/Notification');
 const AuditLog = require('../models/AuditLog');
+const SystemSettings = require('../models/SystemSettings');
 
 const seedDB = async () => {
     try {
@@ -21,17 +22,39 @@ const seedDB = async () => {
             Category.deleteMany({}),
             Ticket.deleteMany({}),
             Notification.deleteMany({}),
-            AuditLog.deleteMany({})
+            AuditLog.deleteMany({}),
+            SystemSettings.deleteMany({})
         ]);
         console.log('✓ All data cleared');
+
+        // ========== STEP 1.5: Seed System Settings ==========
+        console.log('\n--- Seeding System Settings ---');
+        await SystemSettings.create({
+            companyName: 'Apidel Technologies',
+            companyLogo: null,
+            brandColor: '#3b82f6',
+            slaDefaults: {
+                lowPriority: 72,
+                mediumPriority: 48,
+                highPriority: 24,
+                criticalPriority: 4
+            },
+            features: {
+                kanbanView: true,
+                cardView: true,
+                tableView: true,
+                darkMode: false
+            }
+        });
+        console.log('✓ System Settings created');
 
         // ========== STEP 2: Create SuperAdmin ==========
         console.log('\n--- Creating SuperAdmin ---');
         const superAdmin = await User.create({
             employeeId: 'EMP0001',
             name: 'Alice Superadmin',
-            email: 'superadmin@apideltech.com',
-            password: 'Password123',
+            email: 'superadmin@test.com',
+            password: '123456',
             role: 'SuperAdmin',
             permissions: {
                 canAddMembers: true,
@@ -92,21 +115,21 @@ const seedDB = async () => {
             {
                 employeeId: 'EMP0002',
                 name: 'John IT Head',
-                email: 'john.head@apideltech.com',
+                email: 'it.head@test.com',
                 department: 'IT',
                 role: 'Admin'
             },
             {
                 employeeId: 'EMP0003',
                 name: 'Sarah HR Head',
-                email: 'sarah.head@apideltech.com',
+                email: 'hr.head@test.com',
                 department: 'HR',
                 role: 'Admin'
             },
             {
                 employeeId: 'EMP0004',
                 name: 'Michael FM Head',
-                email: 'michael.head@apideltech.com',
+                email: 'fm.head@test.com',
                 department: 'Facility Management',
                 role: 'Admin'
             }
@@ -118,7 +141,7 @@ const seedDB = async () => {
                 employeeId: headData.employeeId,
                 name: headData.name,
                 email: headData.email,
-                password: 'Password123',
+                password: '123456',
                 role: headData.role,
                 department: departments[headData.department]._id,
                 permissions: {
@@ -146,39 +169,39 @@ const seedDB = async () => {
             {
                 employeeId: 'EMP0005',
                 name: 'David Support',
-                email: 'david.support@apideltech.com',
+                email: 'it.support1@test.com',
                 department: 'IT'
             },
             {
                 employeeId: 'EMP0006',
                 name: 'Emma Support',
-                email: 'emma.support@apideltech.com',
+                email: 'it.support2@test.com',
                 department: 'IT'
             },
             // HR Team Members
             {
                 employeeId: 'EMP0007',
                 name: 'Robert Recruiter',
-                email: 'robert.recruiter@apideltech.com',
+                email: 'hr.support1@test.com',
                 department: 'HR'
             },
             {
                 employeeId: 'EMP0008',
                 name: 'Lisa Payroll',
-                email: 'lisa.payroll@apideltech.com',
+                email: 'hr.support2@test.com',
                 department: 'HR'
             },
             // Facility Management Team Members
             {
                 employeeId: 'EMP0009',
                 name: 'James Maintenance',
-                email: 'james.maintenance@apideltech.com',
+                email: 'fm.support1@test.com',
                 department: 'Facility Management'
             },
             {
                 employeeId: 'EMP0010',
                 name: 'Patricia Security',
-                email: 'patricia.security@apideltech.com',
+                email: 'fm.support2@test.com',
                 department: 'Facility Management'
             }
         ];
@@ -189,7 +212,7 @@ const seedDB = async () => {
                 employeeId: memberData.employeeId,
                 name: memberData.name,
                 email: memberData.email,
-                password: 'Password123',
+                password: '123456',
                 role: 'TeamMember',
                 department: departments[memberData.department]._id,
                 permissions: {
@@ -213,17 +236,17 @@ const seedDB = async () => {
             {
                 employeeId: 'EMP0011',
                 name: 'Tom Employee',
-                email: 'tom.employee@apideltech.com'
+                email: 'user1@test.com'
             },
             {
                 employeeId: 'EMP0012',
                 name: 'Jennifer Employee',
-                email: 'jennifer.employee@apideltech.com'
+                email: 'user2@test.com'
             },
             {
                 employeeId: 'EMP0013',
                 name: 'Mark Employee',
-                email: 'mark.employee@apideltech.com'
+                email: 'user3@test.com'
             }
         ];
 
@@ -233,7 +256,7 @@ const seedDB = async () => {
                 employeeId: userData.employeeId,
                 name: userData.name,
                 email: userData.email,
-                password: 'Password123',
+                password: '123456',
                 role: 'NormalUser',
                 department: departments['IT']._id, // Default department
                 permissions: {
@@ -458,22 +481,22 @@ const seedDB = async () => {
         console.log('\nLogin Credentials (All Users):');
         console.log('─────────────────────────────────────────────────────────────');
         console.log('SUPERADMIN:');
-        console.log('  superadmin@apideltech.com / Password123');
+        console.log('  superadmin@test.com / 123456');
         console.log('\nDEPARTMENT HEADS (Admin role):');
-        console.log('  john.head@apideltech.com / Password123 (IT)');
-        console.log('  sarah.head@apideltech.com / Password123 (HR)');
-        console.log('  michael.head@apideltech.com / Password123 (Facility Management)');
+        console.log('  it.head@test.com / 123456 (IT)');
+        console.log('  hr.head@test.com / 123456 (HR)');
+        console.log('  fm.head@test.com / 123456 (Facility Management)');
         console.log('\nTEAM MEMBERS:');
-        console.log('  david.support@apideltech.com / Password123 (IT)');
-        console.log('  emma.support@apideltech.com / Password123 (IT)');
-        console.log('  robert.recruiter@apideltech.com / Password123 (HR)');
-        console.log('  lisa.payroll@apideltech.com / Password123 (HR)');
-        console.log('  james.maintenance@apideltech.com / Password123 (Facility Management)');
-        console.log('  patricia.security@apideltech.com / Password123 (Facility Management)');
+        console.log('  it.support1@test.com / 123456 (IT)');
+        console.log('  it.support2@test.com / 123456 (IT)');
+        console.log('  hr.support1@test.com / 123456 (HR)');
+        console.log('  hr.support2@test.com / 123456 (HR)');
+        console.log('  fm.support1@test.com / 123456 (Facility Management)');
+        console.log('  fm.support2@test.com / 123456 (Facility Management)');
         console.log('\nNORMAL USERS:');
-        console.log('  tom.employee@apideltech.com / Password123');
-        console.log('  jennifer.employee@apideltech.com / Password123');
-        console.log('  mark.employee@apideltech.com / Password123');
+        console.log('  user1@test.com / 123456');
+        console.log('  user2@test.com / 123456');
+        console.log('  user3@test.com / 123456');
         console.log('─────────────────────────────────────────────────────────────');
 
         process.exit(0);

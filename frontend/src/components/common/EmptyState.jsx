@@ -1,4 +1,5 @@
 import { FileQuestion } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export default function EmptyState({
@@ -24,7 +25,9 @@ export default function EmptyState({
             </p>
             {action && (
                 <div className="mt-2">
-                    {action}
+                    <Button variant="outline" onClick={action.onClick}>
+                        {action.label}
+                    </Button>
                 </div>
             )}
         </div>
