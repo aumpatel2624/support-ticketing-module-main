@@ -39,6 +39,7 @@ export default function AssignTicketModal({
         if (isOpen && users.length === 0) {
             fetchUsers();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- Only fetch when modal opens
     }, [isOpen]);
 
     const fetchUsers = async () => {

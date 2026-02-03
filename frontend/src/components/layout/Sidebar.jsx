@@ -57,7 +57,7 @@ export default function Sidebar({ isMobile = false }) {
     // Fetch system settings on mount
     useEffect(() => {
         fetchSystemSettings().catch(() => { });
-    }, []);
+    }, [fetchSystemSettings]);
 
     // Force expanded if mobile, otherwise use store state
     const isCollapsed = isMobile ? false : sidebarCollapsed;
