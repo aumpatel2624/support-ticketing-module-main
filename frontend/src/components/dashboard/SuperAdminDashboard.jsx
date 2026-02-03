@@ -9,8 +9,7 @@ import {
     Activity,
     Server,
     Shield,
-    BarChart3,
-    Filter
+    BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -113,10 +112,6 @@ export default function SuperAdminDashboard({ user }) {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button variant="outline" className="rounded-xl h-12 px-6">
-                        <Filter className="mr-2 h-4 w-4" />
-                        Filter
-                    </Button>
                     <Button className="rounded-xl h-12 px-6 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20" asChild>
                         <Link href="/settings/system">
                             <Settings className="mr-2 h-4 w-4" />
