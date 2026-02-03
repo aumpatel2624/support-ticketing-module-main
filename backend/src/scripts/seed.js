@@ -17,12 +17,12 @@ const DEPARTMENTS = [
 ];
 
 const CATEGORIES = [
-    { name: 'Hardware', departmentName: 'IT Support', priority: 'High', sla: 24 },
-    { name: 'Software', departmentName: 'IT Support', priority: 'Medium', sla: 48 },
-    { name: 'Network', departmentName: 'IT Support', priority: 'High', sla: 12 },
-    { name: 'Access', departmentName: 'IT Support', priority: 'Urgent', sla: 4 },
-    { name: 'Payroll', departmentName: 'HR', priority: 'High', sla: 48 },
-    { name: 'Leave', departmentName: 'HR', priority: 'Low', sla: 72 }
+    { name: 'Hardware', departmentName: 'IT Support', priority: 'High' },
+    { name: 'Software', departmentName: 'IT Support', priority: 'Medium' },
+    { name: 'Network', departmentName: 'IT Support', priority: 'High' },
+    { name: 'Access', departmentName: 'IT Support', priority: 'Urgent' },
+    { name: 'Payroll', departmentName: 'HR', priority: 'High' },
+    { name: 'Leave', departmentName: 'HR', priority: 'Low' }
 ];
 
 const USERS = [
@@ -144,7 +144,6 @@ const seedDB = async () => {
                 name: cat.name,
                 departmentId: dept._id,
                 defaultPriority: cat.priority,
-                defaultSLA: cat.sla,
                 description: `${cat.name} issues for ${cat.departmentName}`,
                 createdBy: superAdmin._id
             });

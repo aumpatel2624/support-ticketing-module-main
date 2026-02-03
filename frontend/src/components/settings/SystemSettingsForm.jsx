@@ -51,6 +51,12 @@ const DEFAULT_SETTINGS = {
   inAppNotificationsEnabled: true,
   fileUploadMaxSize: 5,
   allowedFileTypes: ['image/jpeg', 'image/png', 'application/pdf'],
+  slaDefaults: {
+    lowPriority: 72,
+    mediumPriority: 48,
+    highPriority: 24,
+    urgentPriority: 4
+  }
 };
 
 // Simplified Validation Schema
@@ -68,6 +74,14 @@ const systemSettingsSchema = z.object({
   // File Upload
   fileUploadMaxSize: z.number().int().min(1, 'Minimum 1 MB').max(100),
   allowedFileTypes: z.array(z.string()).min(1, 'Select at least one file type'),
+
+  // SLA Defaults
+  slaDefaults: z.object({
+    lowPriority: z.number().int().min(1, 'Minimum 1 hour').max(720, 'Maximum 720 hours'),
+    mediumPriority: z.number().int().min(1, 'Minimum 1 hour').max(720, 'Maximum 720 hours'),
+    highPriority: z.number().int().min(1, 'Minimum 1 hour').max(720, 'Maximum 720 hours'),
+    urgentPriority: z.number().int().min(1, 'Minimum 1 hour').max(720, 'Maximum 720 hours')
+  }).optional()
 });
 
 export default function SystemSettingsForm() {
@@ -157,10 +171,11 @@ export default function SystemSettingsForm() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="email">Email</TabsTrigger>
               <TabsTrigger value="files">Files</TabsTrigger>
+              <TabsTrigger value="sla">SLA</TabsTrigger>
             </TabsList>
 
             {/* General Tab */}
@@ -362,6 +377,131 @@ export default function SystemSettingsForm() {
                       </FormItem>
                     )}
                   />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* SLA Tab */}
+            <TabsContent value="sla" className="space-y-6 mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>SLA Configuration</CardTitle>
+                  <CardDescription>Set response time deadlines (in hours) for each ticket priority level. These determine when a ticket is considered &quot;at risk&quot; or &quot;breached&quot;.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={control}
+                      name="slaDefaults.lowPriority"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <span className="inline-block w-3 h-3 rounded-full bg-green-500"></span>
+                            Low Priority
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="72"
+                              min="1"
+                              max="720"
+                              {...field}
+                              value={field.value ?? 72}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 72)}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            {field.value ? `${(field.value / 24).toFixed(1)} days` : '3 days'} deadline
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={control}
+                      name="slaDefaults.mediumPriority"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <span className="inline-block w-3 h-3 rounded-full bg-yellow-500"></span>
+                            Medium Priority
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="48"
+                              min="1"
+                              max="720"
+                              {...field}
+                              value={field.value ?? 48}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 48)}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            {field.value ? `${(field.value / 24).toFixed(1)} days` : '2 days'} deadline
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={control}
+                      name="slaDefaults.highPriority"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <span className="inline-block w-3 h-3 rounded-full bg-orange-500"></span>
+                            High Priority
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="24"
+                              min="1"
+                              max="720"
+                              {...field}
+                              value={field.value ?? 24}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 24)}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            {field.value ? `${(field.value / 24).toFixed(1)} days` : '1 day'} deadline
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={control}
+                      name="slaDefaults.urgentPriority"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <span className="inline-block w-3 h-3 rounded-full bg-red-500"></span>
+                            Urgent Priority
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="4"
+                              min="1"
+                              max="720"
+                              {...field}
+                              value={field.value ?? 4}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 4)}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            {field.value ? (field.value >= 24 ? `${(field.value / 24).toFixed(1)} days` : `${field.value} hours`) : '4 hours'} deadline
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

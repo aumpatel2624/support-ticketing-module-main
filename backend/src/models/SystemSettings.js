@@ -48,7 +48,7 @@ const systemSettingsSchema = new mongoose.Schema({
       type: Number,
       default: 24 // 1 day
     },
-    criticalPriority: {
+    urgentPriority: {
       type: Number,
       default: 4 // 4 hours
     }

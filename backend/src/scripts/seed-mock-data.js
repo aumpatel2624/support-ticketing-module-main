@@ -37,7 +37,7 @@ const seedDB = async () => {
                 lowPriority: 72,
                 mediumPriority: 48,
                 highPriority: 24,
-                criticalPriority: 4
+                urgentPriority: 4
             },
             features: {
                 kanbanView: true,
@@ -279,78 +279,66 @@ const seedDB = async () => {
                 {
                     name: 'Hardware Issues',
                     description: 'Computer hardware and peripherals problems',
-                    priority: 'High',
-                    sla: 24
+                    priority: 'High'
                 },
                 {
                     name: 'Software Installation',
                     description: 'Software installation and licensing issues',
-                    priority: 'Medium',
-                    sla: 48
+                    priority: 'Medium'
                 },
                 {
                     name: 'Network Issues',
                     description: 'Network connectivity and VPN problems',
-                    priority: 'High',
-                    sla: 12
+                    priority: 'High'
                 },
                 {
                     name: 'Access Control',
                     description: 'User account access and permissions',
-                    priority: 'Urgent',
-                    sla: 4
+                    priority: 'Urgent'
                 }
             ],
             'HR': [
                 {
                     name: 'Payroll Issues',
                     description: 'Salary and payroll related matters',
-                    priority: 'High',
-                    sla: 48
+                    priority: 'High'
                 },
                 {
                     name: 'Leave Management',
                     description: 'Leave requests and approvals',
-                    priority: 'Medium',
-                    sla: 72
+                    priority: 'Medium'
                 },
                 {
                     name: 'Benefits Enrollment',
                     description: 'Health insurance and benefits enrollment',
-                    priority: 'Medium',
-                    sla: 96
+                    priority: 'Medium'
                 },
                 {
                     name: 'Recruitment',
                     description: 'Hiring and recruitment requests',
-                    priority: 'Low',
-                    sla: 120
+                    priority: 'Low'
                 }
             ],
             'Facility Management': [
                 {
                     name: 'Maintenance',
                     description: 'Building maintenance and repairs',
-                    priority: 'Medium',
-                    sla: 72
+                    priority: 'Medium'
                 },
                 {
                     name: 'Safety Issues',
                     description: 'Safety concerns and hazards',
-                    priority: 'Urgent',
-                    sla: 4
+                    priority: 'Urgent'
                 },
                 {
                     name: 'Facilities Request',
                     description: 'Facilities and space requests',
-                    priority: 'Low',
-                    sla: 120
+                    priority: 'Low'
                 },
                 {
                     name: 'Cleaning and Hygiene',
                     description: 'Cleaning and sanitation issues',
-                    priority: 'Medium',
-                    sla: 24
+                    priority: 'Medium'
                 }
             ]
         };
@@ -364,7 +352,6 @@ const seedDB = async () => {
                     description: catData.description,
                     departmentId: departments[deptName]._id,
                     defaultPriority: catData.priority,
-                    defaultSLA: catData.sla,
                     createdBy: superAdmin._id,
                     isActive: true
                 });

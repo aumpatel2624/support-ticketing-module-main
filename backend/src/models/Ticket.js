@@ -340,7 +340,7 @@ ticketSchema.methods.calculateSLA = async function () {
         Low: settings?.slaDefaults?.lowPriority || 72,
         Medium: settings?.slaDefaults?.mediumPriority || 48,
         High: settings?.slaDefaults?.highPriority || 24,
-        Critical: settings?.slaDefaults?.criticalPriority || 4
+        Urgent: settings?.slaDefaults?.urgentPriority || 4
     };
 
     const hours = slaHours[this.priority] || 48; // Default to Medium if unknown priority

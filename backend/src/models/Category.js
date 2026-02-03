@@ -53,12 +53,6 @@ const categorySchema = new mongoose.Schema({
         enum: ['Low', 'Medium', 'High', 'Urgent'],
         default: 'Medium'
     },
-    defaultSLA: {
-        type: Number, // SLA in hours
-        default: 48,
-        min: [1, 'SLA must be at least 1 hour'],
-        max: [720, 'SLA cannot exceed 720 hours (30 days)']
-    },
     isActive: {
         type: Boolean,
         default: true
