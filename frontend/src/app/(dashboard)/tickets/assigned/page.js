@@ -18,12 +18,30 @@ import toast from 'react-hot-toast';
 export default function AssignedTicketsPage() {
     const [tickets, setTickets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const { viewMode, setViewMode } = useTicketStore();
+    const { viewMode, setViewMode, filters } = useTicketStore();
 
-    const fetchAssignedTickets = async () => {
+    const fetchAssignedTickets = async (appliedFilters = {}) => {
         try {
             setIsLoading(true);
-            const output = await ticketService.getAssignedTickets();
+            const params = {};
+
+            // Add filter parameters
+            if (appliedFilters.status && appliedFilters.status.length > 0) {
+                params.status = appliedFilters.status[0]; // API accepts single status
+            }
+            if (appliedFilters.priority && appliedFilters.priority.length > 0) {
+                params.priority = appliedFilters.priority[0]; // API accepts single priority
+            }
+            if (appliedFilters.dateRange?.from) {
+                params.dateFrom = appliedFilters.dateRange.from;
+            }
+            if (appliedFilters.dateRange?.to) {
+                params.dateTo = appliedFilters.dateRange.to;
+            }
+            // Note: assigned tickets endpoint doesn't support departmentId, categoryId, or assignedTo
+            // as they're already filtered to current user
+
+            const output = await ticketService.getAssignedTickets(params);
             const payload = output;
             if (Array.isArray(payload)) {
                 setTickets(payload);
@@ -44,13 +62,13 @@ export default function AssignedTicketsPage() {
     };
 
     useEffect(() => {
-        fetchAssignedTickets();
-    }, []);
+        fetchAssignedTickets(filters);
+    }, [filters]);
 
     // Listen for real-time ticket updates
     useTicketUpdates((data) => {
         // Refetch tickets when any ticket is updated
-        fetchAssignedTickets();
+        fetchAssignedTickets(filters);
     });
 
     return (

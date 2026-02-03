@@ -21,7 +21,7 @@ import toast from 'react-hot-toast';
 export default function TicketsPage() {
     const [tickets, setTickets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const { viewMode, setViewMode } = useTicketStore();
+    const { viewMode, setViewMode, filters } = useTicketStore();
     const { systemSettings, fetchSystemSettings } = useSettingsStore();
     const searchParams = useSearchParams();
     const searchQuery = searchParams.get('search') || '';
@@ -37,10 +37,39 @@ export default function TicketsPage() {
         fetchSystemSettings().catch(() => { });
     }, []);
 
-    const fetchTickets = async (search = '') => {
+    const fetchTickets = async (search = '', appliedFilters = {}) => {
         try {
             setIsLoading(true);
-            const params = search ? { search } : {};
+            const params = {};
+
+            // Add search parameter
+            if (search) {
+                params.search = search;
+            }
+
+            // Add filter parameters
+            if (appliedFilters.status && appliedFilters.status.length > 0) {
+                params.status = appliedFilters.status[0]; // API accepts single status
+            }
+            if (appliedFilters.priority && appliedFilters.priority.length > 0) {
+                params.priority = appliedFilters.priority[0]; // API accepts single priority
+            }
+            if (appliedFilters.department) {
+                params.departmentId = appliedFilters.department;
+            }
+            if (appliedFilters.category) {
+                params.categoryId = appliedFilters.category;
+            }
+            if (appliedFilters.assignedTo) {
+                params.assignedTo = appliedFilters.assignedTo;
+            }
+            if (appliedFilters.dateRange?.from) {
+                params.dateFrom = appliedFilters.dateRange.from;
+            }
+            if (appliedFilters.dateRange?.to) {
+                params.dateTo = appliedFilters.dateRange.to;
+            }
+
             const output = await ticketService.getTickets(params);
             const payload = output;
             if (Array.isArray(payload)) {
@@ -62,13 +91,13 @@ export default function TicketsPage() {
     };
 
     useEffect(() => {
-        fetchTickets(searchQuery);
-    }, [searchQuery]);
+        fetchTickets(searchQuery, filters);
+    }, [searchQuery, filters]);
 
     // Listen for real-time ticket updates
     useTicketUpdates((data) => {
         // Refetch tickets when any ticket is updated
-        fetchTickets(searchQuery);
+        fetchTickets(searchQuery, filters);
     });
 
     return (
