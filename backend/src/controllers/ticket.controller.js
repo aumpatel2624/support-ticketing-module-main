@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Ticket = require('../models/Ticket');
 const Category = require('../models/Category');
 const Department = require('../models/Department');
@@ -68,10 +69,27 @@ const getTickets = asyncHandler(async (req, res) => {
         const priorities = Array.isArray(priority) ? priority : priority.split(',');
         filter.priority = priorities.length === 1 ? priorities[0] : { $in: priorities };
     }
-    if (departmentId) filter.departmentId = departmentId;
-    if (categoryId) filter.categoryId = categoryId;
-    if (assignedTo) filter.assignedTo = assignedTo;
-    if (createdBy) filter.createdBy = createdBy;
+    // Convert string IDs to MongoDB ObjectIds for reference fields
+    if (departmentId) {
+        filter.departmentId = mongoose.Types.ObjectId.isValid(departmentId)
+            ? new mongoose.Types.ObjectId(departmentId)
+            : departmentId;
+    }
+    if (categoryId) {
+        filter.categoryId = mongoose.Types.ObjectId.isValid(categoryId)
+            ? new mongoose.Types.ObjectId(categoryId)
+            : categoryId;
+    }
+    if (assignedTo) {
+        filter.assignedTo = mongoose.Types.ObjectId.isValid(assignedTo)
+            ? new mongoose.Types.ObjectId(assignedTo)
+            : assignedTo;
+    }
+    if (createdBy) {
+        filter.createdBy = mongoose.Types.ObjectId.isValid(createdBy)
+            ? new mongoose.Types.ObjectId(createdBy)
+            : createdBy;
+    }
 
     // Search filter
     if (search) {

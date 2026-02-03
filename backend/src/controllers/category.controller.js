@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Category = require('../models/Category');
 const Department = require('../models/Department');
 const Ticket = require('../models/Ticket');
@@ -20,7 +21,9 @@ const getCategories = asyncHandler(async (req, res) => {
     if (req.user.role === 'Admin') {
         filter.departmentId = req.user.department;
     } else if (departmentId) {
-        filter.departmentId = departmentId;
+        filter.departmentId = mongoose.Types.ObjectId.isValid(departmentId)
+            ? new mongoose.Types.ObjectId(departmentId)
+            : departmentId;
     }
 
     if (search) {

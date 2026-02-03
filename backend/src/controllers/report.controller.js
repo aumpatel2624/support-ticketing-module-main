@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Ticket = require('../models/Ticket');
 const exportService = require('../services/export.service');
 const asyncHandler = require('../utils/asyncHandler');
@@ -15,7 +16,11 @@ const exportTickets = asyncHandler(async (req, res) => {
     const filter = {};
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
-    if (departmentId) filter.departmentId = departmentId;
+    if (departmentId) {
+        filter.departmentId = mongoose.Types.ObjectId.isValid(departmentId)
+            ? new mongoose.Types.ObjectId(departmentId)
+            : departmentId;
+    }
 
     if (dateFrom || dateTo) {
         filter.createdAt = {};

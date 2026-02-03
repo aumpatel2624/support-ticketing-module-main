@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const AuditLog = require('../models/AuditLog');
 const asyncHandler = require('../utils/asyncHandler');
 const { getPaginationParams, createPaginationResponse } = require('../utils/pagination');
@@ -12,7 +13,11 @@ const getAuditLogs = asyncHandler(async (req, res) => {
     const { userId, action, resource, dateFrom, dateTo } = req.query;
 
     const filter = {};
-    if (userId) filter.userId = userId;
+    if (userId) {
+        filter.userId = mongoose.Types.ObjectId.isValid(userId)
+            ? new mongoose.Types.ObjectId(userId)
+            : userId;
+    }
     if (action) filter.action = action;
     if (resource) filter.resource = resource;
 

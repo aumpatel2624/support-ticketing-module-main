@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Ticket = require('../models/Ticket');
 const User = require('../models/User');
 const Department = require('../models/Department');
@@ -1352,7 +1353,9 @@ const getDetailedReports = asyncHandler(async (req, res) => {
     if (req.user.role === 'Admin') {
         filter.departmentId = req.user.department;
     } else if (req.user.role === 'SuperAdmin' && departmentId) {
-        filter.departmentId = departmentId;
+        filter.departmentId = mongoose.Types.ObjectId.isValid(departmentId)
+            ? new mongoose.Types.ObjectId(departmentId)
+            : departmentId;
     }
 
     if (dateFrom || dateTo) {
