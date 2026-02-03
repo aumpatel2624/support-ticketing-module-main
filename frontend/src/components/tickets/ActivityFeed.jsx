@@ -113,9 +113,10 @@ export default function ActivityFeed({ ticket, onCommentAdded }) {
         // Join ticket room
         emitSocketEvent('join_ticket', ticket._id);
 
-        // Listen for new comments
-            // New comment received
+        // Handle new comment socket event
+        const handleNewComment = () => {
             refetchTicketAsync();
+        };
 
         onSocketEvent('new_comment', handleNewComment);
 
