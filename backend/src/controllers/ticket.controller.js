@@ -299,7 +299,9 @@ const updateTicket = asyncHandler(async (req, res) => {
                 userId: ticket.createdBy._id,
                 ticketId: ticket._id,
                 type: 'StatusUpdated',
-                message: `Your ticket ${ticket.ticketId} status has been updated to ${newStatus}`
+                message: newStatus === 'Completed'
+                    ? `Your ticket ${ticket.ticketId} has been completed and is waiting for your feedback`
+                    : `Your ticket ${ticket.ticketId} status has been updated to ${newStatus}`
             });
 
             // Socket: Notify creator with full notification object (includes _id)
@@ -402,7 +404,9 @@ const updateStatus = asyncHandler(async (req, res) => {
             userId: ticket.createdBy._id,
             ticketId: ticket._id,
             type: 'StatusUpdated',
-            message: `Your ticket ${ticket.ticketId} status has been updated to ${status}`
+            message: status === 'Completed'
+                ? `Your ticket ${ticket.ticketId} has been completed and is waiting for your feedback`
+                : `Your ticket ${ticket.ticketId} status has been updated to ${status}`
         });
 
         // Socket: Notify creator with full notification object

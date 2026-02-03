@@ -24,9 +24,9 @@ export const columns = [
         id: 'age',
         header: '',
         cell: ({ row }) => {
-            const category = getAgeCategory(row.original.createdAt);
-            const ageLabel = getAgeLabel(row.original.createdAt);
-            const ageDescription = getAgeDescription(row.original.createdAt);
+            const category = getAgeCategory(row.original.createdAt, row.original.priority);
+            const ageLabel = getAgeLabel(row.original.createdAt, row.original.priority);
+            const ageDescription = getAgeDescription(row.original.createdAt, row.original.priority);
 
             const colorMap = {
                 fresh: 'bg-green-500',

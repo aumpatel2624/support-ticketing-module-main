@@ -18,7 +18,7 @@ const getNotifications = asyncHandler(async (req, res) => {
 
     const [notifications, total] = await Promise.all([
         Notification.find(filter)
-            .populate('ticketId', 'ticketId subject')
+            .populate('ticketId', 'ticketId subject priority')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit),
@@ -97,9 +97,24 @@ const deleteNotification = asyncHandler(async (req, res) => {
     });
 });
 
+/**
+ * @desc    Delete all notifications for user
+ * @route   DELETE /api/notifications
+ * @access  Private
+ */
+const deleteAllNotifications = asyncHandler(async (req, res) => {
+    await Notification.deleteMany({ userId: req.user._id });
+
+    res.status(200).json({
+        success: true,
+        message: 'All notifications deleted'
+    });
+});
+
 module.exports = {
     getNotifications,
     markAsRead,
     markAllAsRead,
-    deleteNotification
+    deleteNotification,
+    deleteAllNotifications
 };

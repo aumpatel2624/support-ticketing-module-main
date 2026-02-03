@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Sidebar from './Sidebar';
-import NotificationBell from './NotificationBell';
 import useAuthStore from '@/store/authStore';
 import { getInitials, getAvatarColor } from '@/lib/utils';
 import Link from 'next/link';
@@ -98,9 +97,6 @@ export default function Header() {
             </div>
 
             <div className="ml-auto flex items-center gap-3 md:gap-5">
-                {/* Notifications */}
-                <NotificationBell />
-
                 {/* User Profile - More Premium */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>

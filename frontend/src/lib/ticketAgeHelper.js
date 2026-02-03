@@ -1,47 +1,57 @@
 import { differenceInMinutes, differenceInDays } from 'date-fns';
+import { SLA_DEFAULTS, TICKET_PRIORITY } from './constants';
 
 /**
- * ⚠️ TESTING MODE - Using MINUTES instead of days!
- * TODO: Revert to days after testing
- * 
- * Ticket age thresholds (in MINUTES for testing)
- * Original values were in days: FRESH: 1, RECENT: 4, AGING: 8, OLD: 15
+ * Ticket age categories based on SLA consumption percentage
  */
-export const AGE_THRESHOLDS = {
-  FRESH: 1,      // 0-1 minute
-  RECENT: 2,     // 1-2 minutes  
-  AGING: 3,      // 2-3 minutes
-  OLD: 4,        // 3-4 minutes
-  CRITICAL: 5,   // 4+ minutes
+export const AGE_CATEGORIES = {
+  FRESH: 'fresh',      // 0-25% of SLA
+  RECENT: 'recent',    // 25-50% of SLA
+  AGING: 'aging',      // 50-75% of SLA
+  OLD: 'old',          // 75-100% of SLA
+  CRITICAL: 'critical' // >100% (SLA Breached)
 };
 
 /**
- * Get age category based on MINUTES old (TESTING MODE)
- * TODO: Revert to differenceInDays after testing
+ * Get total SLA minutes for a priority
  */
-export function getAgeCategory(createdAt) {
-  const minutesOld = differenceInMinutes(new Date(), new Date(createdAt));
+function getSLAMinutes(priority) {
+  // Default to Medium if priority is missing or invalid
+  const hours = SLA_DEFAULTS[priority] || SLA_DEFAULTS[TICKET_PRIORITY.MEDIUM];
+  return hours * 60;
+}
 
-  if (minutesOld < 1) return 'fresh';
-  if (minutesOld < 2) return 'recent';
-  if (minutesOld < 3) return 'aging';
-  if (minutesOld < 4) return 'old';
-  return 'critical';
+/**
+ * Get age category based on SLA percentage consumed
+ * @param {string|Date} createdAt - Ticket creation date
+ * @param {string} priority - Ticket priority (Low, Medium, High, Urgent)
+ */
+export function getAgeCategory(createdAt, priority) {
+  const minutesOld = differenceInMinutes(new Date(), new Date(createdAt));
+  const slaMinutes = getSLAMinutes(priority);
+
+  const percentage = (minutesOld / slaMinutes) * 100;
+
+  if (percentage < 25) return AGE_CATEGORIES.FRESH;
+  if (percentage < 50) return AGE_CATEGORIES.RECENT;
+  if (percentage < 75) return AGE_CATEGORIES.AGING;
+  if (percentage < 100) return AGE_CATEGORIES.OLD;
+  return AGE_CATEGORIES.CRITICAL;
 }
 
 /**
  * Get border color class for ticket age
  * Returns Tailwind color class
  */
-export function getAgeColorClass(createdAt) {
-  const category = getAgeCategory(createdAt);
+export function getAgeColorClass(createdAt, priority) {
+  const category = getAgeCategory(createdAt, priority);
 
   const colorMap = {
-    fresh: 'border-l-4 border-l-green-500',    // Green
-    recent: 'border-l-4 border-l-blue-500',    // Blue
-    aging: 'border-l-4 border-l-yellow-500',   // Yellow
-    old: 'border-l-4 border-l-orange-500',     // Orange
-    critical: 'border-l-4 border-l-red-500',   // Red
+    [AGE_CATEGORIES.FRESH]: 'border-l-4 border-l-green-500',    // On Track (Early)
+    [AGE_CATEGORIES.RECENT]: 'border-l-4 border-l-blue-500',    // On Track (Mid)
+    [AGE_CATEGORIES.AGING]: 'border-l-4 border-l-yellow-500',   // Warning
+    [AGE_CATEGORIES.OLD]: 'border-l-4 border-l-orange-500',     // At Risk
+    [AGE_CATEGORIES.CRITICAL]: 'border-l-4 border-l-red-500',   // Breached
   };
 
   return colorMap[category];
@@ -50,48 +60,59 @@ export function getAgeColorClass(createdAt) {
 /**
  * Get badge color styles for ticket age
  */
-export function getAgeBadgeColor(createdAt) {
-  const category = getAgeCategory(createdAt);
+export function getAgeBadgeColor(createdAt, priority) {
+  const category = getAgeCategory(createdAt, priority);
 
   const styleMap = {
-    fresh: 'bg-green-500/10 text-green-700 border-green-500/20',
-    recent: 'bg-blue-500/10 text-blue-700 border-blue-500/20',
-    aging: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20',
-    old: 'bg-orange-500/10 text-orange-700 border-orange-500/20',
-    critical: 'bg-red-500/10 text-red-700 border-red-500/20',
+    [AGE_CATEGORIES.FRESH]: 'bg-green-500/10 text-green-700 border-green-500/20',
+    [AGE_CATEGORIES.RECENT]: 'bg-blue-500/10 text-blue-700 border-blue-500/20',
+    [AGE_CATEGORIES.AGING]: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20',
+    [AGE_CATEGORIES.OLD]: 'bg-orange-500/10 text-orange-700 border-orange-500/20',
+    [AGE_CATEGORIES.CRITICAL]: 'bg-red-500/10 text-red-700 border-red-500/20',
   };
 
-  return styleMap[category];
+  return styleMap[category] || styleMap[AGE_CATEGORIES.FRESH];
 }
 
 /**
- * Get human-readable age label (TESTING MODE - uses minutes)
- * TODO: Revert to differenceInDays after testing
+ * Get human-readable age label
  */
-export function getAgeLabel(createdAt) {
-  const minutesOld = differenceInMinutes(new Date(), new Date(createdAt));
+export function getAgeLabel(createdAt, priority) {
+  const category = getAgeCategory(createdAt, priority);
 
-  if (minutesOld < 1) return 'Fresh';
-  if (minutesOld < 2) return 'Recent';
-  if (minutesOld < 3) return 'Aging';
-  if (minutesOld < 4) return 'Old';
-  return 'Critical';
+  const labelMap = {
+    [AGE_CATEGORIES.FRESH]: 'On Track',
+    [AGE_CATEGORIES.RECENT]: 'Stable',
+    [AGE_CATEGORIES.AGING]: 'Aging',
+    [AGE_CATEGORIES.OLD]: 'Check', // Close to breach
+    [AGE_CATEGORIES.CRITICAL]: 'Breached',
+  };
+
+  return labelMap[category];
 }
 
 /**
- * Get age description for tooltip (TESTING MODE - uses minutes)
- * TODO: Revert to differenceInDays after testing
+ * Get age description for tooltip
  */
-export function getAgeDescription(createdAt) {
+export function getAgeDescription(createdAt, priority) {
   const minutesOld = differenceInMinutes(new Date(), new Date(createdAt));
+  const slaMinutes = getSLAMinutes(priority);
+  const percentage = Math.round((minutesOld / slaMinutes) * 100);
+  const daysOld = differenceInDays(new Date(), new Date(createdAt));
 
-  if (minutesOld === 0) return 'Created just now';
-  if (minutesOld === 1) return 'Created 1 minute ago';
-  return `Created ${minutesOld} minutes ago`;
+  let timeText;
+  if (daysOld === 0) timeText = 'Created today';
+  else if (daysOld === 1) timeText = 'Created yesterday';
+  else timeText = `Created ${daysOld} days ago`;
+
+  if (percentage >= 100) {
+    return `${timeText} (${percentage}% of SLA used - BREACHED)`;
+  }
+  return `${timeText} (${percentage}% of SLA used)`;
 }
 
 /**
- * Get days old
+ * Get days old (helper)
  */
 export function getDaysOld(createdAt) {
   return differenceInDays(new Date(), new Date(createdAt));

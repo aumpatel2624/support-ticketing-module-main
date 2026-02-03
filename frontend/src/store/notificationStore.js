@@ -37,7 +37,8 @@ const useNotificationStore = create((set, get) => ({
         });
     },
 
-    markAsRead: (notificationId) => {
+    markAsRead: async (notificationId) => {
+        // Optimistic update
         set((state) => {
             const updated = state.notifications.map((n) =>
                 n._id === notificationId ? { ...n, isRead: true } : n
@@ -45,9 +46,29 @@ const useNotificationStore = create((set, get) => ({
             const unreadCount = updated.filter((n) => !n.isRead).length;
             return { notifications: updated, unreadCount };
         });
+
+        // API call
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+            await fetch(`${apiUrl}/notifications/${notificationId}/read`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        } catch (error) {
+            console.error('Failed to mark notification as read:', error);
+            // Revert on error? For now, we'll just log it. 
+            // In a production app, we might want to revert the state.
+        }
     },
 
-    markAllAsRead: () => {
+    markAllAsRead: async () => {
+        // Optimistic update
         set((state) => {
             const updated = state.notifications.map((n) => ({
                 ...n,
@@ -55,10 +76,45 @@ const useNotificationStore = create((set, get) => ({
             }));
             return { notifications: updated, unreadCount: 0 };
         });
+
+        // API call
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+            await fetch(`${apiUrl}/notifications/read-all`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        } catch (error) {
+            console.error('Failed to mark all notifications as read:', error);
+        }
     },
 
-    clearNotifications: () => {
-        set({ notifications: [], unreadCount: 0 });
+    clearNotifications: async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+            const response = await fetch(`${apiUrl}/notifications`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                set({ notifications: [], unreadCount: 0 });
+            }
+        } catch (error) {
+            console.error('Failed to clear notifications:', error);
+        }
     },
 
     setOpen: (isOpen) => {

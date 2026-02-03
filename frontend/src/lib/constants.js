@@ -62,13 +62,12 @@ export const TICKET_PRIORITY = {
     URGENT: 'Urgent',
 };
 
-// Ticket Age Thresholds (in days)
-export const TICKET_AGE_THRESHOLDS = {
-    FRESH: 1,      // 0-24 hours
-    RECENT: 4,     // 1-3 days
-    AGING: 8,      // 4-7 days
-    OLD: 15,       // 8-14 days
-    CRITICAL: 15,  // 15+ days
+// SLA Defaults (in hours) - matches backend SystemSettings defaults
+export const SLA_DEFAULTS = {
+    [TICKET_PRIORITY.LOW]: 72,      // 3 days
+    [TICKET_PRIORITY.MEDIUM]: 48,   // 2 days
+    [TICKET_PRIORITY.HIGH]: 24,     // 1 day
+    [TICKET_PRIORITY.URGENT]: 4,    // 4 hours
 };
 
 // View Modes
@@ -160,12 +159,14 @@ export const NAVIGATION_ITEMS = {
         { name: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard' },
         { name: 'My Tickets', href: '/tickets', icon: 'Ticket' },
         { name: 'Create Ticket', href: '/tickets/new', icon: 'Plus' },
+        { name: 'Notifications', href: '/notifications', icon: 'Bell' },
     ],
     [USER_ROLES.TEAM_MEMBER]: [
         { name: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard' },
         { name: 'My Tickets', href: '/tickets', icon: 'Ticket' },
         { name: 'Assigned Tickets', href: '/tickets/assigned', icon: 'ClipboardList' },
         { name: 'Create Ticket', href: '/tickets/new', icon: 'Plus' },
+        { name: 'Notifications', href: '/notifications', icon: 'Bell' },
     ],
     [USER_ROLES.ADMIN]: [
         { name: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard' },
@@ -173,6 +174,7 @@ export const NAVIGATION_ITEMS = {
         { name: 'Assigned Tickets', href: '/tickets/assigned', icon: 'ClipboardList' },
         { name: 'Team Members', href: '/users', icon: 'Users' },
         { name: 'Categories', href: '/categories', icon: 'Tags' },
+        { name: 'Notifications', href: '/notifications', icon: 'Bell' },
         // { name: 'Settings', href: '/settings', icon: 'Settings' },
     ],
     [USER_ROLES.SUPER_ADMIN]: [
@@ -181,6 +183,7 @@ export const NAVIGATION_ITEMS = {
         { name: 'Departments', href: '/departments', icon: 'Building2' },
         { name: 'Categories', href: '/categories', icon: 'Tags' },
         { name: 'Users', href: '/users', icon: 'Users' },
+        { name: 'Notifications', href: '/notifications', icon: 'Bell' },
         // { name: 'Settings', href: '/settings', icon: 'Settings' },
     ],
 };

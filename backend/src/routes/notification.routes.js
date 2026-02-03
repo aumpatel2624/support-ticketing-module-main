@@ -4,7 +4,8 @@ const {
     getNotifications,
     markAsRead,
     markAllAsRead,
-    deleteNotification
+    deleteNotification,
+    deleteAllNotifications
 } = require('../controllers/notification.controller');
 const { authenticate } = require('../middleware/auth');
 const { validateParams } = require('../middleware/validate');
@@ -76,5 +77,20 @@ router.patch('/:id/read', authenticate, validateParams(objectIdSchema), markAsRe
  *         description: Notification deleted
  */
 router.delete('/:id', authenticate, validateParams(objectIdSchema), deleteNotification);
+
+/**
+ * @swagger
+ * /notifications:
+ *   delete:
+ *     summary: Delete all notifications
+ *     description: Delete all notifications for current user
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: All notifications deleted
+ */
+router.delete('/', authenticate, deleteAllNotifications);
 
 module.exports = router;

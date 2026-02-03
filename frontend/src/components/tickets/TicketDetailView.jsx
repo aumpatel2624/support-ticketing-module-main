@@ -42,6 +42,7 @@ import ConfirmStatusChangeModal from './ConfirmStatusChangeModal';
 import ActivityFeed from './ActivityFeed';
 import FeedbackDialog from './FeedbackDialog';
 import EscalateTicketDialog from './EscalateTicketDialog';
+import FeedbackResultCard from './FeedbackResultCard';
 import useAuth from '@/hooks/useAuth';
 import useTicketUpdates from '@/hooks/useTicketUpdates';
 import ticketService from '@/lib/services/ticketService';
@@ -537,6 +538,9 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* Feedback Result Card - Show when feedback has been given */}
+                    <FeedbackResultCard ticket={ticket} />
                 </div>
             </div>
 

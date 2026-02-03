@@ -19,7 +19,7 @@ import {
     LogOut,
     Zap,
     Tags,
-    // Building2
+    Bell,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -31,7 +31,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import useAuthStore from '@/store/authStore';
 import useUIStore from '@/store/uiStore';
 import useSettingsStore from '@/store/settingsStore';
+import useNotificationStore from '@/store/notificationStore';
 import { NAVIGATION_ITEMS } from '@/lib/constants';
+import { Badge } from '@/components/ui/badge';
 
 // Map icon strings to components
 const IconMap = {
@@ -46,6 +48,7 @@ const IconMap = {
     Settings,
     Building2,
     Tags,
+    Bell,
 };
 
 export default function Sidebar({ isMobile = false }) {
@@ -69,6 +72,9 @@ export default function Sidebar({ isMobile = false }) {
     const navItems = user?.role && NAVIGATION_ITEMS[user.role]
         ? NAVIGATION_ITEMS[user.role]
         : [];
+
+    // Get unread notification count
+    const { unreadCount } = useNotificationStore();
 
     return (
         <div
@@ -145,7 +151,19 @@ export default function Sidebar({ isMobile = false }) {
                                             {!isCollapsed && (
                                                 <span className="truncate">{item.name}</span>
                                             )}
-                                            {isActive && !isCollapsed && (
+                                            {/* Notification badge for Notifications item */}
+                                            {item.name === 'Notifications' && unreadCount > 0 && (
+                                                <Badge
+                                                    variant="destructive"
+                                                    className={cn(
+                                                        "h-5 min-w-5 px-1.5 text-xs font-bold",
+                                                        isCollapsed && "absolute -top-1 -right-1"
+                                                    )}
+                                                >
+                                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                                </Badge>
+                                            )}
+                                            {isActive && !isCollapsed && item.name !== 'Notifications' && (
                                                 <div className="absolute right-2 h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
                                             )}
                                         </Link>

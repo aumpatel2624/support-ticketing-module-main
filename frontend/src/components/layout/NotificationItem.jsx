@@ -56,9 +56,27 @@ export default function NotificationItem({ notification, onClose }) {
         }
     };
 
-    const ticketId = typeof notification.ticketId === 'object'
-        ? notification.ticketId?._id?.toString()
-        : notification.ticketId?.toString();
+    // Get priority-based color for ticket ID
+    const getPriorityColor = (priority) => {
+        switch (priority) {
+            case 'Urgent':
+                return 'text-red-600 font-bold';
+            case 'High':
+                return 'text-orange-600 font-semibold';
+            case 'Medium':
+                return 'text-yellow-600 font-medium';
+            case 'Low':
+                return 'text-green-600';
+            default:
+                return 'text-primary';
+        }
+    };
+
+    // Extract ticket info including priority
+    const ticketData = typeof notification.ticketId === 'object' ? notification.ticketId : null;
+    const ticketId = ticketData?._id?.toString() || notification.ticketId?.toString();
+    const ticketPriority = ticketData?.priority;
+    const ticketDisplayId = ticketData?.ticketId;
 
     const href = ticketId ? `/tickets/${ticketId}` : '#';
 
@@ -87,16 +105,37 @@ export default function NotificationItem({ notification, onClose }) {
                 </div>
 
                 {notification.ticketId ? (
-                    <Link
-                        href={href}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onClose?.();
-                        }}
-                        className="text-sm font-medium text-foreground hover:underline break-words line-clamp-2 block"
-                    >
-                        {notification.message}
-                    </Link>
+                    <div className="text-sm break-words">
+                        <Link
+                            href={href}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onClose?.();
+                            }}
+                            className="hover:underline"
+                        >
+                            {/* Display ticket ID with priority color if available */}
+                            {ticketDisplayId && ticketPriority ? (
+                                <span>
+                                    <span className={getPriorityColor(ticketPriority)}>
+                                        {ticketDisplayId}
+                                    </span>
+                                    {' - '}
+                                    {notification.message.replace(ticketDisplayId, '').replace(/^[:\s\-]+/, '').trim()}
+                                </span>
+                            ) : (
+                                <span className="font-medium text-foreground">{notification.message}</span>
+                            )}
+                        </Link>
+                        {ticketPriority && (
+                            <Badge
+                                variant="outline"
+                                className={`ml-2 text-[10px] ${getPriorityColor(ticketPriority)}`}
+                            >
+                                {ticketPriority}
+                            </Badge>
+                        )}
+                    </div>
                 ) : (
                     <p className="text-sm font-medium text-foreground break-words line-clamp-2">
                         {notification.message}

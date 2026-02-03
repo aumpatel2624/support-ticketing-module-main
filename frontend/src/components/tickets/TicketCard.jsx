@@ -39,9 +39,9 @@ import { getAgeCategory, getAgeLabel, getAgeDescription } from '@/lib/ticketAgeH
 export default function TicketCard({ ticket, onQuickAction }) {
     const [isHovering, setIsHovering] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
-    const ageCategory = getAgeCategory(ticket.createdAt);
-    const ageLabel = getAgeLabel(ticket.createdAt);
-    const ageDescription = getAgeDescription(ticket.createdAt);
+    const ageCategory = getAgeCategory(ticket.createdAt, ticket.priority);
+    const ageLabel = getAgeLabel(ticket.createdAt, ticket.priority);
+    const ageDescription = getAgeDescription(ticket.createdAt, ticket.priority);
 
     const handleMarkCompleted = async (e) => {
         e.stopPropagation();

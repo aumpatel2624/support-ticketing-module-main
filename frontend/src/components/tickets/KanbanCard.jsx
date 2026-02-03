@@ -23,9 +23,9 @@ import { getAgeCategory, getAgeLabel, getAgeDescription } from '@/lib/ticketAgeH
  */
 export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
     const [isHovering, setIsHovering] = useState(false);
-    const ageCategory = getAgeCategory(ticket.createdAt);
-    const ageLabel = getAgeLabel(ticket.createdAt);
-    const ageDescription = getAgeDescription(ticket.createdAt);
+    const ageCategory = getAgeCategory(ticket.createdAt, ticket.priority);
+    const ageLabel = getAgeLabel(ticket.createdAt, ticket.priority);
+    const ageDescription = getAgeDescription(ticket.createdAt, ticket.priority);
 
     const colorMap = {
         fresh: 'border-l-4 border-l-green-500',
