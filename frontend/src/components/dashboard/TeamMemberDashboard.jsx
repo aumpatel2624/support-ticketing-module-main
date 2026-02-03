@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ClipboardList, Loader2, PlayCircle, CheckCircle2, Star, Clock, TrendingUp, Target, Zap, AlertCircle, Gauge } from 'lucide-react';
+import { ClipboardList, Loader2, PlayCircle, CheckCircle2, Clock, TrendingUp, Target, Zap, AlertCircle, Gauge } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -303,37 +303,6 @@ export default function TeamMemberDashboard({ user }) {
                 </div>
                 <div className="lg:col-span-1">
                     <MyTicketsStatusChart data={tickets} />
-                </div>
-                <div className="lg:col-span-1">
-                    <Card className="border-none shadow-premium">
-                        <CardHeader>
-                            <CardTitle>Performance</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-1">
-                                    <p className="text-sm font-medium leading-none">Satisfaction Rating</p>
-                                    <p className="text-sm text-muted-foreground">Based on feedback</p>
-                                </div>
-                                <div className="flex items-center text-amber-500 font-bold text-xl">
-                                    {user?.rating || '4.8'} <Star className="ml-1 h-5 w-5 fill-current" />
-                                </div>
-                            </div>
-                            <div className="h-2 w-full bg-secondary/20 rounded-full overflow-hidden">
-                                <div className="h-full bg-amber-500 w-[96%]" />
-                            </div>
-
-                            <div className="pt-4 border-t">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-medium">Tickets Target (Month)</span>
-                                    <span className="text-sm text-muted-foreground">{stats.weeklyTarget * 4}/50</span>
-                                </div>
-                                <div className="h-2 w-full bg-secondary/20 rounded-full overflow-hidden">
-                                    <div className="h-full bg-primary" style={{ width: `${Math.min((stats.weeklyTarget * 4 / 50) * 100, 100)}%` }} />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
                 </div>
             </div>
 
