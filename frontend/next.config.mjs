@@ -15,20 +15,7 @@ const nextConfig = {
     };
     return config;
   },
-  output: 'export',
-  images: {
-    unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-      {
-        protocol: 'http',
-        hostname: '**',
-      },
-    ],
-  },
+  distDir: 'out',
 };
 
 export default nextConfig;
