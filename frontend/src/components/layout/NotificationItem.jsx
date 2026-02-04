@@ -78,7 +78,7 @@ export default function NotificationItem({ notification, onClose }) {
     const ticketPriority = ticketData?.priority;
     const ticketDisplayId = ticketData?.ticketId;
 
-    const href = ticketId ? `/tickets/${ticketId}` : '#';
+    const href = ticketId ? `/tickets?id=${ticketId}` : '#';
 
     return (
         <div

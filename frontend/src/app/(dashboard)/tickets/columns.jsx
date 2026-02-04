@@ -81,7 +81,7 @@ export const columns = [
         header: 'ID',
         cell: ({ row }) => (
             <Link
-                href={`/tickets/${row.original.id}`}
+                href={`/tickets?id=${row.original.id}`}
                 className="font-medium hover:underline text-primary"
             >
                 {row.getValue('ticketId')}
@@ -213,7 +213,7 @@ export const columns = [
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                            <Link href={`/tickets/${ticket._id || ticket.id}`}>View details</Link>
+                            <Link href={`/tickets?id=${ticket._id || ticket.id}`}>View details</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleMarkResolved}>
                             Mark as resolved

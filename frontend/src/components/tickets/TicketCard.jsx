@@ -98,7 +98,7 @@ export default function TicketCard({ ticket, onQuickAction }) {
                     <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2 flex-wrap">
                             <Link
-                                href={`/tickets/${ticket._id}`}
+                                href={`/tickets?id=${ticket._id}`}
                                 className="font-bold text-sm text-primary hover:underline"
                                 onClick={(e) => e.stopPropagation()}
                             >
@@ -130,7 +130,7 @@ export default function TicketCard({ ticket, onQuickAction }) {
                                 <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
-                                    <Link href={`/tickets/${ticket._id}`}>
+                                    <Link href={`/tickets?id=${ticket._id}`}>
                                         <ArrowUpRight className="mr-2 h-4 w-4" />
                                         View details
                                     </Link>
@@ -158,7 +158,7 @@ export default function TicketCard({ ticket, onQuickAction }) {
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Link
-                                href={`/tickets/${ticket._id}`}
+                                href={`/tickets?id=${ticket._id}`}
                                 className="block text-sm font-medium text-foreground mb-3 line-clamp-2 hover:text-primary transition-colors"
                                 onClick={(e) => e.stopPropagation()}
                             >

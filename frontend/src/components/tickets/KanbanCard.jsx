@@ -53,7 +53,7 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
                             <GripHorizontal className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0 cursor-grab" data-drag-handle />
                         )}
                         <Link
-                            href={`/tickets/${ticket._id}`}
+                            href={`/tickets?id=${ticket._id}`}
                             className="font-bold text-xs text-primary hover:underline truncate flex-1"
                             title={ticket.ticketId}
                             onPointerDown={(e) => e.stopPropagation()}
@@ -83,7 +83,7 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
-                                <Link href={`/tickets/${ticket._id}`}>View details</Link>
+                                <Link href={`/tickets?id=${ticket._id}`}>View details</Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onMenuAction?.('copy', ticket.ticketId)}>
                                 Copy Ticket ID

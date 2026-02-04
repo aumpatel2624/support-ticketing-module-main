@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Loader2, LayoutGrid, Kanban, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import PageHeader from '@/components/common/PageHeader';
 import KanbanBoard from '@/components/tickets/KanbanBoard';
 import TicketCardView from '@/components/tickets/TicketCardView';
 import AdvancedFilterPanel from '@/components/tickets/AdvancedFilterPanel';
+import TicketDetailView from '@/components/tickets/TicketDetailView';
 import ticketService from '@/lib/services/ticketService';
 import useTicketStore from '@/store/ticketStore';
 import useSettingsStore from '@/store/settingsStore';
@@ -21,11 +22,15 @@ import toast from 'react-hot-toast';
 
 export default function TicketsPage() {
     const [tickets, setTickets] = useState([]);
+    const [ticketDetail, setTicketDetail] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isDetailLoading, setIsDetailLoading] = useState(false);
     const { viewMode, setViewMode, filters } = useTicketStore();
     const { systemSettings, fetchSystemSettings } = useSettingsStore();
     const searchParams = useSearchParams();
+    const router = useRouter();
     const searchQuery = searchParams.get('search') || '';
+    const ticketIdParam = searchParams.get('id');
 
     const { user } = useAuth();
 
@@ -74,7 +79,40 @@ export default function TicketsPage() {
         }
     }, [searchParams, user]);
 
+    // Fetch single ticket details when ID param is present
+    useEffect(() => {
+        const fetchTicketDetail = async () => {
+            if (!ticketIdParam) {
+                setTicketDetail(null);
+                return;
+            }
+
+            try {
+                setIsDetailLoading(true);
+                const output = await ticketService.getTicket(ticketIdParam);
+
+                let ticketData = output;
+                if (output.data) ticketData = output.data;
+                if (output.ticket) ticketData = output.ticket;
+
+                setTicketDetail(ticketData);
+            } catch (error) {
+                console.error('Failed to fetch ticket detail:', error);
+                toast.error('Failed to load ticket details');
+                // Optional: redirect back to list if not found
+                // router.push('/tickets');
+            } finally {
+                setIsDetailLoading(false);
+            }
+        };
+
+        fetchTicketDetail();
+    }, [ticketIdParam]);
+
     const fetchTickets = async (search = '', appliedFilters = {}) => {
+        // If we are showing detail view, we might not need to fetch the list immediately,
+        // but it's good to have it ready in background or if user switches back.
+        // For now, let's keep fetching behavior as is.
         try {
             setIsLoading(true);
             const params = {};
@@ -131,6 +169,8 @@ export default function TicketsPage() {
     };
 
     useEffect(() => {
+        // Only fetch list if we are NOT in detail view OR if we want to keep list updated
+        // Fetching always ensures consistency if we navigate back
         fetchTickets(searchQuery, filters);
     }, [searchQuery, filters]);
 
@@ -138,8 +178,34 @@ export default function TicketsPage() {
     useTicketUpdates((data) => {
         // Refetch tickets when any ticket is updated
         fetchTickets(searchQuery, filters);
+
+        // If we are viewing the updated ticket, refresh detail too
+        if (ticketIdParam && data.ticketId === ticketIdParam) {
+            ticketService.getTicket(ticketIdParam).then(res => {
+                const updated = res.data || res.ticket || res;
+                setTicketDetail(updated);
+            });
+        }
     });
 
+    // RENDER DETAIL VIEW
+    if (ticketIdParam) {
+        if (isDetailLoading) {
+            return (
+                <div className="flex items-center justify-center h-full min-h-[500px]">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            );
+        }
+
+        if (!ticketDetail) {
+            return <div className="p-8 text-center text-muted-foreground">Ticket not found</div>;
+        }
+
+        return <TicketDetailView ticket={ticketDetail} />;
+    }
+
+    // RENDER LIST VIEW
     return (
         <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
             <PageHeader

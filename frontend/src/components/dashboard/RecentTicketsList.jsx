@@ -50,7 +50,7 @@ export default function RecentTicketsList({ tickets = [], loading = false }) {
           {tickets.map((ticket) => (
             <TableRow key={ticket.id} className="group cursor-pointer hover:bg-primary/[0.02] transition-colors border-b/5 border-border/40">
               <TableCell className="pl-6 font-bold text-primary/70 group-hover:text-primary transition-colors">
-                <Link href={`/tickets/${ticket.id}`} className="flex items-center gap-2">
+                <Link href={`/tickets?id=${ticket.id}`} className="flex items-center gap-2">
                   <span className="bg-primary/5 px-2 py-1 rounded text-[11px] uppercase tracking-tighter">
                     {ticket.ticketId}
                   </span>

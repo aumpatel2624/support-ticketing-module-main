@@ -13,7 +13,7 @@ const init = (server) => {
 
     io = new Server(server, {
         cors: {
-            origin: origins.length === 1 ? origins[0] : origins,
+            origin: origins,
             methods: ['GET', 'POST'],
             credentials: true
         }
