@@ -364,7 +364,7 @@ const seedDB = async () => {
         console.log('\n--- Creating Tickets ---');
 
         const priorities = ['Low', 'Medium', 'High', 'Urgent'];
-        const statuses = ['New', 'Assigned', 'InProgress', 'Completed', 'Closed', 'Escalated'];
+        const statuses = ['New', 'Assigned', 'InProgress', 'Resolved', 'Escalated'];
         const ticketSubjects = {
             'IT': [
                 'Cannot access email on new laptop',
@@ -440,24 +440,9 @@ const seedDB = async () => {
                     }
                 }
 
-                // Set resolved/closed timestamps for completed tickets
-                if (['Completed', 'Closed'].includes(status)) {
+                // Set resolved timestamp for resolved tickets
+                if (status === 'Resolved') {
                     ticket.resolvedAt = new Date();
-                    if (status === 'Closed') {
-                        ticket.closedAt = new Date();
-                        // Add feedback for closed tickets to test FeedbackResultCard UI
-                        const feedbackTexts = [
-                            'Great support! Issue was resolved quickly and professionally.',
-                            'Very satisfied with the resolution. The team was responsive.',
-                            'Good service overall. Would appreciate faster response time.',
-                            'Excellent work! The technician was very helpful and thorough.',
-                            'Issue resolved but took longer than expected.',
-                        ];
-                        ticket.rating = Math.floor(Math.random() * 3) + 3; // Random rating 3-5
-                        ticket.feedback = feedbackTexts[Math.floor(Math.random() * feedbackTexts.length)];
-                        ticket.feedbackGiven = true;
-                        ticket.feedbackGivenAt = new Date();
-                    }
                 }
 
                 await ticket.save();

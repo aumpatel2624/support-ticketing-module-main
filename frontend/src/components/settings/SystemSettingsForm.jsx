@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import LogoUpload from './LogoUpload';
 import useSettingsStore from '@/store/settingsStore';
+import departmentService from '@/lib/services/departmentService';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
@@ -81,7 +82,19 @@ const systemSettingsSchema = z.object({
     mediumPriority: z.number().int().min(1, 'Minimum 1 hour').max(720, 'Maximum 720 hours'),
     highPriority: z.number().int().min(1, 'Minimum 1 hour').max(720, 'Maximum 720 hours'),
     urgentPriority: z.number().int().min(1, 'Minimum 1 hour').max(720, 'Maximum 720 hours')
-  }).optional()
+  }).optional(),
+
+  // Department SLA
+  departmentSla: z.array(z.object({
+    departmentId: z.string(),
+    departmentName: z.string().optional(), // For display only
+    slaDefaults: z.object({
+      lowPriority: z.number().int().min(1).max(720),
+      mediumPriority: z.number().int().min(1).max(720),
+      highPriority: z.number().int().min(1).max(720),
+      urgentPriority: z.number().int().min(1).max(720)
+    })
+  })).optional()
 });
 
 export default function SystemSettingsForm() {
@@ -96,30 +109,64 @@ export default function SystemSettingsForm() {
   const [activeTab, setActiveTab] = useState('general');
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
 
+  const [departments, setDepartments] = useState([]);
+
   const form = useForm({
     resolver: zodResolver(systemSettingsSchema),
     defaultValues: DEFAULT_SETTINGS,
   });
 
-  // Fetch settings on mount
+  const { fields: departmentSlaFields, replace: replaceDepartmentSla } = useFieldArray({
+    control: form.control,
+    name: "departmentSla"
+  });
+
+  // Fetch settings and departments on mount
   useEffect(() => {
-    const loadSettings = async () => {
+    const loadData = async () => {
       try {
         await fetchSystemSettings();
+        const depts = await departmentService.getDepartments();
+        setDepartments(depts.data || depts || []); // Handle various response formats
       } catch (error) {
-        toast.error('Failed to load system settings');
+        console.error("Failed to load data", error);
+        toast.error('Failed to load initial data');
       }
     };
 
-    loadSettings();
+    loadData();
   }, [fetchSystemSettings]);
 
-  // Update form when settings are loaded
+  // Update form when settings or departments are loaded
   useEffect(() => {
-    if (settings) {
+    if (settings && departments.length > 0) {
+      // Merge existing department SLA settings with current departments list
+      const mergedDepartmentSla = departments.map(dept => {
+        const existingSla = settings.departmentSla?.find(d =>
+          (d.departmentId?._id || d.departmentId) === dept._id
+        );
+
+        return {
+          departmentId: dept._id,
+          departmentName: dept.name,
+          slaDefaults: existingSla?.slaDefaults || {
+            lowPriority: 72,
+            mediumPriority: 48,
+            highPriority: 24,
+            urgentPriority: 4
+          }
+        };
+      });
+
+      form.reset({
+        ...settings,
+        departmentSla: mergedDepartmentSla
+      });
+    } else if (settings) {
+      // If no departments yet or failed to load, just reset settings
       form.reset(settings);
     }
-  }, [settings, form]);
+  }, [settings, departments, form]);
 
   const onSubmit = async (data) => {
     try {
@@ -504,6 +551,129 @@ export default function SystemSettingsForm() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Department SLA Overrides */}
+              {departmentSlaFields.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Department Overrides</CardTitle>
+                    <CardDescription>
+                      Set specific SLA deadlines for individual departments.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {departmentSlaFields.map((field, index) => (
+                      <div key={field.id} className="border p-4 rounded-lg space-y-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-sm uppercase tracking-wide">
+                            {field.departmentName || 'Unknown Department'}
+                          </h4>
+                        </div>
+
+                        {/* Hidden Department ID Field */}
+                        <input
+                          type="hidden"
+                          {...form.register(`departmentSla.${index}.departmentId`)}
+                        />
+                        <input
+                          type="hidden"
+                          {...form.register(`departmentSla.${index}.departmentName`)}
+                        />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <FormField
+                            control={control}
+                            name={`departmentSla.${index}.slaDefaults.lowPriority`}
+                            render={({ field }) => (
+                              <FormItem className="space-y-1">
+                                <FormLabel className="text-xs text-muted-foreground">Low (Hours)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    max="720"
+                                    {...field}
+                                    value={field.value ?? 72}
+                                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 72)}
+                                    className="h-8"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={control}
+                            name={`departmentSla.${index}.slaDefaults.mediumPriority`}
+                            render={({ field }) => (
+                              <FormItem className="space-y-1">
+                                <FormLabel className="text-xs text-muted-foreground">Medium (Hours)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    max="720"
+                                    {...field}
+                                    value={field.value ?? 48}
+                                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 48)}
+                                    className="h-8"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={control}
+                            name={`departmentSla.${index}.slaDefaults.highPriority`}
+                            render={({ field }) => (
+                              <FormItem className="space-y-1">
+                                <FormLabel className="text-xs text-muted-foreground">High (Hours)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    max="720"
+                                    {...field}
+                                    value={field.value ?? 24}
+                                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 24)}
+                                    className="h-8"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={control}
+                            name={`departmentSla.${index}.slaDefaults.urgentPriority`}
+                            render={({ field }) => (
+                              <FormItem className="space-y-1">
+                                <FormLabel className="text-xs text-muted-foreground">Urgent (Hours)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    max="720"
+                                    {...field}
+                                    value={field.value ?? 4}
+                                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 4)}
+                                    className="h-8"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
           </Tabs>
 

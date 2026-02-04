@@ -26,23 +26,16 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { getStatusColor, getPriorityColor, formatDate, getInitials, getAvatarColor, formatRelativeTime } from '@/lib/utils';
 import PageHeader from '@/components/common/PageHeader';
 import AttachmentList from './AttachmentList';
 import FileUpload from './FileUpload';
 import AssignTicketModal from './AssignTicketModal';
-import ConfirmStatusChangeModal from './ConfirmStatusChangeModal';
+import ChangeStatusModal from './ChangeStatusModal';
+import ResolutionModal from './ResolutionModal';
+import ReopenDialog from './ReopenDialog';
 import ActivityFeed from './ActivityFeed';
-import FeedbackDialog from './FeedbackDialog';
 import EscalateTicketDialog from './EscalateTicketDialog';
-import FeedbackResultCard from './FeedbackResultCard';
 import useAuth from '@/hooks/useAuth';
 import useTicketUpdates from '@/hooks/useTicketUpdates';
 import ticketService from '@/lib/services/ticketService';
@@ -59,9 +52,9 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
     const [isReady, setIsReady] = useState(false);
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [pendingStatus, setPendingStatus] = useState(null);
-    const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
-    const [showStatusConfirmModal, setShowStatusConfirmModal] = useState(false);
-    const [pendingStatusChange, setPendingStatusChange] = useState(null);
+    const [showChangeStatusModal, setShowChangeStatusModal] = useState(false);
+    const [showResolutionModal, setShowResolutionModal] = useState(false);
+    const [showReopenDialog, setShowReopenDialog] = useState(false);
     const [assignmentMode, setAssignmentMode] = useState(null); // 'assign' or 'reassign'
     const [showEscalateDialog, setShowEscalateDialog] = useState(false);
 
@@ -98,60 +91,42 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
         setIsReady(true);
     }, []);
 
-    // Show feedback dialog if ticket is completed and creator hasn't given feedback
+    // Show resolution modal if ticket is resolved (for non-staff creator)
+    // Show resolution modal if ticket is resolved (ONLY for the creator)
     useEffect(() => {
-        const isCreator = ticket?.createdBy?._id === user?._id || ticket?.createdBy === user?._id;
-        if (
-            ticket?.status === 'Completed' &&
-            isCreator &&
-            !ticket?.feedbackGiven &&
-            isReady
-        ) {
-            setShowFeedbackDialog(true);
-        }
-    }, [ticket?.status, ticket?.feedbackGiven, ticket?.createdBy, user?._id, isReady]);
+        const isCreator = user?._id && (
+            (ticket.createdBy?._id === user._id) ||
+            (ticket.createdBy === user._id)
+        );
 
-    const handleStatusChange = (newStatus) => {
-        // Only allow status changes after component is ready (after mount)
-        if (!isReady) {
-            return;
+        if (ticket?.status === 'Resolved' && isReady && isCreator) {
+            setShowResolutionModal(true);
         }
+    }, [ticket?.status, isReady, user?._id, ticket.createdBy]);
 
-        // Only staff members can change status
-        if (!isStaff) {
-            toast.error('You do not have permission to change ticket status');
-            return;
-        }
+    const handleStatusChangeClick = () => {
+        setShowChangeStatusModal(true);
+    };
 
-        // Validate that newStatus is one of the allowed values
-        const validStatuses = ['New', 'Assigned', 'InProgress', 'Completed', 'Reopened', 'Closed', 'Escalated'];
-        if (!validStatuses.includes(newStatus)) {
-            toast.error('Invalid status value');
-            return;
-        }
-
-        // If changing to "Assigned" and ticket is unassigned, show assign modal instead
-        if (newStatus === 'Assigned' && !ticket.assignedTo) {
+    const handleStatusUpdate = async (newStatus) => {
+        // If changing to "Assigned", show assign modal if:
+        // 1. Ticket is unassigned (New -> Assigned)
+        // 2. Ticket is Reopened (Reopened -> Assigned) - to confirm/change assignee
+        if (newStatus === 'Assigned' && (!ticket.assignedTo || ticket.status === 'Reopened')) {
             setPendingStatus(newStatus);
             setShowAssignModal(true);
             return;
         }
 
-        // Show confirmation modal
-        setPendingStatusChange({ newStatus });
-        setShowStatusConfirmModal(true);
-    };
-
-    const handleConfirmStatusChange = async () => {
-        if (!pendingStatusChange?.newStatus) return;
-
-        const newStatus = pendingStatusChange.newStatus;
-
         try {
             setIsUpdatingStatus(true);
             const updateData = { status: newStatus };
-            const response = await ticketService.updateTicket(ticket._id, updateData);
-            // Update local ticket state with the response
+
+            // If resolving, show resolution modal? Or just update.
+            // For now just update. Component will handle 'Resolved' state display.
+
+            // Use dedicate status update endpoint (PATCH) which allows assignees to change status
+            const response = await ticketService.updateTicketStatus(ticket._id, newStatus);
             if (response.data) {
                 setTicket(response.data);
             }
@@ -164,8 +139,44 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
             toast.error('Failed to update ticket status');
         } finally {
             setIsUpdatingStatus(false);
-            setShowStatusConfirmModal(false);
-            setPendingStatusChange(null);
+        }
+    };
+
+    const handleReopenCallback = () => {
+        setShowReopenDialog(true);
+    };
+
+    const handleConfirmReopen = async (remarks) => {
+        try {
+            setIsUpdatingStatus(true);
+            const updateData = {
+                status: 'Reopened',
+                // You might need to add a way to send remarks to backend if Ticket model supports it directly 
+                // or just add it as a comment manually
+            };
+
+            // 1. Update status
+            const response = await ticketService.updateTicket(ticket._id, updateData);
+
+            // 2. Add remarks as a comment
+            if (remarks) {
+                await ticketService.addComment(ticket._id, { text: `[Reopen Remarks]: ${remarks}` });
+            }
+
+            if (response.data) {
+                setTicket(response.data);
+            }
+            toast.success('Ticket reopened');
+            if (onTicketUpdate) {
+                onTicketUpdate();
+            }
+        } catch (error) {
+            console.error('Failed to reopen ticket:', error);
+            toast.error('Failed to reopen ticket');
+        } finally {
+            setIsUpdatingStatus(false);
+            setShowReopenDialog(false);
+            setShowResolutionModal(false);
         }
     };
 
@@ -225,7 +236,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
     };
 
     const handleCloseTicket = () => {
-        handleStatusChange('Closed');
+        handleStatusUpdate('Closed');
     };
 
     const handleFileUpload = async (files) => {
@@ -319,9 +330,16 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                         <span className="text-sm font-medium text-muted-foreground">
                             {ticket.ticketId}
                         </span>
-                        <Badge variant="outline" className={getStatusColor(ticket.status)}>
-                            {ticket.status}
-                        </Badge>
+                        {ticket.status === 'Reopened' ? (
+                            <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200 gap-1">
+                                <span className="flex h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+                                Reopened
+                            </Badge>
+                        ) : (
+                            <Badge variant="outline" className={getStatusColor(ticket.status)}>
+                                {ticket.status}
+                            </Badge>
+                        )}
                     </div>
                     <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">
                         {ticket.subject}
@@ -329,15 +347,16 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                 </div>
                 {/* Action buttons */}
                 <div className="flex items-center gap-2 flex-wrap">
-                    {/* Feedback button for creator when ticket is completed */}
-                    {ticket.status === 'Completed' &&
-                        ticket.createdBy?._id === user?._id &&
-                        !ticket.feedbackGiven && (
+                    {/* Created by user action for Resolved tickets */}
+                    {ticket.status === 'Resolved' &&
+                        (ticket.createdBy?._id === user?._id || ticket.createdBy === user?._id) && (
                             <Button
-                                onClick={() => setShowFeedbackDialog(true)}
-                                className="bg-blue-500 hover:bg-blue-600"
+                                onClick={() => setShowResolutionModal(true)}
+                                variant="outline"
+                                className="border-green-500 text-green-600 hover:bg-green-50"
                             >
-                                ★ Submit Feedback
+                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                Resolved
                             </Button>
                         )}
 
@@ -367,9 +386,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                 <DropdownMenuItem onClick={handleEscalate} disabled={isUpdatingStatus}>
                                     Escalate
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleCloseTicket} disabled={isUpdatingStatus} className="text-destructive">
-                                    Close Ticket
-                                </DropdownMenuItem>
+
                             </DropdownMenuContent>
                         </DropdownMenu>
                     )}
@@ -449,24 +466,21 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                 <span className="text-xs text-muted-foreground block mb-1">Status</span>
                                 {isStaff ? (
                                     // Staff can change status
-                                    ticket.status ? (
-                                        <Select value={ticket.status} onValueChange={handleStatusChange} disabled={isUpdatingStatus || !isReady}>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="New">New</SelectItem>
-                                                <SelectItem value="Assigned">Assigned</SelectItem>
-                                                <SelectItem value="InProgress">In Progress</SelectItem>
-                                                <SelectItem value="Completed">Completed</SelectItem>
-                                                <SelectItem value="Reopened">Reopened</SelectItem>
-                                                <SelectItem value="Closed">Closed</SelectItem>
-                                                <SelectItem value="Escalated">Escalated</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    ) : (
-                                        <Badge variant="outline">No Status</Badge>
-                                    )
+                                    <div className="flex flex-col gap-2">
+                                        <Badge variant="outline" className={`${getStatusColor(ticket.status)} w-fit`}>
+                                            {ticket.status}
+                                        </Badge>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={handleStatusChangeClick}
+                                            disabled={isUpdatingStatus || !isReady}
+                                            className="w-full justify-between"
+                                        >
+                                            Change Status
+                                            <MoreVertical className="h-3 w-3 opacity-50" />
+                                        </Button>
+                                    </div>
                                 ) : (
                                     // Normal users can only view status
                                     <Badge variant="outline" className={getStatusColor(ticket.status)}>
@@ -539,23 +553,32 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                         </CardContent>
                     </Card>
 
-                    {/* Feedback Result Card - Show when feedback has been given */}
-                    <FeedbackResultCard ticket={ticket} />
+                    {/* Removed FeedbackResultCard */}
                 </div>
             </div>
 
-            {/* Status Change Confirmation Modal */}
-            <ConfirmStatusChangeModal
-                isOpen={showStatusConfirmModal}
-                onClose={() => {
-                    setShowStatusConfirmModal(false);
-                    setPendingStatusChange(null);
-                }}
-                onConfirm={handleConfirmStatusChange}
-                isLoading={isUpdatingStatus}
-                ticketSubject={ticket.subject}
+            {/* Change Status Modal */}
+            <ChangeStatusModal
+                isOpen={showChangeStatusModal}
+                onClose={() => setShowChangeStatusModal(false)}
                 currentStatus={ticket.status}
-                newStatus={pendingStatusChange?.newStatus}
+                onStatusChange={handleStatusUpdate}
+                isLoading={isUpdatingStatus}
+            />
+
+            {/* Resolution Modal */}
+            <ResolutionModal
+                isOpen={showResolutionModal}
+                onClose={() => setShowResolutionModal(false)}
+                onReopen={handleReopenCallback}
+            />
+
+            {/* Reopen Dialog */}
+            <ReopenDialog
+                isOpen={showReopenDialog}
+                onClose={() => setShowReopenDialog(false)}
+                onConfirm={handleConfirmReopen}
+                isLoading={isUpdatingStatus}
             />
 
             {/* Assign/Reassign Ticket Modal */}
@@ -575,23 +598,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                 currentAssignee={assignmentMode === 'reassign' ? ticket.assignedTo : null}
             />
 
-            {/* Feedback Dialog */}
-            <FeedbackDialog
-                open={showFeedbackDialog}
-                onOpenChange={setShowFeedbackDialog}
-                ticketId={ticket._id}
-                ticketSubject={ticket.subject}
-                onFeedbackSubmitted={() => {
-                    // Refetch ticket to get updated status
-                    ticketService.getTicket(ticket._id)
-                        .then((response) => {
-                            setTicket(response.data || response);
-                        })
-                        .catch((error) => {
-                            console.error('Failed to refetch ticket:', error);
-                        });
-                }}
-            />
+            {/* Removed FeedbackDialog */}
 
             {/* Escalate Ticket Dialog */}
             <EscalateTicketDialog

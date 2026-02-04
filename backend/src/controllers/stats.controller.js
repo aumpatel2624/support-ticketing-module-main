@@ -1745,6 +1745,96 @@ const getMyPerformance = asyncHandler(async (req, res) => {
 // Import mongoose for ObjectId
 // const mongoose = require('mongoose');
 
+/**
+ * @desc    Get feedback statistics
+ * @route   GET /api/stats/feedback
+ * @access  Private (Admin/SuperAdmin)
+ */
+const getFeedbackStats = asyncHandler(async (req, res) => {
+    const { role, department: userDep } = req.user;
+
+    if (!['SuperAdmin', 'Admin'].includes(role)) {
+        throw new AuthorizationError('Not authorized to access feedback stats');
+    }
+
+    const match = {
+        feedbackGiven: true
+    };
+
+    if (role === 'Admin') {
+        match.departmentId = userDep;
+    }
+
+    // 1. Overall Feedback Stats (Average Rating, Total Feedbacks)
+    const overallStats = await Ticket.aggregate([
+        { $match: match },
+        {
+            $group: {
+                _id: null,
+                avgRating: { $avg: '$rating' },
+                totalFeedbacks: { $sum: 1 },
+                ratingDistribution: {
+                    $push: '$rating'
+                }
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                avgRating: { $round: [{ $ifNull: ['$avgRating', 0] }, 1] },
+                totalFeedbacks: 1,
+                distribution: {
+                    1: { $size: { $filter: { input: '$ratingDistribution', as: 'r', cond: { $eq: ['$$r', 1] } } } },
+                    2: { $size: { $filter: { input: '$ratingDistribution', as: 'r', cond: { $eq: ['$$r', 2] } } } },
+                    3: { $size: { $filter: { input: '$ratingDistribution', as: 'r', cond: { $eq: ['$$r', 3] } } } },
+                    4: { $size: { $filter: { input: '$ratingDistribution', as: 'r', cond: { $eq: ['$$r', 4] } } } },
+                    5: { $size: { $filter: { input: '$ratingDistribution', as: 'r', cond: { $eq: ['$$r', 5] } } } }
+                }
+            }
+        }
+    ]);
+
+    // 2. Department-wise Feedback (For SuperAdmin)
+    let departmentStats = [];
+    if (role === 'SuperAdmin') {
+        departmentStats = await Ticket.aggregate([
+            { $match: { feedbackGiven: true } },
+            {
+                $group: {
+                    _id: '$departmentId',
+                    avgRating: { $avg: '$rating' },
+                    totalFeedbacks: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'departments',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'dept'
+                }
+            },
+            { $unwind: '$dept' },
+            {
+                $project: {
+                    departmentName: '$dept.name',
+                    avgRating: { $round: [{ $ifNull: ['$avgRating', 0] }, 1] },
+                    totalFeedbacks: 1
+                }
+            },
+            { $sort: { avgRating: -1 } }
+        ]);
+    }
+
+    res.status(200).json({
+        success: true,
+        data: {
+            overall: overallStats[0] || { avgRating: 0, totalFeedbacks: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } },
+            byDepartment: departmentStats
+        }
+    });
+});
+
 module.exports = {
     getDashboardStats,
     getDetailedReports,
@@ -1760,5 +1850,6 @@ module.exports = {
     getSystemHealth,
     getAuditLog,
     getDepartmentBreakdown,
-    getMyPerformance
+    getMyPerformance,
+    getFeedbackStats
 };

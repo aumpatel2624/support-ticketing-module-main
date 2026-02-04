@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { formatDateTime, formatDate } from '@/lib/utils';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -59,6 +60,11 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
                         >
                             {ticket.ticketId}
                         </Link>
+                        {ticket.status === 'Reopened' && (
+                            <Badge variant="outline" className="h-5 px-1 bg-orange-50 text-orange-600 border-orange-200 text-[10px] shrink-0">
+                                Reopened
+                            </Badge>
+                        )}
                     </div>
 
                     <DropdownMenu>
@@ -124,12 +130,17 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Badge
-                                    variant="outline"
-                                    className="text-xs cursor-help bg-background"
-                                >
-                                    {ageLabel}
-                                </Badge>
+                                <div className="flex items-center">
+                                    <Badge
+                                        variant="outline"
+                                        className="text-xs cursor-help bg-background"
+                                    >
+                                        {ageLabel}
+                                    </Badge>
+                                    <span className="text-[10px] text-muted-foreground ml-2">
+                                        {formatDate(ticket.createdAt, 'MMM dd, HH:mm')}
+                                    </span>
+                                </div>
                             </TooltipTrigger>
                             <TooltipContent>
                                 <p className="text-xs">{ageDescription}</p>

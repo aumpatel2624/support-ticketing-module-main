@@ -15,7 +15,8 @@ const {
     getSystemHealth,
     getAuditLog,
     getDepartmentBreakdown,
-    getMyPerformance
+    getMyPerformance,
+    getFeedbackStats
 } = require('../controllers/stats.controller');
 const { authenticate } = require('../middleware/auth');
 const { requireAdmin, requireSuperAdmin, requireTeamMember } = require('../middleware/rbac');
@@ -291,6 +292,22 @@ router.get('/department-breakdown', authenticate, requireSuperAdmin, getDepartme
  *         description: Personal performance stats retrieved
  */
 router.get('/my-performance', authenticate, requireTeamMember, getMyPerformance);
+
+/**
+ * @swagger
+ * /stats/feedback:
+ *   get:
+ *     summary: Get feedback statistics
+ *     description: Retrieve feedback statistics (Admin/SuperAdmin only)
+ *     tags: [Stats]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Feedback stats retrieved
+ */
+router.get('/feedback', authenticate, requireAdmin, getFeedbackStats);
+
 
 module.exports = router;
 

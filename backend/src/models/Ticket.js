@@ -32,7 +32,7 @@ const mongoose = require('mongoose');
  *           enum: [Low, Medium, High, Urgent]
  *         status:
  *           type: string
- *           enum: [New, Assigned, InProgress, Completed, Reopened, Closed, Escalated]
+ *           enum: [New, Assigned, InProgress, Resolved, Reopened, Escalated]
  *         createdBy:
  *           type: string
  *           description: User who created the ticket
@@ -115,7 +115,7 @@ const attachmentSchema = new mongoose.Schema({
 const statusHistorySchema = new mongoose.Schema({
     status: {
         type: String,
-        enum: ['New', 'Assigned', 'InProgress', 'Completed', 'Reopened', 'Closed', 'Escalated'],
+        enum: ['New', 'Assigned', 'InProgress', 'Resolved', 'Reopened', 'Escalated'],
         required: true
     },
     changedBy: {
@@ -171,7 +171,7 @@ const ticketSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['New', 'Assigned', 'InProgress', 'Completed', 'Reopened', 'Closed', 'Escalated'],
+        enum: ['New', 'Assigned', 'InProgress', 'Resolved', 'Reopened', 'Escalated'],
         default: 'New',
         index: true
     },
@@ -335,13 +335,38 @@ ticketSchema.methods.calculateSLA = async function () {
         console.warn('Could not fetch SystemSettings for SLA:', err.message);
     }
 
-    // SLA hours by priority from SystemSettings or defaults
-    const slaHours = {
-        Low: settings?.slaDefaults?.lowPriority || 72,
-        Medium: settings?.slaDefaults?.mediumPriority || 48,
-        High: settings?.slaDefaults?.highPriority || 24,
-        Urgent: settings?.slaDefaults?.urgentPriority || 4
+    // SLA hours by priority from SystemSettings (Global or Department-specific)
+    let slaHours = {
+        Low: 72,
+        Medium: 48,
+        High: 24,
+        Urgent: 4
     };
+
+    if (settings) {
+        // Check for department-specific SLA
+        const deptSla = settings.departmentSla?.find(
+            d => d.departmentId.toString() === this.departmentId.toString()
+        );
+
+        if (deptSla && deptSla.slaDefaults) {
+            // Use department specific settings
+            slaHours = {
+                Low: deptSla.slaDefaults.lowPriority || 72,
+                Medium: deptSla.slaDefaults.mediumPriority || 48,
+                High: deptSla.slaDefaults.highPriority || 24,
+                Urgent: deptSla.slaDefaults.urgentPriority || 4
+            };
+        } else if (settings.slaDefaults) {
+            // Use global settings
+            slaHours = {
+                Low: settings.slaDefaults.lowPriority || 72,
+                Medium: settings.slaDefaults.mediumPriority || 48,
+                High: settings.slaDefaults.highPriority || 24,
+                Urgent: settings.slaDefaults.urgentPriority || 4
+            };
+        }
+    }
 
     const hours = slaHours[this.priority] || 48; // Default to Medium if unknown priority
     const baseDate = this.createdAt || new Date();
@@ -376,13 +401,12 @@ ticketSchema.methods.addStatusHistory = function (status, userId, comment = '') 
  */
 ticketSchema.methods.canTransitionTo = function (newStatus) {
     const transitions = {
-        'New': ['Assigned', 'Closed'],
-        'Assigned': ['InProgress', 'New', 'Closed'],
-        'InProgress': ['Completed', 'Escalated', 'Closed'],
-        'Completed': ['Closed', 'Reopened'],
-        'Reopened': ['InProgress', 'Assigned', 'Closed'],
-        'Closed': [],
-        'Escalated': ['Assigned', 'InProgress', 'Closed']
+        'New': ['Assigned'],
+        'Assigned': ['InProgress', 'New', 'Assigned'], // Added self-loop for re-assignment
+        'InProgress': ['Resolved', 'Escalated', 'Assigned'], // Added Assigned for transfer flow
+        'Resolved': ['Reopened'],
+        'Reopened': ['Assigned'], // Strict: Must be assigned first
+        'Escalated': ['Assigned', 'InProgress']
     };
 
     return transitions[this.status]?.includes(newStatus) || false;

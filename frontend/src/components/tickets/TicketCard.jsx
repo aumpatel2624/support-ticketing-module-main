@@ -43,14 +43,14 @@ export default function TicketCard({ ticket, onQuickAction }) {
     const ageLabel = getAgeLabel(ticket.createdAt, ticket.priority);
     const ageDescription = getAgeDescription(ticket.createdAt, ticket.priority);
 
-    const handleMarkCompleted = async (e) => {
+    const handleMarkResolved = async (e) => {
         e.stopPropagation();
         try {
             setIsUpdating(true);
             await ticketService.updateTicket(ticket._id, {
-                status: 'Completed'
+                status: 'Resolved'
             });
-            toast.success('Ticket marked as completed');
+            toast.success('Ticket marked as resolved');
             onQuickAction?.('refresh');
         } catch (error) {
             console.error('Failed to update ticket:', error);
@@ -107,6 +107,12 @@ export default function TicketCard({ ticket, onQuickAction }) {
                             <Badge variant="outline" className={getStatusColor(ticket.status)}>
                                 {ticket.status}
                             </Badge>
+                            {ticket.status === 'Reopened' && (
+                                <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200 gap-1">
+                                    <span className="flex h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+                                    Reopened Tag
+                                </Badge>
+                            )}
                         </div>
 
                         <DropdownMenu>
@@ -137,8 +143,8 @@ export default function TicketCard({ ticket, onQuickAction }) {
                                     Change priority
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={handleMarkCompleted} disabled={isUpdating}>
-                                    Mark as completed
+                                <DropdownMenuItem onClick={handleMarkResolved} disabled={isUpdating}>
+                                    Mark as resolved
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => onQuickAction?.('copy', ticket.ticketId)}>
@@ -212,7 +218,7 @@ export default function TicketCard({ ticket, onQuickAction }) {
                                 <div className="flex items-center gap-1.5">
                                     <Clock className="h-3 w-3 text-muted-foreground" />
                                     <span className="text-xs text-muted-foreground">
-                                        {formatDate(ticket.createdAt, 'MMM dd')}
+                                        {formatDate(ticket.createdAt, 'MMM dd, HH:mm')}
                                     </span>
                                     <Badge
                                         variant="outline"

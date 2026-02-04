@@ -35,7 +35,7 @@ const updateTicketSchema = z.object({
         .optional(),
     priority: z.enum(['Low', 'Medium', 'High', 'Urgent'])
         .optional(),
-    status: z.enum(['New', 'Assigned', 'InProgress', 'Completed', 'Reopened', 'Closed', 'Escalated'])
+    status: z.enum(['New', 'Assigned', 'InProgress', 'Resolved', 'Reopened', 'Escalated'])
         .optional(),
     assignedTo: z.string()
         .regex(/^[0-9a-fA-F]{24}$/, 'Invalid user ID format')
@@ -45,7 +45,7 @@ const updateTicketSchema = z.object({
 
 // Update status schema
 const updateStatusSchema = z.object({
-    status: z.enum(['New', 'Assigned', 'InProgress', 'Completed', 'Reopened', 'Closed', 'Escalated']),
+    status: z.enum(['New', 'Assigned', 'InProgress', 'Resolved', 'Reopened', 'Escalated']),
     comment: z.string()
         .max(500, 'Comment must not exceed 500 characters')
         .trim()

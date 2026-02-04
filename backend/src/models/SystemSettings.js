@@ -54,6 +54,21 @@ const systemSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Department-specific SLA configuration
+  departmentSla: [{
+    departmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Department',
+      required: true
+    },
+    slaDefaults: {
+      lowPriority: { type: Number, default: 72 },
+      mediumPriority: { type: Number, default: 48 },
+      highPriority: { type: Number, default: 24 },
+      urgentPriority: { type: Number, default: 4 }
+    }
+  }],
+
   // Escalation Rules
   escalationRules: [{
     afterHours: {

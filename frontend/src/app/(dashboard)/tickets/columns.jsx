@@ -105,9 +105,17 @@ export const columns = [
             const category = row.original.category?.name;
             return (
                 <div className="flex flex-col space-y-1">
-                    <span className="max-w-[500px] truncate font-medium">
-                        {row.getValue('subject')}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className="max-w-[500px] truncate font-medium">
+                            {row.getValue('subject')}
+                        </span>
+                        {row.getValue('status') === 'Reopened' && (
+                            <Badge variant="outline" className="h-5 px-1.5 bg-orange-100 text-orange-700 border-orange-200 text-[10px] gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                                Reopened
+                            </Badge>
+                        )}
+                    </div>
                     {category && (
                         <span className="text-xs text-muted-foreground">
                             {category}
@@ -163,7 +171,7 @@ export const columns = [
         cell: ({ row }) => {
             return (
                 <div className="text-muted-foreground text-sm">
-                    {formatDate(row.getValue('createdAt'))}
+                    {formatDate(row.getValue('createdAt'), 'MMM dd, yyyy HH:mm')}
                 </div>
             );
         },
@@ -178,7 +186,7 @@ export const columns = [
                 e.preventDefault();
                 try {
                     await ticketService.updateTicket(ticket._id || ticket.id, {
-                        status: 'Completed'
+                        status: 'Resolved'
                     });
                     toast.success('Ticket marked as resolved');
                     window.location.reload();

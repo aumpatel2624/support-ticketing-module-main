@@ -272,8 +272,7 @@ const updateTicket = asyncHandler(async (req, res) => {
         ticket.status = newStatus;
 
         // Update timestamps based on status
-        if (newStatus === 'Completed') ticket.resolvedAt = new Date();
-        if (newStatus === 'Closed') ticket.closedAt = new Date();
+        if (newStatus === 'Resolved') ticket.resolvedAt = new Date();
 
         // Add to status history
         ticket.addStatusHistory(newStatus, req.user._id, req.body.comment || null);
@@ -299,8 +298,8 @@ const updateTicket = asyncHandler(async (req, res) => {
                 userId: ticket.createdBy._id,
                 ticketId: ticket._id,
                 type: 'StatusUpdated',
-                message: newStatus === 'Completed'
-                    ? `Your ticket ${ticket.ticketId} has been completed and is waiting for your feedback`
+                message: newStatus === 'Resolved'
+                    ? `Your ticket ${ticket.ticketId} has been resolved`
                     : `Your ticket ${ticket.ticketId} status has been updated to ${newStatus}`
             });
 
@@ -375,16 +374,26 @@ const updateStatus = asyncHandler(async (req, res) => {
     // Normal users can only close their own tickets or reopen completed ones
     const isCreator = ticket.createdBy.toString() === req.user._id.toString();
 
-    if (!isAssigned && !isAdmin && !(isCreator && ['Closed', 'InProgress'].includes(status))) {
+    // Allow TeamMembers to update status if:
+    // 1. They are assigned to the ticket
+    // 2. The ticket is unassigned and they are moving it to InProgress (Claiming it)
+    const isTeamMember = req.user.role === 'TeamMember';
+    const isClaiming = isTeamMember && !ticket.assignedTo && status === 'InProgress';
+
+    if (!isAssigned && !isAdmin && !isClaiming && !(isCreator && ['Resolved', 'InProgress'].includes(status))) {
         throw new AuthorizationError('You do not have permission to change the status of this ticket');
+    }
+
+    // Auto-assign if claiming
+    if (isClaiming) {
+        ticket.assignedTo = req.user._id;
     }
 
     const oldStatus = ticket.status;
     ticket.status = status;
 
     // Update timestamps
-    if (status === 'Completed') ticket.resolvedAt = new Date();
-    if (status === 'Closed') ticket.closedAt = new Date();
+    if (status === 'Resolved') ticket.resolvedAt = new Date();
 
     ticket.addStatusHistory(status, req.user._id, comment);
     await ticket.save();
@@ -404,8 +413,8 @@ const updateStatus = asyncHandler(async (req, res) => {
             userId: ticket.createdBy._id,
             ticketId: ticket._id,
             type: 'StatusUpdated',
-            message: status === 'Completed'
-                ? `Your ticket ${ticket.ticketId} has been completed and is waiting for your feedback`
+            message: status === 'Resolved'
+                ? `Your ticket ${ticket.ticketId} has been resolved`
                 : `Your ticket ${ticket.ticketId} status has been updated to ${status}`
         });
 
@@ -448,15 +457,15 @@ const assignTicket = asyncHandler(async (req, res) => {
 
     ticket.assignedTo = assignedTo;
 
-    // If ticket is Reopened, automatically change to InProgress when reassigned
+    // If ticket is Reopened, automatically change to Assigned (was InProgress)
     const wasReopened = ticket.status === 'Reopened';
     if (wasReopened) {
-        ticket.status = 'InProgress';
+        ticket.status = 'Assigned';
     }
 
     // Add assignment to status history
     const historyComment = wasReopened
-        ? `${comment || 'Ticket assigned to user'} - status changed from Reopened to InProgress`
+        ? `${comment || 'Ticket assigned to user'} - status changed from Reopened to Assigned`
         : (comment || `Ticket assigned to user`);
 
     ticket.addStatusHistory(ticket.status, req.user._id, historyComment);
@@ -564,8 +573,8 @@ const rateTicket = asyncHandler(async (req, res) => {
         throw new AuthorizationError('Only the ticket creator can rate this ticket');
     }
 
-    if (!['Completed', 'Closed'].includes(ticket.status)) {
-        throw new ValidationError('Can only rate completed or closed tickets');
+    if (!['Resolved'].includes(ticket.status)) {
+        throw new ValidationError('Can only rate resolved tickets');
     }
 
     ticket.rating = rating;
@@ -600,8 +609,8 @@ const submitFeedback = asyncHandler(async (req, res) => {
         throw new AuthorizationError('Only the ticket creator can submit feedback');
     }
 
-    if (ticket.status !== 'Completed') {
-        throw new ValidationError('Feedback can only be submitted for completed tickets');
+    if (ticket.status !== 'Resolved') {
+        throw new ValidationError('Feedback can only be submitted for resolved tickets');
     }
 
     // Update ticket with feedback
@@ -612,10 +621,8 @@ const submitFeedback = asyncHandler(async (req, res) => {
 
     // Handle action
     if (action === 'close') {
-        // Close the ticket
-        ticket.status = 'Closed';
-        ticket.closedAt = new Date();
-        ticket.addStatusHistory('Closed', req.user._id, 'Ticket closed based on creator feedback');
+        // Confirm resolution
+        ticket.status = 'Resolved'; // Stays resolved
     } else if (action === 'reopen') {
         // Reopen the ticket - change to Reopened
         ticket.status = 'Reopened';
@@ -631,7 +638,7 @@ const submitFeedback = asyncHandler(async (req, res) => {
 
         const notificationType = action === 'close' ? 'FeedbackSubmitted' : 'TicketReopened';
         const message = action === 'close'
-            ? `Creator has submitted feedback and closed ticket ${ticket.ticketId}`
+            ? `Creator has submitted feedback for ticket ${ticket.ticketId}`
             : `Creator has reopened ticket ${ticket.ticketId} - not satisfied with completion`;
 
         await Notification.create({
@@ -652,7 +659,7 @@ const submitFeedback = asyncHandler(async (req, res) => {
 
     res.status(200).json({
         success: true,
-        message: action === 'close' ? 'Feedback submitted and ticket closed' : 'Ticket reopened for further work',
+        message: action === 'close' ? 'Feedback submitted' : 'Ticket reopened for further work',
         data: {
             ticketId: ticket._id,
             status: ticket.status,

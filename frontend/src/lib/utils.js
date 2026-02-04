@@ -56,9 +56,9 @@ export function getStatusColor(status) {
     assigned: 'bg-status-assigned/10 text-status-assigned border-status-assigned/20',
     'in-progress': 'bg-status-in-progress/10 text-status-in-progress border-status-in-progress/20',
     pending: 'bg-status-pending/10 text-status-pending border-status-pending/20',
-    completed: 'bg-status-completed/10 text-status-completed border-status-completed/20',
+    resolved: 'bg-status-completed/10 text-status-completed border-status-completed/20',
     reopened: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
-    closed: 'bg-status-closed/10 text-status-closed border-status-closed/20',
+
     escalated: 'bg-status-escalated/10 text-status-escalated border-status-escalated/20',
   };
 
