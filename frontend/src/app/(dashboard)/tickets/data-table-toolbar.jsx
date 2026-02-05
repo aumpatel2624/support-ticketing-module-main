@@ -3,19 +3,8 @@
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { DataTableFacetedFilter } from '@/components/ui/data-table-faceted-filter';
-import { TICKET_STATUS, TICKET_PRIORITY } from '@/lib/constants';
 
-// Convert constants to options format
-const statusOptions = Object.values(TICKET_STATUS).map((status) => ({
-    value: status,
-    label: status,
-}));
-
-const priorityOptions = Object.values(TICKET_PRIORITY).map((priority) => ({
-    value: priority,
-    label: priority,
-}));
+import useAuth from '@/hooks/useAuth';
 
 export function DataTableToolbar({ table }) {
     const isFiltered = table.getState().columnFilters.length > 0;
@@ -31,20 +20,6 @@ export function DataTableToolbar({ table }) {
                     }
                     className="h-8 w-[150px] lg:w-[250px]"
                 />
-                {table.getColumn('status') && (
-                    <DataTableFacetedFilter
-                        column={table.getColumn('status')}
-                        title="Status"
-                        options={statusOptions}
-                    />
-                )}
-                {table.getColumn('priority') && (
-                    <DataTableFacetedFilter
-                        column={table.getColumn('priority')}
-                        title="Priority"
-                        options={priorityOptions}
-                    />
-                )}
                 {isFiltered && (
                     <Button
                         variant="ghost"
@@ -56,10 +31,6 @@ export function DataTableToolbar({ table }) {
                     </Button>
                 )}
             </div>
-            {/* 
-        View Options can go here (column visibility toggle)
-        For now simple.
-       */}
         </div>
     );
 }

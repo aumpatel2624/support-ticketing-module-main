@@ -360,8 +360,8 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                             </Button>
                         )}
 
-                    {/* Reassign button for Admin/SuperAdmin */}
-                    {user && ['Admin', 'SuperAdmin'].includes(user.role) && (
+                    {/* Reassign button for Admin/SuperAdmin - Only if already assigned */}
+                    {user && ['Admin', 'SuperAdmin'].includes(user.role) && ticket.assignedTo && (
                         <Button
                             onClick={() => {
                                 setAssignmentMode('reassign');
@@ -385,6 +385,9 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={handleEscalate} disabled={isUpdatingStatus}>
                                     Escalate
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setShowChangeStatusModal(true)} disabled={isUpdatingStatus}>
+                                    Change Status
                                 </DropdownMenuItem>
 
                             </DropdownMenuContent>
@@ -470,16 +473,50 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                         <Badge variant="outline" className={`${getStatusColor(ticket.status)} w-fit`}>
                                             {ticket.status}
                                         </Badge>
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={handleStatusChangeClick}
-                                            disabled={isUpdatingStatus || !isReady}
-                                            className="w-full justify-between"
-                                        >
-                                            Change Status
-                                            <MoreVertical className="h-3 w-3 opacity-50" />
-                                        </Button>
+                                        {(() => {
+                                            let nextStatus = null;
+                                            let buttonText = '';
+                                            let buttonVariant = 'default'; // Use default (primary) for main action
+
+                                            switch (ticket.status) {
+                                                case 'New':
+                                                    nextStatus = 'Assigned';
+                                                    buttonText = 'Assign Ticket';
+                                                    break;
+                                                case 'Assigned':
+                                                    nextStatus = 'InProgress';
+                                                    buttonText = 'Move to In Progress';
+                                                    break;
+                                                case 'InProgress':
+                                                    nextStatus = 'Resolved';
+                                                    buttonText = 'Resolve Ticket';
+                                                    buttonVariant = 'success'; // You might need to define this variant or use explicit className
+                                                    break;
+                                                case 'Reopened':
+                                                case 'Escalated':
+                                                    nextStatus = 'InProgress';
+                                                    buttonText = 'Move to In Progress';
+                                                    break;
+                                                default:
+                                                    // Resolved or other terminal states
+                                                    break;
+                                            }
+
+                                            if (nextStatus) {
+                                                return (
+                                                    <Button
+                                                        size="sm"
+                                                        // Use specific styles for different actions if needed, or just default primary
+                                                        className={`w-full ${nextStatus === 'Resolved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                                                        onClick={() => handleStatusUpdate(nextStatus)}
+                                                        disabled={isUpdatingStatus || !isReady}
+                                                    >
+                                                        {buttonText}
+                                                    </Button>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                     </div>
                                 ) : (
                                     // Normal users can only view status
@@ -503,7 +540,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
 
                             <div>
                                 <span className="text-xs text-muted-foreground block mb-1">Category</span>
-                                <div className="font-medium">{ticket.categoryId?.name || 'Uncategorized'}</div>
+                                <div className="font-medium">{ticket.category?.name || ticket.categoryId?.name || 'Uncategorized'}</div>
                             </div>
 
                             <Separator />
@@ -542,7 +579,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                 <span className="text-muted-foreground flex items-center gap-1">
                                     <Calendar className="h-3 w-3" /> Created
                                 </span>
-                                <span>{formatDate(ticket.createdAt)}</span>
+                                <span>{formatDate(ticket.createdAt)} <span className="text-muted-foreground/50 mx-1">•</span> {new Date(ticket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground flex items-center gap-1">

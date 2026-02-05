@@ -39,7 +39,13 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan('dev'));
+
+// Configure Morgan to use Pino logger
+app.use(morgan('combined', {
+  stream: {
+    write: (message) => logger.info(message.trim())
+  }
+}));
 
 // Data sanitization against NoSQL query injection
 app.use(mongoSanitize());
@@ -101,7 +107,7 @@ if (process.env.NODE_ENV !== 'test') {
     const logger = require('./utils/logger'); // Ensure this is required if not already
     // ... inside server.listen
     logger.info(`Server running on port ${PORT}`);
-    logger.info(`API Docs available at http://localhost:${PORT}/api-docs`);
+    logger.info(`API Docs available at https://api.ticket.apideltech.de/api-docs`);
   });
 }
 

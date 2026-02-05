@@ -9,18 +9,17 @@ import { DataTableToolbar } from '../data-table-toolbar';
 import PageHeader from '@/components/common/PageHeader';
 import KanbanBoard from '@/components/tickets/KanbanBoard';
 import TicketCardView from '@/components/tickets/TicketCardView';
-import AdvancedFilterPanel from '@/components/tickets/AdvancedFilterPanel';
 import ticketService from '@/lib/services/ticketService';
 import useTicketStore from '@/store/ticketStore';
 import useTicketUpdates from '@/hooks/useTicketUpdates';
 import toast from 'react-hot-toast';
 
-export default function AssignedTicketsPage() {
+export default function MyTicketsPage() {
     const [tickets, setTickets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const { viewMode, setViewMode, filters } = useTicketStore();
 
-    const fetchAssignedTickets = async (appliedFilters = {}) => {
+    const fetchMyTickets = async (appliedFilters = {}) => {
         try {
             setIsLoading(true);
             const params = {};
@@ -38,10 +37,9 @@ export default function AssignedTicketsPage() {
             if (appliedFilters.dateRange?.to) {
                 params.dateTo = appliedFilters.dateRange.to;
             }
-            // Note: assigned tickets endpoint doesn't support departmentId, categoryId, or assignedTo
-            // as they're already filtered to current user
+            // Note: my tickets endpoint already filters to current user as creator
 
-            const output = await ticketService.getAssignedTickets(params);
+            const output = await ticketService.getMyTickets(params);
             const payload = output;
             if (Array.isArray(payload)) {
                 setTickets(payload);
@@ -50,32 +48,32 @@ export default function AssignedTicketsPage() {
             } else if (payload.tickets && Array.isArray(payload.tickets)) {
                 setTickets(payload.tickets);
             } else {
-                console.warn('Unexpected assigned tickets API response format:', payload);
+                console.warn('Unexpected my tickets API response format:', payload);
                 setTickets([]);
             }
         } catch (error) {
-            console.error('Failed to fetch assigned tickets:', error);
-            toast.error('Failed to load assigned tickets');
+            console.error('Failed to fetch my tickets:', error);
+            toast.error('Failed to load my tickets');
         } finally {
             setIsLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchAssignedTickets(filters);
+        fetchMyTickets(filters);
     }, [filters]);
 
     // Listen for real-time ticket updates
     useTicketUpdates((data) => {
         // Refetch tickets when any ticket is updated
-        fetchAssignedTickets(filters);
+        fetchMyTickets(filters);
     });
 
     return (
         <div className={`flex-1 flex-col space-y-6 p-4 md:p-6 md:flex ${viewMode === 'kanban' ? 'h-[calc(100vh-80px)] overflow-hidden' : 'h-full'}`}>
             <PageHeader
-                heading="Assigned Tickets"
-                text="View and manage tickets assigned to you."
+                heading="My Tickets"
+                text="View and track tickets you have created."
             />
 
             {/* View Mode Toggle */}
@@ -120,17 +118,17 @@ export default function AssignedTicketsPage() {
                     </div>
                 ) : tickets.length === 0 ? (
                     <div className="flex items-center justify-center h-64">
-                        <p className="text-muted-foreground text-lg">No assigned tickets</p>
+                        <p className="text-muted-foreground text-lg">No tickets created yet</p>
                     </div>
                 ) : viewMode === 'kanban' ? (
                     <KanbanBoard
                         initialTickets={tickets}
-                        onTicketUpdate={fetchAssignedTickets}
+                        onTicketUpdate={fetchMyTickets}
                     />
                 ) : viewMode === 'card' ? (
                     <TicketCardView
                         tickets={tickets}
-                        onTicketUpdate={fetchAssignedTickets}
+                        onTicketUpdate={fetchMyTickets}
                     />
                 ) : (
                     <DataTable

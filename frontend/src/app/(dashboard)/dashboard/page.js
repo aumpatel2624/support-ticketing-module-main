@@ -13,15 +13,24 @@ export default function DashboardPage() {
     if (!user) return null;
 
     // Render dashboard based on role
-    switch (user.role) {
-        case USER_ROLES.SUPER_ADMIN:
-            return <SuperAdminDashboard user={user} />;
-        case USER_ROLES.ADMIN:
-            return <AdminDashboard user={user} />;
-        case USER_ROLES.TEAM_MEMBER:
-            return <TeamMemberDashboard user={user} />;
-        case USER_ROLES.NORMAL_USER:
-        default:
-            return <NormalUserDashboard user={user} />;
-    }
+    // Render dashboard based on role
+    const getDashboardComponent = () => {
+        switch (user.role) {
+            case USER_ROLES.SUPER_ADMIN:
+                return <SuperAdminDashboard user={user} />;
+            case USER_ROLES.ADMIN:
+                return <AdminDashboard user={user} />;
+            case USER_ROLES.TEAM_MEMBER:
+                return <TeamMemberDashboard user={user} />;
+            case USER_ROLES.NORMAL_USER:
+            default:
+                return <NormalUserDashboard user={user} />;
+        }
+    };
+
+    return (
+        <div className="p-6 md:p-8 lg:p-10">
+            {getDashboardComponent()}
+        </div>
+    );
 }

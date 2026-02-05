@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { GripHorizontal, MoreHorizontal } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { MoreHorizontal, Paperclip, MessageSquare, AlertCircle, Clock, Calendar, GripHorizontal } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ import { getAgeCategory, getAgeLabel, getAgeDescription } from '@/lib/ticketAgeH
  * KanbanCard component - Individual ticket card in Kanban board
  */
 export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
+    const router = useRouter();
     const [isHovering, setIsHovering] = useState(false);
     const ageCategory = getAgeCategory(ticket.createdAt, ticket.priority);
     const ageLabel = getAgeLabel(ticket.createdAt, ticket.priority);
@@ -36,127 +38,111 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
         critical: 'border-l-4 border-l-red-500',
     };
 
+    const handleCardClick = () => {
+        router.push(`/tickets?id=${ticket._id}`);
+    };
+
+    const getInitials = (name) => {
+        return name
+            ?.split(' ')
+            .map((n) => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2) || '??';
+    };
+
     return (
         <div
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
-            className="group"
+            className={`
+                group cursor-pointer relative bg-white rounded-lg border border-slate-200 
+                shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200
+                p-3 flex flex-col gap-3 max-h-[200px] min-h-[150px] w-full
+                ${isDragging ? 'opacity-50 ring-2 ring-primary rotate-2' : ''}
+                ${colorMap[ageCategory].replace('border-l-4', 'border-l-[3px]')}
+            `}
+            onClick={handleCardClick}
         >
-            <Card
-                className={`p-3 transition-all ${isDragging ? 'opacity-50 ring-2 ring-primary' : ''
-                    } hover:shadow-md border-0 ${colorMap[ageCategory]}`}
-            >
-                {/* Header with grip and actions */}
-                <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-start gap-2 flex-1">
-                        {isHovering && (
-                            <GripHorizontal className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0 cursor-grab" data-drag-handle />
-                        )}
-                        <Link
-                            href={`/tickets?id=${ticket._id}`}
-                            className="font-bold text-xs text-primary hover:underline truncate flex-1"
-                            title={ticket.ticketId}
-                            onPointerDown={(e) => e.stopPropagation()}
-                        >
+            {/* Header: Avatar, Name, Code, Menu */}
+            < div className="flex items-start gap-3" >
+                {/* Avatar Placeholder - 36px */}
+                < div className="w-9 h-9 rounded-md bg-slate-100 flex items-center justify-center shrink-0 text-slate-400 text-xs font-bold border border-slate-100" >
+                    {ticket.assignedTo ? getInitials(ticket.assignedTo.name) : <GripHorizontal className="w-4 h-4" />}
+                </div >
+
+                {/* Name and Code */}
+                < div className="flex-1 min-w-0" >
+                    <h4 className="m-0 text-[13px] font-bold text-slate-800 leading-tight truncate">
+                        {ticket.assignedTo?.name || 'Unassigned'}
+                    </h4>
+                    <div className="mt-1 flex items-center gap-2">
+                        {/* Ticket Code Badge - 20px height */}
+                        <span className="h-[20px] flex items-center text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 rounded-sm whitespace-nowrap">
                             {ticket.ticketId}
-                        </Link>
+                        </span>
                         {ticket.status === 'Reopened' && (
-                            <Badge variant="outline" className="h-5 px-1 bg-orange-50 text-orange-600 border-orange-200 text-[10px] shrink-0">
+                            <Badge variant="outline" className="h-[20px] flex items-center px-1 bg-orange-50 text-orange-600 border-orange-200 text-[9px] shrink-0">
                                 Reopened
                             </Badge>
                         )}
                     </div>
+                </div >
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={(e) => e.stopPropagation()}
-                                onPointerDown={(e) => e.stopPropagation()}
-                            >
-                                <MoreHorizontal className="h-3 w-3" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                                <Link href={`/tickets?id=${ticket._id}`}>View details</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onMenuAction?.('copy', ticket.ticketId)}>
-                                Copy Ticket ID
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => onMenuAction?.('reassign', ticket)}>
-                                Reassign
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onMenuAction?.('resolve', ticket)}>
-                                Mark as Resolved
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+
+            </div >
+
+            {/* Subject */}
+            < TooltipProvider >
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <p className="text-[13px] font-medium text-slate-700 line-clamp-2 leading-relaxed">
+                            {ticket.subject}
+                        </p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p className="max-w-xs text-xs">{ticket.subject}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider >
+
+            {/* Badges */}
+            < div className="flex items-center gap-1.5 flex-wrap mt-auto" >
+                {
+                    (ticket.category || ticket.categoryId) && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium border-0">
+                            {ticket.category?.name || ticket.categoryId?.name}
+                        </Badge>
+                    )
+                }
+                < Badge variant="outline" className={`${getPriorityColor(ticket.priority)} text-[10px] px-1.5 py-0 border-0 font-medium`}>
+                    {ticket.priority}
+                </Badge >
+            </div >
+
+            {/* Footer: Date & Age */}
+            < div className="pt-2 border-t border-slate-100 flex items-center justify-between" >
+                <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span>{formatDate(ticket.createdAt)} <span className="text-slate-300">|</span> {new Date(ticket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
 
-                {/* Subject - truncated with tooltip */}
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <p className="text-xs font-medium text-foreground mb-2 line-clamp-1 hover:underline">
-                                {ticket.subject}
-                            </p>
+                            <Badge
+                                variant="outline"
+                                className="text-[10px] px-1.5 py-0 h-5 cursor-help border-slate-200 text-slate-500 font-medium"
+                            >
+                                {ageLabel}
+                            </Badge>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p className="max-w-xs">{ticket.subject}</p>
+                            <p className="text-xs">{ageDescription}</p>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
-
-                {/* Category and Priority on same line */}
-                <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                    {ticket.category && (
-                        <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
-                            {ticket.category.name}
-                        </Badge>
-                    )}
-                    <Badge variant="outline" className={`${getPriorityColor(ticket.priority)} text-xs px-1.5 py-0.5`}>
-                        {ticket.priority}
-                    </Badge>
-                </div>
-
-                {/* Footer with age and assignee */}
-                <div className="flex items-center justify-between pt-2 border-t text-xs">
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div className="flex items-center">
-                                    <Badge
-                                        variant="outline"
-                                        className="text-xs cursor-help bg-background"
-                                    >
-                                        {ageLabel}
-                                    </Badge>
-                                    <span className="text-[10px] text-muted-foreground ml-2">
-                                        {formatDate(ticket.createdAt, 'MMM dd, HH:mm')}
-                                    </span>
-                                </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p className="text-xs">{ageDescription}</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-
-                    {ticket.assignedTo ? (
-                        <span className="text-xs text-muted-foreground truncate max-w-[100px]">
-                            {ticket.assignedTo.name}
-                        </span>
-                    ) : (
-                        <span className="text-xs text-muted-foreground italic">Unassigned</span>
-                    )}
-                </div>
-            </Card>
-        </div>
+            </div >
+        </div >
     );
 }

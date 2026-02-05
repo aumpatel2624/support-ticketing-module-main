@@ -31,11 +31,11 @@ export default function DashboardShell({ children }) {
             <div
                 className={cn(
                     "flex flex-col min-h-screen transition-all duration-500 ease-in-out",
-                    sidebarCollapsed ? "md:pl-[88px]" : "md:pl-[280px]"
+                    sidebarCollapsed ? "md:pl-[88px]" : "md:pl-[200px]"
                 )}
             >
                 <Header />
-                <main className="flex-1 p-6 md:p-8 lg:p-10 max-w-[1600px] mx-auto w-full">
+                <main className="flex-1 max-w-[1600px] mx-auto w-full">
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
                         {children}
                     </div>

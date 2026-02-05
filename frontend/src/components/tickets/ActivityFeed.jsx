@@ -49,8 +49,8 @@ export default function ActivityFeed({ ticket, onCommentAdded }) {
             });
         }
 
-        // Sort oldest first (natural conversation flow)
-        return items.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        // Sort newest first (Top to Bottom)
+        return items.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     };
 
     // Build users map for quick lookup

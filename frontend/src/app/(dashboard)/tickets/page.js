@@ -207,62 +207,65 @@ export default function TicketsPage() {
 
     // RENDER LIST VIEW
     return (
-        <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
+        <div className={`flex-1 flex-col space-y-6 p-4 md:p-6 md:flex ${viewMode === 'kanban' ? 'h-[calc(100vh-80px)] overflow-hidden' : 'h-full'}`}>
             <PageHeader
                 heading="Tickets"
                 text="Manage and track all support tickets."
+                className="relative z-20"
             >
-                <Button asChild>
-                    <Link href="/tickets/new">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Ticket
-                    </Link>
-                </Button>
+                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                    {/* Advanced Filter Panel */}
+                    {['Admin', 'SuperAdmin'].includes(user?.role) && (
+                        <AdvancedFilterPanel className="mr-2" />
+                    )}
+
+                    {/* View Mode Toggle */}
+                    <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 mr-2 h-9">
+                        <button
+                            onClick={() => setViewMode('kanban')}
+                            className={`flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${viewMode === 'kanban'
+                                    ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5'
+                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                                }`}
+                        >
+                            <Kanban className="h-3.5 w-3.5" />
+                            Kanban
+                        </button>
+                        <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+                        <button
+                            onClick={() => setViewMode('table')}
+                            className={`flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${viewMode === 'table'
+                                    ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5'
+                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                                }`}
+                        >
+                            <List className="h-3.5 w-3.5" />
+                            Table
+                        </button>
+                        <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+                        <button
+                            onClick={() => setViewMode('card')}
+                            className={`flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${viewMode === 'card'
+                                    ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5'
+                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                                }`}
+                        >
+                            <LayoutGrid className="h-3.5 w-3.5" />
+                            Cards
+                        </button>
+                    </div>
+
+                    <Button asChild>
+                        <Link href="/tickets/new">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create Ticket
+                        </Link>
+                    </Button>
+                </div>
             </PageHeader>
 
-            {/* Advanced Filter Panel */}
-            <AdvancedFilterPanel />
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-muted-foreground">View:</span>
-                {showTableView && (
-                    <Button
-                        variant={viewMode === 'table' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setViewMode('table')}
-                        className="gap-2"
-                    >
-                        <List className="h-4 w-4" />
-                        Table
-                    </Button>
-                )}
-                {showKanbanView && (
-                    <Button
-                        variant={viewMode === 'kanban' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setViewMode('kanban')}
-                        className="gap-2"
-                    >
-                        <Kanban className="h-4 w-4" />
-                        Kanban
-                    </Button>
-                )}
-                {showCardView && (
-                    <Button
-                        variant={viewMode === 'card' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setViewMode('card')}
-                        className="gap-2"
-                    >
-                        <LayoutGrid className="h-4 w-4" />
-                        Card
-                    </Button>
-                )}
-            </div>
-
             {/* Content */}
-            <div className="flex-1">
+            <div className={`flex-1 ${viewMode === 'kanban' ? 'overflow-hidden min-h-0' : ''}`}>
                 {isLoading ? (
                     <div className="flex items-center justify-center h-64">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />

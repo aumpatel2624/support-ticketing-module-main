@@ -80,26 +80,21 @@ export default function Sidebar({ isMobile = false }) {
         <div
             className={cn(
                 "relative flex flex-col h-full border-r bg-card transition-all duration-500 ease-in-out",
-                isMobile ? "w-full border-none" : (isCollapsed ? "w-[88px]" : "w-[280px]")
+                isMobile ? "w-full border-none" : (isCollapsed ? "w-[88px]" : "w-[200px]")
             )}
         >
             {/* Sidebar Header */}
-            <div className="flex items-center justify-between px-6 h-20 border-b/50 shrink-0">
-                <div className={cn("flex flex-col items-center justify-center transition-all duration-300", isCollapsed ? "h-12 w-12" : "h-12 w-full max-w-[180px]")}>
+            <div className="flex items-center justify-between px-4 h-20 border-b/50 shrink-0">
+                <div className={cn("flex flex-col items-center justify-center transition-all duration-300", isCollapsed ? "h-12 w-12" : "h-12 w-full max-w-[140px]")}>
                     <Image
                         src={systemSettings?.companyLogo || "/logo.webp"}
                         alt={`${companyName} Logo`}
-                        width={180}
+                        width={140}
                         height={40}
                         className="object-contain"
                         priority
                         unoptimized
                     />
-                    {!isCollapsed && companyName !== 'Support' && (
-                        <span className="mt-1 text-xs font-semibold text-muted-foreground tracking-wide truncate max-w-full">
-                            {companyName}
-                        </span>
-                    )}
                 </div>
                 {!isMobile && (
                     <Button
@@ -126,6 +121,84 @@ export default function Sidebar({ isMobile = false }) {
                     <TooltipProvider delayDuration={0}>
                         {navItems.map((item, index) => {
                             const Icon = IconMap[item.icon] || Ticket;
+
+                            // Check for nested items
+                            if (item.items && item.items.length > 0) {
+                                // For nested items, check if any child is active to expand/highlight parent
+                                const isChildActive = item.items.some(subItem => pathname === subItem.href);
+
+                                // Render collapsed state (icon only) differently than expanded
+                                if (isCollapsed) {
+                                    return (
+                                        <Tooltip key={index}>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    className={cn(
+                                                        "w-12 h-12 p-0 justify-center mx-auto mb-2",
+                                                        isChildActive ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                                                    )}
+                                                    onClick={() => !isMobile && toggleSidebar()} // Expand on click if collapsed
+                                                >
+                                                    <Icon className="h-5 w-5" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right" className="flex flex-col gap-1 p-2">
+                                                <div className="font-semibold pb-1 border-b mb-1">{item.name}</div>
+                                                {item.items.map((subItem, subIndex) => (
+                                                    <Link
+                                                        key={subIndex}
+                                                        href={subItem.href}
+                                                        className={cn(
+                                                            "text-xs px-2 py-1 rounded block w-full text-left transition-colors",
+                                                            pathname === subItem.href
+                                                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                                                : "hover:bg-accent hover:text-accent-foreground"
+                                                        )}
+                                                    >
+                                                        {subItem.name}
+                                                    </Link>
+                                                ))}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    );
+                                }
+
+                                // Expanded state: Render as simple list with indentation for now to avoid complexity of full accordion
+                                // or assume user wants simple grouping. Let's do a simple grouping details/summary or custom collapsible
+                                return (
+                                    <div key={index} className="mb-2">
+                                        <div className="px-3.5 py-2 text-sm font-semibold text-muted-foreground flex items-center gap-3">
+                                            <Icon className="h-4 w-4" />
+                                            <span>{item.name}</span>
+                                        </div>
+                                        <div className="flex flex-col gap-1 pl-4 mt-1 border-l ml-5">
+                                            {item.items.map((subItem, subIndex) => {
+                                                const isSubActive = pathname === subItem.href;
+                                                return (
+                                                    <Link
+                                                        key={subIndex}
+                                                        href={subItem.href}
+                                                        className={cn(
+                                                            "group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200",
+                                                            isSubActive
+                                                                ? "bg-primary/10 text-primary font-medium"
+                                                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                        )}
+                                                    >
+                                                        <span>{subItem.name}</span>
+                                                        {isSubActive && (
+                                                            <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+                                                        )}
+                                                    </Link>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            }
+
+                            // Regular Item Rendering
                             // Check if current pathname matches a nav item exactly (for sibling routes)
                             const hasExactMatch = navItems.some(navItem => pathname === navItem.href);
                             // Only match parent routes if there's no exact match (prevents parent highlighting when child route exists)
@@ -151,17 +224,14 @@ export default function Sidebar({ isMobile = false }) {
                                             {!isCollapsed && (
                                                 <span className="truncate">{item.name}</span>
                                             )}
-                                            {/* Notification badge for Notifications item */}
+                                            {/* Notification dot for Notifications item */}
                                             {item.name === 'Notifications' && unreadCount > 0 && (
-                                                <Badge
-                                                    variant="destructive"
+                                                <span
                                                     className={cn(
-                                                        "h-5 min-w-5 px-1.5 text-xs font-bold",
-                                                        isCollapsed && "absolute -top-1 -right-1"
+                                                        "h-2.5 w-2.5 rounded-full bg-destructive",
+                                                        isCollapsed ? "absolute -top-0.5 -right-0.5" : "ml-auto"
                                                     )}
-                                                >
-                                                    {unreadCount > 9 ? '9+' : unreadCount}
-                                                </Badge>
+                                                />
                                             )}
                                             {isActive && !isCollapsed && item.name !== 'Notifications' && (
                                                 <div className="absolute right-2 h-1.5 w-1.5 rounded-full bg-white animate-pulse" />

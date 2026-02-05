@@ -48,9 +48,8 @@ export const TICKET_STATUS = {
     NEW: 'New',
     ASSIGNED: 'Assigned',
     IN_PROGRESS: 'InProgress',
-    COMPLETED: 'Completed',
+    COMPLETED: 'Resolved',
     REOPENED: 'Reopened',
-    CLOSED: 'Closed',
     ESCALATED: 'Escalated',
 };
 
@@ -157,34 +156,59 @@ export const BREAKPOINTS = {
 export const NAVIGATION_ITEMS = {
     [USER_ROLES.NORMAL_USER]: [
         { name: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard' },
-        { name: 'My Tickets', href: '/tickets', icon: 'Ticket' },
+        {
+            name: 'Tickets',
+            icon: 'Ticket',
+            items: [
+                { name: 'My Tickets', href: '/tickets/my' },
+            ]
+        },
         { name: 'Create Ticket', href: '/tickets/new', icon: 'Plus' },
         { name: 'Notifications', href: '/notifications', icon: 'Bell' },
     ],
     [USER_ROLES.TEAM_MEMBER]: [
         { name: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard' },
-        { name: 'My Tickets', href: '/tickets', icon: 'Ticket' },
-        { name: 'Assigned Tickets', href: '/tickets/assigned', icon: 'ClipboardList' },
+        {
+            name: 'Tickets',
+            icon: 'Ticket',
+            items: [
+                { name: 'My Tickets', href: '/tickets/my' },
+                { name: 'Assigned Tickets', href: '/tickets/assigned' },
+            ]
+        },
         { name: 'Create Ticket', href: '/tickets/new', icon: 'Plus' },
         { name: 'Notifications', href: '/notifications', icon: 'Bell' },
     ],
     [USER_ROLES.ADMIN]: [
         { name: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard' },
-        { name: 'All Tickets', href: '/tickets', icon: 'Ticket' },
-        { name: 'Assigned Tickets', href: '/tickets/assigned', icon: 'ClipboardList' },
+        {
+            name: 'Tickets',
+            icon: 'Ticket',
+            items: [
+                { name: 'My Tickets', href: '/tickets/my' },
+                { name: 'Assigned Tickets', href: '/tickets/assigned' },
+                { name: 'All Tickets', href: '/tickets' },
+            ]
+        },
         { name: 'Team Members', href: '/users', icon: 'Users' },
         { name: 'Categories', href: '/categories', icon: 'Tags' },
         { name: 'Notifications', href: '/notifications', icon: 'Bell' },
-        // { name: 'Settings', href: '/settings', icon: 'Settings' },
     ],
     [USER_ROLES.SUPER_ADMIN]: [
         { name: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard' },
-        { name: 'All Tickets', href: '/tickets', icon: 'Ticket' },
+        {
+            name: 'Tickets',
+            icon: 'Ticket',
+            items: [
+                { name: 'My Tickets', href: '/tickets/my' },
+                { name: 'Assigned Tickets', href: '/tickets/assigned' },
+                { name: 'All Tickets', href: '/tickets' },
+            ]
+        },
         { name: 'Departments', href: '/departments', icon: 'Building2' },
         { name: 'Categories', href: '/categories', icon: 'Tags' },
         { name: 'Users', href: '/users', icon: 'Users' },
         { name: 'Notifications', href: '/notifications', icon: 'Bell' },
-        // { name: 'Settings', href: '/settings', icon: 'Settings' },
     ],
 };
 

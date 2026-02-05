@@ -15,7 +15,7 @@ const useTicketStore = create(
             error: null,
 
             // View Mode
-            viewMode: 'table', // 'table', 'card', 'kanban'
+            viewMode: 'kanban', // 'table', 'card', 'kanban'
 
             // Filters
             filters: {

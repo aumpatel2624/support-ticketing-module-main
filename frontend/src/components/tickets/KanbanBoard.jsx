@@ -20,7 +20,7 @@ import KanbanCard from './KanbanCard';
 import AssignTicketModal from './AssignTicketModal';
 import ConfirmStatusChangeModal from './ConfirmStatusChangeModal';
 
-const STATUSES = ['New', 'Reopened', 'Assigned', 'InProgress', 'Resolved', 'Escalated'];
+const STATUSES = ['New', 'Assigned', 'InProgress', 'Resolved', 'Reopened', 'Escalated'];
 
 /**
  * KanbanBoard - Main Kanban view component with drag-and-drop ticket management
@@ -44,7 +44,9 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
-            distance: 8,
+            activationConstraint: {
+                distance: 8,
+            },
         }),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
@@ -320,10 +322,10 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex flex-col-reverse gap-4 h-[calc(100vh-200px)]">
+            <div className="flex flex-col h-full">
                 <div
                     ref={scrollContainerRef}
-                    className="flex gap-4 overflow-x-auto pb-4 cursor-grab active:cursor-grabbing select-none"
+                    className="flex gap-4 overflow-x-auto p-4 flex-1 cursor-grab active:cursor-grabbing select-none h-full"
                     data-scrollable="true"
                 >
                     {STATUSES.map((status) => (

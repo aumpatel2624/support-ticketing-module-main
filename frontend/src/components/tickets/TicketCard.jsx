@@ -32,11 +32,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { getStatusColor, getPriorityColor, truncate, formatDate, getInitials, getAvatarColor } from '@/lib/utils';
 import { getAgeCategory, getAgeLabel, getAgeDescription } from '@/lib/ticketAgeHelper';
+import useAuth from '@/hooks/useAuth';
 
 /**
  * TicketCard component - Individual ticket card for card view
  */
 export default function TicketCard({ ticket, onQuickAction }) {
+    const { user } = useAuth();
     const [isHovering, setIsHovering] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
     const ageCategory = getAgeCategory(ticket.createdAt, ticket.priority);
@@ -78,8 +80,8 @@ export default function TicketCard({ ticket, onQuickAction }) {
 
     const assigneeName = ticket.assignedTo?.name || ticket.assignedToName || 'Unassigned';
     const assigneeAvatar = ticket.assignedTo?.avatar || ticket.assignedToAvatar;
-    const departmentName = ticket.department?.name || ticket.departmentName || '-';
-    const categoryName = ticket.category?.name || ticket.categoryName || '-';
+    const departmentName = ticket.department?.name || ticket.departmentId?.name || ticket.departmentName || '-';
+    const categoryName = ticket.category?.name || ticket.categoryId?.name || ticket.categoryName || '-';
 
     return (
         <TooltipProvider>
@@ -89,69 +91,58 @@ export default function TicketCard({ ticket, onQuickAction }) {
                 className="group relative"
             >
                 <Card
-                    className={`p-4 transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 
-                        border-l-4 ${colorMap[ageCategory]} 
-                        ${isHovering ? 'scale-[1.02]' : ''}
-                        cursor-pointer bg-card`}
+                    className={`p-5 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 
+                        border-l-[5px] ${colorMap[ageCategory]} ${ageCategory === 'critical' ? 'bg-red-50/30' : 'bg-card'}
+                        ${isHovering ? '-translate-y-1' : ''}
+                        cursor-pointer border-t border-b border-r rounded-xl overflow-hidden`}
                 >
                     {/* Header: Ticket ID + Status + Actions */}
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-2 flex-wrap">
                             <Link
                                 href={`/tickets?id=${ticket._id}`}
-                                className="font-bold text-sm text-primary hover:underline"
+                                className="font-bold text-sm text-indigo-600 hover:text-indigo-700 hover:underline tracking-wide"
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 {ticket.ticketId}
                             </Link>
-                            <Badge variant="outline" className={getStatusColor(ticket.status)}>
+                            <Badge variant="outline" className={`${getStatusColor(ticket.status)} border-transparent bg-opacity-10 px-2 py-0.5 font-medium`}>
                                 {ticket.status}
                             </Badge>
                             {ticket.status === 'Reopened' && (
-                                <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200 gap-1">
+                                <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200 gap-1 px-2">
                                     <span className="flex h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
-                                    Reopened Tag
+                                    Reopened
                                 </Badge>
                             )}
                         </div>
 
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                    <Link href={`/tickets?id=${ticket._id}`}>
-                                        <ArrowUpRight className="mr-2 h-4 w-4" />
-                                        View details
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onQuickAction?.('assign', ticket)}>
-                                    <User className="mr-2 h-4 w-4" />
-                                    Assign to...
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onQuickAction?.('priority', ticket)}>
-                                    Change priority
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={handleMarkResolved} disabled={isUpdating}>
-                                    Mark as resolved
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => onQuickAction?.('copy', ticket.ticketId)}>
-                                    Copy Ticket ID
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="flex items-center">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-all rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg border-slate-100 p-1">
+                                    <DropdownMenuItem asChild className="rounded-lg cursor-pointer focus:bg-indigo-50 focus:text-indigo-600">
+                                        <Link href={`/tickets?id=${ticket._id}`}>
+                                            <ArrowUpRight className="mr-2 h-4 w-4" />
+                                            View details
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onQuickAction?.('copy', ticket.ticketId)} className="rounded-lg cursor-pointer focus:bg-indigo-50 focus:text-indigo-600">
+                                        <Tag className="mr-2 h-4 w-4" />
+                                        Copy Ticket ID
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                     </div>
 
                     {/* Subject with tooltip */}
@@ -159,55 +150,47 @@ export default function TicketCard({ ticket, onQuickAction }) {
                         <TooltipTrigger asChild>
                             <Link
                                 href={`/tickets?id=${ticket._id}`}
-                                className="block text-sm font-medium text-foreground mb-3 line-clamp-2 hover:text-primary transition-colors"
+                                className="block text-base font-semibold text-slate-800 mb-4 line-clamp-2 hover:text-indigo-600 transition-colors leading-snug"
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 {ticket.subject}
                             </Link>
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-sm">
+                        <TooltipContent side="top" className="max-w-sm text-xs bg-slate-900 text-white border-0 shadow-xl">
                             <p>{ticket.subject}</p>
                         </TooltipContent>
                     </Tooltip>
 
                     {/* Department & Category */}
-                    <div className="flex flex-wrap items-center gap-2 mb-3 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                            <Building2 className="h-3 w-3" />
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-4 text-xs font-medium text-slate-500">
+                        <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md border border-slate-100/50">
+                            <Building2 className="h-3 w-3 text-slate-400" />
                             <span className="truncate max-w-[100px]">{departmentName}</span>
                         </div>
-                        <span className="text-border">|</span>
-                        <div className="flex items-center gap-1">
-                            <Tag className="h-3 w-3" />
+                        <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md border border-slate-100/50">
+                            <Tag className="h-3 w-3 text-slate-400" />
                             <span className="truncate max-w-[100px]">{categoryName}</span>
                         </div>
                     </div>
 
-                    {/* Priority Badge */}
-                    <div className="mb-3">
-                        <Badge variant="outline" className={getPriorityColor(ticket.priority)}>
-                            {ticket.priority}
-                        </Badge>
-                    </div>
-
                     {/* Footer: Assignee + Created Date */}
-                    <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                         {/* Assignee */}
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <div className="flex items-center gap-2">
-                                    <Avatar className="h-6 w-6">
+                                <div className="flex items-center gap-2 group/assignee">
+                                    <Avatar className="h-6 w-6 ring-2 ring-white shadow-sm group-hover/assignee:ring-indigo-100 transition-all">
                                         <AvatarImage src={assigneeAvatar} alt={assigneeName} />
                                         <AvatarFallback className={`text-[10px] ${getAvatarColor(assigneeName)} text-white`}>
                                             {getInitials(assigneeName)}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <span className="text-xs text-muted-foreground truncate max-w-[80px]">
+                                    <span className="text-xs font-medium text-slate-600 truncate max-w-[100px] group-hover/assignee:text-indigo-600 transition-colors">
                                         {assigneeName}
                                     </span>
                                 </div>
                             </TooltipTrigger>
-                            <TooltipContent>
+                            <TooltipContent side="bottom" className="text-xs bg-slate-900 text-white border-0 shadow-xl">
                                 <p>Assigned to: {assigneeName}</p>
                             </TooltipContent>
                         </Tooltip>
@@ -215,22 +198,18 @@ export default function TicketCard({ ticket, onQuickAction }) {
                         {/* Created Date + Age */}
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <div className="flex items-center gap-1.5">
-                                    <Clock className="h-3 w-3 text-muted-foreground" />
-                                    <span className="text-xs text-muted-foreground">
-                                        {formatDate(ticket.createdAt, 'MMM dd, HH:mm')}
-                                    </span>
+                                <div className="flex items-center gap-2">
                                     <Badge
                                         variant="outline"
-                                        className={`text-[10px] px-1.5 py-0 h-4 ${ageBadgeColorMap[ageCategory]}`}
+                                        className={`text-[10px] px-2 py-0.5 h-5 font-semibold border-0 ${ageBadgeColorMap[ageCategory]}`}
                                     >
                                         {ageLabel}
                                     </Badge>
                                 </div>
                             </TooltipTrigger>
-                            <TooltipContent>
-                                <p>{ageDescription}</p>
-                                <p className="text-xs text-muted-foreground">
+                            <TooltipContent side="bottom" className="text-xs bg-slate-900 text-white border-0 shadow-xl">
+                                <p className="font-semibold mb-1">{ageDescription}</p>
+                                <p className="text-slate-300">
                                     Created: {formatDate(ticket.createdAt, 'MMM dd, yyyy HH:mm')}
                                 </p>
                             </TooltipContent>

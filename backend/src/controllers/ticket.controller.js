@@ -457,6 +457,9 @@ const assignTicket = asyncHandler(async (req, res) => {
 
     ticket.assignedTo = assignedTo;
 
+    // Fetch assignee user for notification and comment
+    const assignee = await User.findById(assignedTo);
+
     // If ticket is Reopened, automatically change to Assigned (was InProgress)
     const wasReopened = ticket.status === 'Reopened';
     if (wasReopened) {
@@ -467,6 +470,14 @@ const assignTicket = asyncHandler(async (req, res) => {
     const historyComment = wasReopened
         ? `${comment || 'Ticket assigned to user'} - status changed from Reopened to Assigned`
         : (comment || `Ticket assigned to user`);
+
+    // Add system comment for reassignment log
+    ticket.comments.push({
+        userId: req.user._id,
+        text: `System: ${historyComment} (${assignee?.name || 'Unknown'})`,
+        isInternal: true,
+        createdAt: new Date()
+    });
 
     ticket.addStatusHistory(ticket.status, req.user._id, historyComment);
 
@@ -481,8 +492,8 @@ const assignTicket = asyncHandler(async (req, res) => {
         .populate('comments.userId', 'name email role')
         .populate('statusHistory.changedBy', 'name role');
 
-    // Notify assignee
-    const assignee = await User.findById(assignedTo);
+
+    // Notify assignee (already fetched earlier)    
     if (assignee) {
         const notification = await Notification.create({
             userId: assignedTo,
@@ -494,6 +505,23 @@ const assignTicket = asyncHandler(async (req, res) => {
         // Socket: Notify assignee with full notification object
         socketService.emitToUser(assignedTo, 'notification', notification);
     }
+
+    // Notify ticket creator about reassignment (if they are not the one self-assigning or doing the assignment)
+    if (ticket.createdBy.toString() !== req.user._id.toString()) {
+        const creatorNotification = await Notification.create({
+            userId: ticket.createdBy,
+            ticketId: ticket._id,
+            type: 'StatusUpdated', // Or create a new type like 'TicketReassigned'
+            message: `Your ticket ${ticket.ticketId} has been reassigned to ${populatedTicket.assignedTo.name}`
+        });
+
+        // Socket: Notify creator
+        socketService.emitToUser(ticket.createdBy, 'notification', creatorNotification);
+    }
+
+    // Emit new comment event to update activity feed immediately
+    const systemComment = ticket.comments[ticket.comments.length - 1];
+    socketService.emitToTicket(ticket._id, 'new_comment', systemComment);
 
     res.status(200).json({
         success: true,

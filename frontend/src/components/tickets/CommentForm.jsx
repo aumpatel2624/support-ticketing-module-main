@@ -65,44 +65,52 @@ export default function CommentForm({ ticketId, onCommentAdded }) {
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-            <div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {isStaff && (
+                <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg w-fit">
+                    <button
+                        type="button"
+                        onClick={() => setIsInternal(false)}
+                        className={`text-xs font-medium px-3 py-1.5 rounded-md transition-all ${!isInternal
+                                ? 'bg-white shadow-sm text-foreground'
+                                : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                    >
+                        Public Reply
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setIsInternal(true)}
+                        className={`text-xs font-medium px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${isInternal
+                                ? 'bg-yellow-100 text-yellow-800 shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                    >
+                        Internal Note
+                        {isInternal && <Badge variant="outline" className="h-4 px-1 text-[9px] border-yellow-300 bg-yellow-200/50">Staff Only</Badge>}
+                    </button>
+                </div>
+            )}
+
+            <div className={`relative rounded-md transition-colors ${isInternal ? 'bg-yellow-50/50 p-1' : ''}`}>
                 <Textarea
                     ref={textareaRef}
-                    placeholder="Add a comment..."
-                    className="min-h-[80px] resize-none"
+                    placeholder={isInternal ? "Add an internal note (visible only to staff)..." : "Type your reply to the customer..."}
+                    className={`min-h-[80px] resize-none ${isInternal ? 'border-yellow-200 focus-visible:ring-yellow-400/50 bg-yellow-50/50 placeholder:text-yellow-700/40' : ''}`}
                     disabled={isSubmitting}
                     {...register('text')}
                 />
             </div>
 
-            <div className="flex items-center justify-between">
-                {isStaff && (
-                    <div className="flex items-center gap-3">
-                        <Label htmlFor="internal-toggle" className="text-xs cursor-pointer">
-                            Internal Comment
-                        </Label>
-                        <Switch
-                            id="internal-toggle"
-                            checked={isInternal}
-                            onCheckedChange={setIsInternal}
-                            disabled={isSubmitting}
-                        />
-                        {isInternal && (
-                            <Badge variant="secondary" className="text-xs">
-                                Staff Only
-                            </Badge>
-                        )}
-                    </div>
-                )}
-
+            <div className="flex items-center justify-end">
                 <Button
                     type="submit"
                     disabled={isSubmitting || !textValue.trim()}
                     size="sm"
+                    className={isInternal ? 'bg-yellow-600 hover:bg-yellow-700 text-white' : ''}
                 >
                     {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    {isSubmitting ? 'Adding...' : 'Add Comment'}
+                    {isSubmitting ? 'Sending...' : (isInternal ? 'Save Internal Note' : 'Send Reply')}
                 </Button>
             </div>
         </form>

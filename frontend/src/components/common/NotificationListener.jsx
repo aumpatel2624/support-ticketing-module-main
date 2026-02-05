@@ -7,8 +7,13 @@ import { Bell } from 'lucide-react';
 import useNotificationStore from '@/store/notificationStore';
 
 const NotificationListener = () => {
-    const { addNotification } = useNotificationStore();
+    const { addNotification, fetchNotifications } = useNotificationStore();
     const toastedNotifications = useRef(new Set()); // Track notified IDs to prevent duplicates
+
+    // Fetch existing notifications on mount
+    useEffect(() => {
+        fetchNotifications();
+    }, [fetchNotifications]);
 
     useEffect(() => {
         const handleNotification = (data) => {
