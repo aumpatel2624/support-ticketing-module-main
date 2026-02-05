@@ -62,16 +62,38 @@ export default function PriorityDonutChart({ data = [], className }) {
                                 ))}
                             </Pie>
                             <Tooltip
+                                isAnimationActive={false}
                                 content={({ active, payload }) => {
                                     if (active && payload && payload.length) {
                                         const data = payload[0].payload;
                                         const percentage = total > 0 ? Math.round((data.value / total) * 100) : 0;
                                         return (
-                                            <div className="bg-background border border-border/50 rounded-lg p-3 shadow-premium">
-                                                <p className="font-bold text-sm">{data.name}</p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {data.value} tickets ({percentage}%)
-                                                </p>
+                                            <div key={data.name} className="bg-background border border-border/50 rounded-lg p-3 shadow-premium animate-in fade-in zoom-in-95 duration-200">
+                                                <div className="flex items-center justify-between gap-4 mb-2">
+                                                    <p className="font-bold text-sm text-foreground">{data.name}</p>
+                                                    <p className="text-xs font-bold text-muted-foreground">{data.value} Total ({percentage}%)</p>
+                                                </div>
+
+                                                {/* Department Breakdown */}
+                                                {data.breakdown && data.breakdown.length > 0 && (
+                                                    <div className="space-y-1 pt-2 border-t border-border/50">
+                                                        {data.breakdown.slice(0, 5).map((dept, idx) => (
+                                                            <div key={idx} className="flex justify-between items-center text-[11px]">
+                                                                <span className="text-muted-foreground truncate max-w-[120px]">{dept.name}</span>
+                                                                <span className="font-medium">{dept.value}</span>
+                                                            </div>
+                                                        ))}
+                                                        {data.breakdown.length > 5 && (
+                                                            <p className="text-[10px] text-muted-foreground italic pt-1">
+                                                                + {data.breakdown.length - 5} others...
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {(!data.breakdown || data.breakdown.length === 0) && (
+                                                    <p className="text-xs text-muted-foreground italic">No breakdown available</p>
+                                                )}
                                             </div>
                                         );
                                     }

@@ -32,6 +32,45 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         { $group: { _id: '$status', count: { $sum: 1 } } }
     ]);
 
+    // 1.1 Status Breakdown by Department (New)
+    let statusBreakdownData = [];
+    if (['SuperAdmin', 'Admin'].includes(role)) {
+        statusBreakdownData = await Ticket.aggregate([
+            { $match: match },
+            {
+                $group: {
+                    _id: { status: '$status', department: '$departmentId' },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'departments',
+                    localField: '_id.department',
+                    foreignField: '_id',
+                    as: 'dept'
+                }
+            },
+            { $unwind: { path: '$dept', preserveNullAndEmptyArrays: true } },
+            {
+                $project: {
+                    status: '$_id.status',
+                    departmentName: { $ifNull: ['$dept.name', 'Unassigned'] },
+                    count: 1,
+                    _id: 0
+                }
+            },
+            { $sort: { count: -1 } }
+        ]);
+    }
+
+    // Transform breakdown into a map: Status -> [{ name: Dept, value: Count }]
+    const statusBreakdown = statusBreakdownData.reduce((acc, curr) => {
+        if (!acc[curr.status]) acc[curr.status] = [];
+        acc[curr.status].push({ name: curr.departmentName, value: curr.count });
+        return acc;
+    }, {});
+
     // Transform to object { New: 5, Assigned: 2, ... }
     const statusStats = statusCounts.reduce((acc, curr) => {
         acc[curr._id] = curr.count;
@@ -46,6 +85,44 @@ const getDashboardStats = asyncHandler(async (req, res) => {
 
     const priorityStats = priorityCounts.reduce((acc, curr) => {
         acc[curr._id] = curr.count;
+        return acc;
+    }, {});
+
+    // 2.1 Priority Breakdown by Department (New)
+    let priorityBreakdownData = [];
+    if (['SuperAdmin', 'Admin'].includes(role)) {
+        priorityBreakdownData = await Ticket.aggregate([
+            { $match: match },
+            {
+                $group: {
+                    _id: { priority: '$priority', department: '$departmentId' },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'departments',
+                    localField: '_id.department',
+                    foreignField: '_id',
+                    as: 'dept'
+                }
+            },
+            { $unwind: { path: '$dept', preserveNullAndEmptyArrays: true } },
+            {
+                $project: {
+                    priority: '$_id.priority',
+                    departmentName: { $ifNull: ['$dept.name', 'Unassigned'] },
+                    count: 1,
+                    _id: 0
+                }
+            },
+            { $sort: { count: -1 } }
+        ]);
+    }
+
+    const priorityBreakdown = priorityBreakdownData.reduce((acc, curr) => {
+        if (!acc[curr.priority]) acc[curr.priority] = [];
+        acc[curr.priority].push({ name: curr.departmentName, value: curr.count });
         return acc;
     }, {});
 
@@ -376,7 +453,10 @@ const getDashboardStats = asyncHandler(async (req, res) => {
                 resolvedToday,
                 createdToday
             },
-            slaCompliance
+            slaCompliance,
+            slaCompliance,
+            statusBreakdown,
+            priorityBreakdown // New field
         }
     });
 });

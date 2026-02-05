@@ -19,7 +19,15 @@ const analyticsService = {
         // Formatter for status distribution
         const statusDistribution = Object.entries(data.statusStats || {}).map(([name, value]) => ({
             name,
-            value
+            value,
+            breakdown: data.statusBreakdown?.[name] || [] // Pass breakdown data if available
+        }));
+
+        // Formatter for priority distribution - Update to include breakdown
+        const priorityDistribution = Object.entries(data.priorityStats || {}).map(([name, value]) => ({
+            name,
+            value,
+            breakdown: data.priorityBreakdown?.[name] || [] // Pass breakdown data if available
         }));
 
         // Transform backend structure to components' expectations
@@ -34,6 +42,7 @@ const analyticsService = {
             statusStats: data.statusStats || {},
             statusDistribution,
             priorityStats: data.priorityStats || {},
+            priorityDistribution, // New field with breakdown
             departmentStats: data.departmentStats || [],
             monthlyTrend: formattedTrend,
             trends: data.trends || {

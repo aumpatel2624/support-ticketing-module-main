@@ -5,9 +5,11 @@ import Header from './Header';
 import useUIStore from '@/store/uiStore';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function DashboardShell({ children }) {
     const { sidebarCollapsed } = useUIStore();
+    const pathname = usePathname();
     const [mounted, setMounted] = useState(false);
 
     // Prevent hydration mismatch
@@ -34,7 +36,7 @@ export default function DashboardShell({ children }) {
                     sidebarCollapsed ? "md:pl-[88px]" : "md:pl-[200px]"
                 )}
             >
-                <Header />
+                {!pathname.includes('/tickets') && <Header />}
                 <main className="flex-1 max-w-[1600px] mx-auto w-full">
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
                         {children}

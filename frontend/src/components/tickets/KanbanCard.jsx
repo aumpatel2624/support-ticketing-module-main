@@ -57,9 +57,9 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
             onMouseLeave={() => setIsHovering(false)}
             className={`
                 group cursor-pointer relative bg-white rounded-lg border border-slate-200 
-                shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200
+                shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 hover:border-indigo-200 transition-all duration-300 ease-in-out
                 p-3 flex flex-col gap-3 max-h-[200px] min-h-[150px] w-full
-                ${isDragging ? 'opacity-50 ring-2 ring-primary rotate-2' : ''}
+                ${isDragging ? 'opacity-50 ring-2 ring-primary rotate-2 scale-105 shadow-2xl' : ''}
                 ${colorMap[ageCategory].replace('border-l-4', 'border-l-[3px]')}
             `}
             onClick={handleCardClick}

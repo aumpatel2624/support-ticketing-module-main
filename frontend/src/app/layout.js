@@ -19,9 +19,9 @@ export const metadata = {
   title: "Ticketing System",
   description: "Professional Support Ticketing System for efficient ticket management",
   icons: {
-    icon: "/logo.webp",
-    shortcut: "/logo.webp",
-    apple: "/logo.webp",
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
   },
 };
 

@@ -14,11 +14,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { formatFileSize, cn } from '@/lib/utils';
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -58,6 +58,50 @@ export default function AttachmentList({
     const isImage = (attachment) => {
         const mimetype = attachment.mimetype || attachment.type;
         return mimetype?.startsWith('image/');
+    };
+
+    const isPDF = (attachment) => {
+        const mimetype = attachment.mimetype || attachment.type;
+        return mimetype?.includes('pdf');
+    };
+
+    const isVideo = (attachment) => {
+        const mimetype = attachment.mimetype || attachment.type;
+        return mimetype?.startsWith('video/');
+    };
+
+    const isAudio = (attachment) => {
+        const mimetype = attachment.mimetype || attachment.type;
+        return mimetype?.startsWith('audio/');
+    };
+
+    const isText = (attachment) => {
+        const mimetype = attachment.mimetype || attachment.type;
+        const filename = attachment.originalName || attachment.name || attachment.filename || '';
+        return mimetype?.startsWith('text/') ||
+            filename.endsWith('.txt') ||
+            filename.endsWith('.json') ||
+            filename.endsWith('.xml') ||
+            filename.endsWith('.csv');
+    };
+
+    const isOfficeDoc = (attachment) => {
+        const mimetype = attachment.mimetype || attachment.type;
+        const filename = attachment.originalName || attachment.name || attachment.filename || '';
+        const officeMimes = [
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        ];
+        const officeExts = ['.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'];
+        return officeMimes.includes(mimetype) || officeExts.some(ext => filename.toLowerCase().endsWith(ext));
+    };
+
+    const canPreview = (attachment) => {
+        return isImage(attachment) || isPDF(attachment) || isVideo(attachment) || isAudio(attachment) || isText(attachment) || isOfficeDoc(attachment);
     };
 
     const handleDownload = async (attachment) => {
@@ -175,7 +219,7 @@ export default function AttachmentList({
 
                             {/* Actions */}
                             <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                {isImageFile && (
+                                {canPreview(attachment) && (
                                     <Button
                                         variant="ghost"
                                         size="sm"
@@ -214,33 +258,112 @@ export default function AttachmentList({
                 })}
             </div>
 
-            {/* Image Preview Dialog */}
-            <Dialog open={!!previewAttachment} onOpenChange={() => setPreviewAttachment(null)}>
-                <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
-                    <DialogHeader className="p-4 border-b">
-                        <DialogTitle className="flex items-center justify-between">
-                            <span className="truncate pr-8">
+            {/* Document Preview Drawer (Left Side) */}
+            <Sheet open={!!previewAttachment} onOpenChange={() => setPreviewAttachment(null)}>
+                <SheetContent side="left" className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl p-0 flex flex-col">
+                    <SheetHeader className="p-4 border-b shrink-0">
+                        <SheetTitle className="flex items-center justify-between pr-8">
+                            <span className="truncate">
                                 {previewAttachment?.originalName || previewAttachment?.name || 'Preview'}
                             </span>
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="p-4 flex items-center justify-center bg-muted/50 min-h-[300px]">
+                        </SheetTitle>
+                    </SheetHeader>
+                    <div className="flex-1 p-4 flex items-center justify-center bg-muted/50 overflow-auto">
                         {previewAttachment && (
-                            <img
-                                src={getAttachmentUrl(previewAttachment)}
-                                alt={previewAttachment?.originalName || previewAttachment?.name}
-                                className="max-w-full max-h-[70vh] object-contain rounded-lg"
-                            />
+                            <>
+                                {/* Image Preview */}
+                                {isImage(previewAttachment) && (
+                                    <img
+                                        src={getAttachmentUrl(previewAttachment)}
+                                        alt={previewAttachment?.originalName || previewAttachment?.name || 'Image preview'}
+                                        className="max-w-full max-h-full object-contain rounded-lg"
+                                    />
+                                )}
+
+                                {/* PDF Preview */}
+                                {isPDF(previewAttachment) && (
+                                    <iframe
+                                        src={getAttachmentUrl(previewAttachment)}
+                                        title={previewAttachment?.originalName || 'PDF Preview'}
+                                        className="w-full h-full rounded-lg border"
+                                    />
+                                )}
+
+                                {/* Video Preview */}
+                                {isVideo(previewAttachment) && (
+                                    <video
+                                        src={getAttachmentUrl(previewAttachment)}
+                                        controls
+                                        className="max-w-full max-h-full rounded-lg"
+                                    >
+                                        Your browser does not support video playback.
+                                    </video>
+                                )}
+
+                                {/* Audio Preview */}
+                                {isAudio(previewAttachment) && (
+                                    <div className="flex flex-col items-center gap-4 py-8">
+                                        <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <File className="h-12 w-12 text-primary" />
+                                        </div>
+                                        <audio
+                                            src={getAttachmentUrl(previewAttachment)}
+                                            controls
+                                            className="w-full max-w-md"
+                                        >
+                                            Your browser does not support audio playback.
+                                        </audio>
+                                    </div>
+                                )}
+
+                                {/* Text File Preview */}
+                                {isText(previewAttachment) && (
+                                    <div className="w-full h-full overflow-auto bg-slate-900 rounded-lg p-4">
+                                        <iframe
+                                            src={getAttachmentUrl(previewAttachment)}
+                                            title={previewAttachment?.originalName || 'Text Preview'}
+                                            className="w-full h-full bg-white rounded"
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Office Document - No Browser Preview */}
+                                {isOfficeDoc(previewAttachment) && (
+                                    <div className="flex flex-col items-center gap-4 py-8 text-center">
+                                        <div className="h-24 w-24 rounded-full bg-blue-50 flex items-center justify-center">
+                                            <FileText className="h-12 w-12 text-blue-500" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="font-medium text-lg">
+                                                {previewAttachment?.originalName || previewAttachment?.name}
+                                            </p>
+                                            <p className="text-muted-foreground text-sm">
+                                                This document type cannot be previewed in the browser.
+                                            </p>
+                                            <p className="text-muted-foreground text-sm">
+                                                Please download the file to view it.
+                                            </p>
+                                        </div>
+                                        <Button
+                                            onClick={() => handleDownload(previewAttachment)}
+                                            className="mt-2"
+                                        >
+                                            <Download className="mr-2 h-4 w-4" />
+                                            Download File
+                                        </Button>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
-                    <div className="p-4 border-t flex justify-end gap-2">
+                    <div className="p-4 border-t flex justify-end gap-2 shrink-0">
                         <Button
                             variant="outline"
                             onClick={() => setPreviewAttachment(null)}
                         >
                             Close
                         </Button>
-                        {previewAttachment && (
+                        {previewAttachment && !isOfficeDoc(previewAttachment) && (
                             <Button
                                 onClick={() => handleDownload(previewAttachment)}
                             >
@@ -249,8 +372,8 @@ export default function AttachmentList({
                             </Button>
                         )}
                     </div>
-                </DialogContent>
-            </Dialog>
+                </SheetContent>
+            </Sheet>
 
             {/* Delete Confirmation */}
             <AlertDialog open={!!deleteAttachment} onOpenChange={() => setDeleteAttachment(null)}>

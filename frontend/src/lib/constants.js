@@ -92,7 +92,8 @@ export const PAGINATION = {
 
 // File Upload
 export const FILE_UPLOAD = {
-    MAX_SIZE: 10 * 1024 * 1024, // 10MB
+    MAX_SIZE: 5 * 1024 * 1024, // 5MB
+    MAX_FILES: 5,
     ALLOWED_TYPES: [
         'image/jpeg',
         'image/png',
@@ -255,12 +256,13 @@ export const FILE_TYPE_OPTIONS = [
 // Default System Settings
 // Default System Settings
 export const DEFAULT_SYSTEM_SETTINGS = {
-    companyName: 'My Company',
+    companyName: 'Apidel Technologies',
     companyLogo: '',
-    emailFrom: 'noreply@company.com',
+    emailFrom: 'noreply@apideltech.com',
     emailReplyTo: '',
     emailNotificationsEnabled: true,
     inAppNotificationsEnabled: true,
-    fileUploadMaxSize: 5,
+    fileUploadMaxSize: 5, // 5MB
+    maxFileUploads: 5, // Max files per upload
     allowedFileTypes: ['image/jpeg', 'image/png', 'application/pdf'],
 };

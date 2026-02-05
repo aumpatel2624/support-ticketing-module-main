@@ -19,7 +19,7 @@ import { getAgeCategory, getAgeLabel, getAgeDescription } from '@/lib/ticketAgeH
 import ticketService from '@/lib/services/ticketService';
 import toast from 'react-hot-toast';
 
-export const columns = [
+export const createColumns = (readOnly = false) => [
     {
         id: 'age',
         header: '',
@@ -215,12 +215,16 @@ export const columns = [
                         <DropdownMenuItem asChild>
                             <Link href={`/tickets?id=${ticket._id || ticket.id}`}>View details</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleMarkResolved}>
-                            Mark as resolved
-                        </DropdownMenuItem>
+                        {!readOnly && (
+                            <DropdownMenuItem onClick={handleMarkResolved}>
+                                Mark as resolved
+                            </DropdownMenuItem>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
         },
     },
 ];
+
+export const columns = createColumns();

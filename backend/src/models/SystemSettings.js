@@ -104,7 +104,11 @@ const systemSettingsSchema = new mongoose.Schema({
   // File Upload Settings
   fileUploadMaxSize: {
     type: Number,
-    default: 5242880 // 5MB in bytes
+    default: 5 // 5MB (stored in MB)
+  },
+  maxFileUploads: {
+    type: Number,
+    default: 5 // Max files per upload
   },
   allowedFileTypes: {
     type: [String],

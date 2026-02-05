@@ -1035,7 +1035,8 @@ const downloadAttachment = asyncHandler(async (req, res) => {
     // Handle S3 files
     if (attachment.s3Key) {
         try {
-            const presignedUrl = await s3Service.generatePresignedUrl(attachment.s3Key, 3600);
+            const fileName = attachment.originalName || attachment.filename || 'download';
+            const presignedUrl = await s3Service.generatePresignedUrl(attachment.s3Key, 3600, fileName);
             return res.redirect(presignedUrl);
         } catch (error) {
             logger.error(`S3 presigned URL generation failed: ${error.message}`);

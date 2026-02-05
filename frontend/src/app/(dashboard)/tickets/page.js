@@ -14,18 +14,22 @@ import TicketCardView from '@/components/tickets/TicketCardView';
 import AdvancedFilterPanel from '@/components/tickets/AdvancedFilterPanel';
 import TicketDetailView from '@/components/tickets/TicketDetailView';
 import ticketService from '@/lib/services/ticketService';
+import departmentService from '@/lib/services/departmentService';
 import useTicketStore from '@/store/ticketStore';
 import useSettingsStore from '@/store/settingsStore';
 import useTicketUpdates from '@/hooks/useTicketUpdates';
 import useAuth from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function TicketsPage() {
     const [tickets, setTickets] = useState([]);
     const [ticketDetail, setTicketDetail] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
-    const { viewMode, setViewMode, filters } = useTicketStore();
+    const [departments, setDepartments] = useState([]);
+    const [selectedDepartment, setSelectedDepartment] = useState('all');
+    const { viewMode, setViewMode, filters, setFilters } = useTicketStore();
     const { systemSettings, fetchSystemSettings } = useSettingsStore();
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -33,6 +37,7 @@ export default function TicketsPage() {
     const ticketIdParam = searchParams.get('id');
 
     const { user } = useAuth();
+    const isSuperAdmin = user?.role === 'SuperAdmin';
 
     // Feature toggles from SystemSettings (default to true if not loaded)
     const features = systemSettings?.features || {};
@@ -44,6 +49,48 @@ export default function TicketsPage() {
     useEffect(() => {
         fetchSystemSettings().catch(() => { });
     }, [fetchSystemSettings]);
+
+    // Fetch departments for SuperAdmin
+    useEffect(() => {
+        if (isSuperAdmin) {
+            departmentService.getDepartments()
+                .then(res => {
+                    const depts = res.data || res.departments || res || [];
+                    setDepartments(depts);
+                    // Default to 'all' - no department filter
+                    setSelectedDepartment('all');
+                })
+                .catch(() => { });
+        }
+    }, [isSuperAdmin]);
+
+    // Handle department tab change
+    const handleDepartmentChange = (deptId) => {
+        setSelectedDepartment(deptId);
+        if (deptId === 'all') {
+            // Clear department filter to show all tickets
+            // Clear department filter to show all tickets
+            useTicketStore.getState().setFilters({
+                department: null,
+                departmentName: null
+            });
+        } else {
+            // Find the department name
+            const dept = departments.find(d => d._id === deptId);
+            useTicketStore.getState().setFilters({
+                ...useTicketStore.getState().filters,
+                department: deptId,
+                departmentName: dept?.name
+            });
+        }
+    };
+
+    // Sync tab selection with filter state - switch to 'All' when department filter is removed
+    useEffect(() => {
+        if (isSuperAdmin && !filters.department && selectedDepartment !== 'all') {
+            setSelectedDepartment('all');
+        }
+    }, [isSuperAdmin, filters.department, selectedDepartment]);
 
     // Initialize filters from URL parameters
     useEffect(() => {
@@ -202,12 +249,16 @@ export default function TicketsPage() {
             return <div className="p-8 text-center text-muted-foreground">Ticket not found</div>;
         }
 
-        return <TicketDetailView ticket={ticketDetail} onTicketUpdate={() => fetchTickets(searchQuery, filters)} />;
+        return (
+            <div className="pt-4 md:pt-6">
+                <TicketDetailView ticket={ticketDetail} onTicketUpdate={() => fetchTickets(searchQuery, filters)} />
+            </div>
+        );
     }
 
     // RENDER LIST VIEW
     return (
-        <div className={`flex-1 flex-col space-y-6 p-4 md:p-6 md:flex ${viewMode === 'kanban' ? 'h-[calc(100vh-80px)] overflow-hidden' : 'h-full'}`}>
+        <div className={`flex flex-col pt-4 md:pt-6 px-4 md:px-6 pb-4 md:pb-6 gap-4 ${viewMode === 'kanban' ? 'h-[calc(100vh-24px)] overflow-hidden' : 'flex-1 h-full'}`}>
             <PageHeader
                 heading="Tickets"
                 text="Manage and track all support tickets."
@@ -264,8 +315,30 @@ export default function TicketsPage() {
                 </div>
             </PageHeader>
 
+            {/* Department Tabs for SuperAdmin */}
+            {isSuperAdmin && departments.length > 0 && (
+                <div className="border-b border-border/50 -mt-2">
+                    <Tabs value={selectedDepartment} onValueChange={handleDepartmentChange}>
+                        <TabsList variant="line" className="bg-transparent h-10 p-0 gap-0">
+                            <TabsTrigger value="all" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2 text-sm font-medium">
+                                All Tickets
+                            </TabsTrigger>
+                            {departments.map((dept) => (
+                                <TabsTrigger
+                                    key={dept._id}
+                                    value={dept._id}
+                                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2 text-sm font-medium"
+                                >
+                                    {dept.name}
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                    </Tabs>
+                </div>
+            )}
+
             {/* Content */}
-            <div className={`flex-1 ${viewMode === 'kanban' ? 'overflow-hidden min-h-0' : ''}`}>
+            <div className={`flex-1 min-h-0 ${viewMode === 'kanban' ? 'overflow-hidden' : ''}`}>
                 {isLoading ? (
                     <div className="flex items-center justify-center h-64">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />

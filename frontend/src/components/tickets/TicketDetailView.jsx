@@ -282,11 +282,13 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
 
     const handleDeleteAttachment = async (attachment) => {
         try {
-            const response = await ticketService.deleteAttachment(ticket._id, attachment._id || attachment.id);
-            // Update local ticket state with the response
-            if (response.data) {
-                setTicket(response.data);
-            }
+            await ticketService.deleteAttachment(ticket._id, attachment._id || attachment.id);
+
+            // Refetch the ticket to get updated attachments list
+            const response = await ticketService.getTicket(ticket._id);
+            const updatedTicket = response.data || response;
+            setTicket(updatedTicket);
+
             toast.success('Attachment deleted');
             if (onTicketUpdate) {
                 onTicketUpdate();
@@ -311,50 +313,51 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 max-w-7xl mx-auto">
             {/* Back Button */}
             <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => router.back()}
-                className="w-fit"
+                className="w-fit hover:bg-slate-100 transition-colors"
             >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Tickets
             </Button>
 
             {/* Header Section */}
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between pb-4 border-b">
                 <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-muted-foreground">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm text-slate-500">
                             {ticket.ticketId}
                         </span>
                         <Badge variant="outline" className={getStatusColor(ticket.status)}>
                             {ticket.status}
                         </Badge>
                         {ticket.wasReopened && ticket.status !== 'Resolved' && (
-                            <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200 gap-1">
+                            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 gap-1">
                                 <span className="flex h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
                                 Reopened
                             </Badge>
                         )}
                     </div>
-                    <h1 className="font-heading text-2xl font-bold tracking-tight md:text-3xl">
+                    <h1 className="font-semibold text-lg md:text-xl text-slate-900">
                         {ticket.subject}
                     </h1>
                 </div>
                 {/* Action buttons */}
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
                     {/* Created by user action for Resolved tickets */}
                     {ticket.status === 'Resolved' &&
                         (ticket.createdBy?._id === user?._id || ticket.createdBy === user?._id) && (
                             <Button
                                 onClick={() => setShowResolutionModal(true)}
                                 variant="outline"
+                                size="sm"
                                 className="border-green-500 text-green-600 hover:bg-green-50"
                             >
-                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
                                 Resolved
                             </Button>
                         )}
@@ -367,6 +370,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                 setShowAssignModal(true);
                             }}
                             variant="outline"
+                            size="sm"
                             className="border-purple-500 text-purple-600 hover:bg-purple-50"
                         >
                             ↻ Reassign
@@ -381,10 +385,11 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                             <Button
                                 onClick={() => handleReassignUser(user)}
                                 variant="outline"
+                                size="sm"
                                 className="border-blue-500 text-blue-600 hover:bg-blue-50"
                                 disabled={isUpdatingStatus}
                             >
-                                <User className="mr-2 h-4 w-4" />
+                                <User className="mr-1.5 h-3.5 w-3.5" />
                                 Reassign to Self
                             </Button>
                         )}
@@ -393,7 +398,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                     {isStaff && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
                                     <MoreVertical className="h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
@@ -404,7 +409,6 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                 <DropdownMenuItem onClick={() => setShowChangeStatusModal(true)} disabled={isUpdatingStatus}>
                                     Change Status
                                 </DropdownMenuItem>
-
                             </DropdownMenuContent>
                         </DropdownMenu>
                     )}
@@ -415,26 +419,33 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                 {/* Main Content - Left 2 Columns */}
                 <div className="md:col-span-2 space-y-6">
                     {/* Description Card */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Description</CardTitle>
+                    <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 border-slate-200/60">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                                <MessageSquare className="h-4 w-4 text-primary" />
+                                Description
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="prose max-w-none text-muted-foreground whitespace-pre-wrap">
+                            <div className="prose max-w-none text-slate-600 whitespace-pre-wrap leading-relaxed">
                                 {ticket.description}
                             </div>
 
                             {/* Attachments Section */}
-                            <div className="mt-6 pt-4 border-t">
+                            <div className="mt-6 pt-4 border-t border-slate-100">
                                 <div className="flex items-center justify-between mb-3">
-                                    <h4 className="text-sm font-medium flex items-center gap-2">
-                                        <Paperclip className="h-4 w-4" />
-                                        Attachments ({ticket.attachments?.length || 0})
+                                    <h4 className="text-sm font-semibold flex items-center gap-2 text-slate-700">
+                                        <Paperclip className="h-4 w-4 text-primary" />
+                                        Attachments
+                                        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                                            {ticket.attachments?.length || 0}
+                                        </span>
                                     </h4>
                                     <Button
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => setShowUpload(!showUpload)}
+                                        className="hover:bg-primary/10 hover:text-primary transition-colors"
                                     >
                                         <Upload className="mr-1 h-3 w-3" />
                                         {showUpload ? 'Cancel' : 'Add'}
@@ -472,20 +483,21 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                 </div>
 
                 {/* Sidebar - Right Column */}
-                <div className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+                <div className="space-y-4">
+                    <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 border-slate-200/60 sticky top-4">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                 Ticket Details
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div>
-                                <span className="text-xs text-muted-foreground block mb-1">Status</span>
+                            {/* Status Section */}
+                            <div className="p-3 rounded-lg bg-slate-50/80">
+                                <span className="text-xs font-medium text-slate-500 block mb-2">Status</span>
                                 {isStaff ? (
                                     // Staff can change status
                                     <div className="flex flex-col gap-2">
-                                        <Badge variant="outline" className={`${getStatusColor(ticket.status)} w-fit`}>
+                                        <Badge variant="outline" className={`${getStatusColor(ticket.status)} w-fit shadow-sm`}>
                                             {ticket.status}
                                         </Badge>
                                         {(() => {
@@ -500,20 +512,19 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                                     break;
                                                 case 'Assigned':
                                                     nextStatus = 'InProgress';
-                                                    buttonText = 'Move to In Progress';
+                                                    buttonText = 'Start Progress';
                                                     break;
                                                 case 'InProgress':
                                                     nextStatus = 'Resolved';
                                                     buttonText = 'Resolve Ticket';
-                                                    buttonVariant = 'success'; // You might need to define this variant or use explicit className
+                                                    buttonVariant = 'success';
                                                     break;
                                                 case 'Reopened':
                                                 case 'Escalated':
                                                     nextStatus = 'InProgress';
-                                                    buttonText = 'Move to In Progress';
+                                                    buttonText = 'Start Progress';
                                                     break;
                                                 default:
-                                                    // Resolved or other terminal states
                                                     break;
                                             }
 
@@ -521,8 +532,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                                 return (
                                                     <Button
                                                         size="sm"
-                                                        // Use specific styles for different actions if needed, or just default primary
-                                                        className={`w-full ${nextStatus === 'Resolved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                                                        className={`w-full shadow-sm transition-all hover:shadow-md ${nextStatus === 'Resolved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
                                                         onClick={() => handleStatusUpdate(nextStatus)}
                                                         disabled={isUpdatingStatus || !isReady}
                                                     >
@@ -534,78 +544,78 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                         })()}
                                     </div>
                                 ) : (
-                                    // Normal users can only view status
-                                    <Badge variant="outline" className={getStatusColor(ticket.status)}>
+                                    <Badge variant="outline" className={`${getStatusColor(ticket.status)} shadow-sm`}>
                                         {ticket.status || 'No Status'}
                                     </Badge>
                                 )}
                             </div>
 
-                            <Separator />
-
-                            <div>
-                                <span className="text-xs text-muted-foreground block mb-1">Priority</span>
-                                <Badge variant="outline" className={getPriorityColor(ticket.priority)}>
+                            {/* Priority Section */}
+                            <div className="p-3 rounded-lg bg-slate-50/80">
+                                <span className="text-xs font-medium text-slate-500 block mb-2">Priority</span>
+                                <Badge variant="outline" className={`${getPriorityColor(ticket.priority)} shadow-sm`}>
                                     <AlertCircle className="mr-1 h-3 w-3" />
                                     {ticket.priority}
                                 </Badge>
                             </div>
 
-                            <Separator />
+                            <Separator className="bg-slate-100" />
 
+                            {/* Category */}
                             <div>
-                                <span className="text-xs text-muted-foreground block mb-1">Category</span>
-                                <div className="font-medium">{ticket.category?.name || ticket.categoryId?.name || 'Uncategorized'}</div>
+                                <span className="text-xs font-medium text-slate-500 block mb-1.5">Category</span>
+                                <div className="font-medium text-slate-800">{ticket.category?.name || ticket.categoryId?.name || 'Uncategorized'}</div>
                             </div>
 
-                            <Separator />
+                            <Separator className="bg-slate-100" />
 
+                            {/* Assignee */}
                             <div>
-                                <span className="text-xs text-muted-foreground block mb-1">Assignee</span>
-                                <div className="flex items-center gap-2">
-                                    <Avatar className="h-6 w-6">
-                                        <AvatarFallback className={`${getAvatarColor(ticket.assignedTo?.name)} text-[10px] text-white`}>
+                                <span className="text-xs font-medium text-slate-500 block mb-2">Assignee</span>
+                                <div className="flex items-center gap-2.5">
+                                    <Avatar className="h-8 w-8 ring-2 ring-white shadow-sm">
+                                        <AvatarFallback className={`${getAvatarColor(ticket.assignedTo?.name)} text-xs text-white font-medium`}>
                                             {getInitials(ticket.assignedTo?.name || '?')}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <span className="text-sm font-medium">{ticket.assignedTo?.name || 'Unassigned'}</span>
+                                    <span className="text-sm font-medium text-slate-800">{ticket.assignedTo?.name || 'Unassigned'}</span>
                                 </div>
                             </div>
 
-                            <Separator />
+                            <Separator className="bg-slate-100" />
 
+                            {/* Reporter */}
                             <div>
-                                <span className="text-xs text-muted-foreground block mb-1">Reporter</span>
-                                <div className="flex items-center gap-2">
-                                    <Avatar className="h-6 w-6">
-                                        <AvatarFallback className={`${getAvatarColor(ticket.createdBy?.name)} text-[10px] text-white`}>
+                                <span className="text-xs font-medium text-slate-500 block mb-2">Reporter</span>
+                                <div className="flex items-center gap-2.5">
+                                    <Avatar className="h-8 w-8 ring-2 ring-white shadow-sm">
+                                        <AvatarFallback className={`${getAvatarColor(ticket.createdBy?.name)} text-xs text-white font-medium`}>
                                             {getInitials(ticket.createdBy?.name || '?')}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <span className="text-sm font-medium">{ticket.createdBy?.name || 'Unknown'}</span>
+                                    <span className="text-sm font-medium text-slate-800">{ticket.createdBy?.name || 'Unknown'}</span>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardContent className="pt-6 space-y-4 text-sm">
+                    {/* Timestamps Card */}
+                    <Card className="shadow-sm border-slate-200/60">
+                        <CardContent className="pt-4 space-y-3 text-sm">
                             <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground flex items-center gap-1">
-                                    <Calendar className="h-3 w-3" /> Created
+                                <span className="text-slate-500 flex items-center gap-1.5">
+                                    <Calendar className="h-3.5 w-3.5" /> Created
                                 </span>
-                                <span>{formatDate(ticket.createdAt)} <span className="text-muted-foreground/50 mx-1">•</span> {new Date(ticket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                <span className="font-medium text-slate-700">{formatDate(ticket.createdAt)}</span>
                             </div>
                             <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground flex items-center gap-1">
-                                    <Clock className="h-3 w-3" /> Updated
+                                <span className="text-slate-500 flex items-center gap-1.5">
+                                    <Clock className="h-3.5 w-3.5" /> Updated
                                 </span>
-                                <span>{formatRelativeTime(ticket.updatedAt || ticket.createdAt)}</span>
+                                <span className="font-medium text-slate-700">{formatRelativeTime(ticket.updatedAt || ticket.createdAt)}</span>
                             </div>
                         </CardContent>
                     </Card>
-
-                    {/* Removed FeedbackResultCard */}
                 </div>
             </div>
 
@@ -668,6 +678,6 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                         });
                 }}
             />
-        </div>
+        </div >
     );
 }

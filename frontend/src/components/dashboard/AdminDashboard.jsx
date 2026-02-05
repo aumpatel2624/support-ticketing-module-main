@@ -39,7 +39,7 @@ import { API_ENDPOINTS } from '@/lib/constants';
 import toast from 'react-hot-toast';
 
 // Secondary KPI Card Component
-function SecondaryKPICard({ title, value, subtext, icon: Icon, trend, trendDirection, alert = false, progress }) {
+function SecondaryKPICard({ title, value, subtext, icon: Icon, trend, trendDirection, alert = false, progress, href }) {
     const getTrendIcon = () => {
         if (trendDirection === 'up') return <TrendingUp className="h-3 w-3" />;
         if (trendDirection === 'down') return <TrendingDown className="h-3 w-3" />;
@@ -53,10 +53,11 @@ function SecondaryKPICard({ title, value, subtext, icon: Icon, trend, trendDirec
         return 'text-muted-foreground bg-muted';
     };
 
-    return (
+    const Content = () => (
         <Card className={cn(
             "border-none shadow-premium bg-card overflow-hidden",
-            alert && "border-l-4 border-l-destructive"
+            alert && "border-l-4 border-l-destructive",
+            href && "hover:shadow-lg transition-shadow cursor-pointer" // Add hover effect if clickable
         )}>
             <CardContent className="p-5">
                 <div className="flex items-start justify-between">
@@ -90,6 +91,16 @@ function SecondaryKPICard({ title, value, subtext, icon: Icon, trend, trendDirec
             </CardContent>
         </Card>
     );
+
+    if (href) {
+        return (
+            <Link href={href} className="block">
+                <Content />
+            </Link>
+        );
+    }
+
+    return <Content />;
 }
 
 // Line Chart Component for Ticket Trends
@@ -267,18 +278,10 @@ export default function AdminDashboard({ user }) {
                     setMonthlyTrend(dashboardStats.monthlyTrend || []);
 
                     // Transform status distribution
-                    const statusDist = Object.entries(dashboardStats.statusStats || {}).map(([name, value]) => ({
-                        name,
-                        value
-                    }));
-                    setStatusDistribution(statusDist);
+                    setStatusDistribution(dashboardStats.statusDistribution || []);
 
                     // Transform priority distribution
-                    const priorityDist = Object.entries(dashboardStats.priorityStats || {}).map(([name, value]) => ({
-                        name,
-                        value
-                    }));
-                    setPriorityDistribution(priorityDist);
+                    setPriorityDistribution(dashboardStats.priorityDistribution || []);
                 }
 
                 // Process tickets
@@ -383,6 +386,7 @@ export default function AdminDashboard({ user }) {
                     trend={{ value: Math.abs(stats.trends.responseTime), label: "from last week" }}
                     trendDirection={stats.trends.responseTime <= 0 ? 'up' : 'down'}
                     invertedTrend={true}
+                    href="/tickets?status=New" // Avg Response is most relevant for New tickets
                 />
                 <StatsCard
                     title="Avg Resolution Time"
@@ -420,6 +424,7 @@ export default function AdminDashboard({ user }) {
                     subtext="Tickets >48h unassigned"
                     icon={Inbox}
                     alert={stats.ticketBacklog > 10}
+                    href="/tickets?status=New&assignedTo=unassigned" // Map to unassigned new tickets (logic might need check)
                 />
                 <SecondaryKPICard
                     title="Resolution Rate Today"

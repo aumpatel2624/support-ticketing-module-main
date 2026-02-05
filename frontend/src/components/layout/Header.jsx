@@ -97,46 +97,7 @@ export default function Header() {
             </div>
 
             <div className="ml-auto flex items-center gap-3 md:gap-5">
-                {/* User Profile - More Premium */}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="relative group flex items-center gap-3 pl-1 pr-1 md:pr-4 h-12 rounded-2xl hover:bg-secondary/80 transition-all border border-transparent hover:border-border/50">
-                            <div className="relative">
-                                <Avatar className="h-9 w-9 border-2 border-background shadow-sm group-hover:border-primary/20 transition-all">
-                                    <AvatarImage src={user?.profilePicture} alt={user?.name} />
-                                    <AvatarFallback className={`${getAvatarColor(user?.name)} text-white font-bold`}>
-                                        {getInitials(user?.name || 'User')}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 border-background"></div>
-                            </div>
-                            <div className="hidden md:flex flex-col items-start leading-tight">
-                                <span className="text-sm font-bold text-foreground">{user?.name}</span>
-                                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">{user?.role}</span>
-                            </div>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-64 p-2 rounded-2xl shadow-2xl border-border/40 animate-in fade-in zoom-in duration-200">
-                        <DropdownMenuLabel className="px-3 py-3">
-                            <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-bold leading-none">{user?.name}</p>
-                                <p className="text-xs font-medium text-muted-foreground truncate">{user?.email}</p>
-                            </div>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator className="opacity-50" />
-                        <DropdownMenuItem asChild className="rounded-xl py-2.5 my-0.5 focus:bg-primary/5 focus:text-primary cursor-pointer">
-                            <Link href="/settings/system" className="flex items-center">
-                                <Settings className="mr-3 h-4 w-4" />
-                                <span className="font-medium">Settings</span>
-                            </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator className="opacity-50" />
-                        <DropdownMenuItem onClick={logout} className="rounded-xl py-2.5 my-0.5 text-destructive focus:bg-destructive/5 focus:text-destructive cursor-pointer">
-                            <LogOut className="mr-3 h-4 w-4" />
-                            <span className="font-bold">Sign out</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                {/* User Profile moved to Sidebar */}
             </div>
         </header>
     );

@@ -25,7 +25,7 @@ const STATUSES = ['New', 'Assigned', 'InProgress', 'Resolved', 'Reopened', 'Esca
 /**
  * KanbanBoard - Main Kanban view component with drag-and-drop ticket management
  */
-export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
+export default function KanbanBoard({ initialTickets = [], onTicketUpdate, readOnly = false }) {
     const { user } = useAuth();
     const [tickets, setTickets] = useState(initialTickets);
     const [isUpdating, setIsUpdating] = useState(null);
@@ -65,7 +65,10 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate }) {
 
     // Handle drag start
     const handleDragStart = (event) => {
-        // Prevent dragging if user is not staff
+        // Prevent dragging if readOnly mode or user is not staff
+        if (readOnly) {
+            return;
+        }
         if (!isStaff) {
             toast.error('You do not have permission to move tickets');
             return;

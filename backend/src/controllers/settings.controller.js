@@ -44,7 +44,7 @@ const updateSystemSettings = asyncHandler(async (req, res) => {
     const allowedFields = [
       'companyName', 'companyLogo', 'brandColor', 'brandSecondaryColor',
       'emailFrom', 'emailReplyTo', 'slaDefaults', 'escalationRules',
-      'auditEnabled', 'auditRetentionDays', 'fileUploadMaxSize',
+      'auditEnabled', 'auditRetentionDays', 'fileUploadMaxSize', 'maxFileUploads',
       'allowedFileTypes', 'ticketAutoCloseAfterDays', 'allowReopeningClosedTickets',
       'requireResolutionCommentOnClose', 'emailNotificationsEnabled',
       'inAppNotificationsEnabled', 'passwordMinLength', 'passwordRequireUppercase',
@@ -98,6 +98,7 @@ const getPublicSettings = asyncHandler(async (req, res) => {
     maintenanceMode: settings.maintenanceMode,
     maintenanceMessage: settings.maintenanceMode ? settings.maintenanceMessage : null,
     fileUploadMaxSize: settings.fileUploadMaxSize,
+    maxFileUploads: settings.maxFileUploads,
     allowedFileTypes: settings.allowedFileTypes
   };
 

@@ -130,10 +130,11 @@ export function capitalize(text) {
  * Format file size
  */
 export function formatFileSize(bytes) {
+  if (bytes === undefined || bytes === null || isNaN(bytes)) return 'Unknown';
   if (bytes === 0) return '0 Bytes';
 
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];

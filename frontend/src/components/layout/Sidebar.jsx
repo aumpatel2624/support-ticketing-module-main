@@ -22,6 +22,16 @@ import {
     Bell,
 } from 'lucide-react';
 import Image from 'next/image';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getInitials, getAvatarColor } from '@/lib/utils';
 
 
 import { cn } from '@/lib/utils';
@@ -83,37 +93,68 @@ export default function Sidebar({ isMobile = false }) {
                 isMobile ? "w-full border-none" : (isCollapsed ? "w-[88px]" : "w-[200px]")
             )}
         >
-            {/* Sidebar Header */}
-            <div className="flex items-center justify-between px-4 h-20 border-b/50 shrink-0">
-                <div className={cn("flex flex-col items-center justify-center transition-all duration-300", isCollapsed ? "h-12 w-12" : "h-12 w-full max-w-[140px]")}>
-                    <Image
-                        src={systemSettings?.companyLogo || "/logo.webp"}
-                        alt={`${companyName} Logo`}
-                        width={140}
-                        height={40}
-                        className="object-contain"
-                        priority
-                        unoptimized
-                    />
-                </div>
-                {!isMobile && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn(
-                            "h-8 w-8 hover:bg-muted rounded-lg transition-all",
-                            isCollapsed ? "mx-auto" : "ml-auto"
-                        )}
-                        onClick={toggleSidebar}
-                    >
-                        {isCollapsed ? (
-                            <ChevronRight className="h-4 w-4" />
-                        ) : (
-                            <ChevronLeft className="h-4 w-4" />
-                        )}
-                    </Button>
-                )}
+            {/* Sidebar Header - Premium User Profile */}
+            <div className={cn(
+                "flex items-center gap-3 h-20 border-b/50 shrink-0 transition-all duration-300",
+                isCollapsed ? "justify-center px-2" : "px-4"
+            )}>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className={cn(
+                            "relative group flex items-center h-14 rounded-2xl hover:bg-secondary/80 transition-all border border-transparent hover:border-border/50 p-1",
+                            isCollapsed ? "w-12 justify-center" : "w-full justify-start gap-3 md:pr-4"
+                        )}>
+                            <div className="relative shrink-0">
+                                <Avatar className="h-10 w-10 border-2 border-background shadow-sm group-hover:border-primary/20 transition-all">
+                                    <AvatarImage src={user?.profilePicture} alt={user?.name} />
+                                    <AvatarFallback className={`${getAvatarColor(user?.name)} text-white font-bold`}>
+                                        {getInitials(user?.name || 'User')}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 border-background"></div>
+                            </div>
+                            {!isCollapsed && (
+                                <div className="flex flex-col items-start leading-tight overflow-hidden">
+                                    <span className="text-sm font-bold text-foreground truncate w-full">{user?.name}</span>
+                                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">{user?.role}</span>
+                                </div>
+                            )}
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align={isCollapsed ? "start" : "center"} side={isCollapsed ? "right" : "bottom"} className="w-64 p-2 rounded-2xl shadow-2xl border-border/40 animate-in fade-in zoom-in duration-200 z-[50]">
+                        <DropdownMenuLabel className="px-3 py-3">
+                            <div className="flex flex-col space-y-1">
+                                <p className="text-sm font-bold leading-none">{user?.name}</p>
+                                <p className="text-xs font-medium text-muted-foreground truncate">{user?.email}</p>
+                            </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator className="opacity-50" />
+                        <DropdownMenuItem asChild className="rounded-xl py-2.5 my-0.5 focus:bg-primary/5 focus:text-primary cursor-pointer">
+                            <Link href="/settings/system" className="flex items-center">
+                                <Settings className="mr-3 h-4 w-4" />
+                                <span className="font-medium">Settings</span>
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator className="opacity-50" />
+                        <DropdownMenuItem onClick={logout} className="rounded-xl py-2.5 my-0.5 text-destructive focus:bg-destructive/5 focus:text-destructive cursor-pointer">
+                            <LogOut className="mr-3 h-4 w-4" />
+                            <span className="font-bold">Sign out</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
+
+            {/* Collapse/Expand Button - Centered on sidebar */}
+            {!isMobile && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 bg-background border shadow-sm z-10 rounded-full hover:bg-muted"
+                    onClick={toggleSidebar}
+                >
+                    {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+                </Button>
+            )}
 
             {/* Navigation Items */}
             <ScrollArea className="flex-1 py-6">

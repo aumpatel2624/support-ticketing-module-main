@@ -96,14 +96,26 @@ class S3Service {
    * Generate presigned URL for secure file access
    * @param {string} s3Key - S3 object key
    * @param {number} expirySeconds - URL expiry in seconds (default: 1 hour)
+   * @param {string} fileName - Optional filename for download (forces attachment disposition)
    * @returns {Promise<string>}
    */
-  async generatePresignedUrl(s3Key, expirySeconds = this.presignedUrlExpiry) {
+  async generatePresignedUrl(s3Key, expirySeconds = this.presignedUrlExpiry, fileName = null) {
     try {
-      const command = new GetObjectCommand({
+      const commandParams = {
         Bucket: this.bucketName,
         Key: s3Key,
-      });
+      };
+
+      // If filename provided, force download with Content-Disposition header
+      // Use RFC 5987 format for proper UTF-8 filename support
+      if (fileName) {
+        // Sanitize filename - replace quotes and special chars
+        const sanitizedName = fileName.replace(/"/g, '\\"');
+        // Use both filename for legacy and filename* for modern browsers
+        commandParams.ResponseContentDisposition = `attachment; filename="${sanitizedName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
+      }
+
+      const command = new GetObjectCommand(commandParams);
 
       const presignedUrl = await getSignedUrl(s3Client, command, {
         expiresIn: expirySeconds,

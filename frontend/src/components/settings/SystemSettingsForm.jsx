@@ -51,6 +51,8 @@ const DEFAULT_SETTINGS = {
   emailNotificationsEnabled: true,
   inAppNotificationsEnabled: true,
   fileUploadMaxSize: 5,
+  fileUploadMaxSize: 5,
+  maxFileUploads: 5,
   allowedFileTypes: ['image/jpeg', 'image/png', 'application/pdf'],
   slaDefaults: {
     lowPriority: 72,
@@ -73,7 +75,9 @@ const systemSettingsSchema = z.object({
   inAppNotificationsEnabled: z.boolean(),
 
   // File Upload
+  // File Upload
   fileUploadMaxSize: z.number().int().min(1, 'Minimum 1 MB').max(100),
+  maxFileUploads: z.number().int().min(1, 'At least 1 file').max(20, 'Maximum 20 files'),
   allowedFileTypes: z.array(z.string()).min(1, 'Select at least one file type'),
 
   // SLA Defaults
@@ -382,28 +386,53 @@ export default function SystemSettingsForm() {
                   <CardDescription>Configure file upload limits and allowed types</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <FormField
-                    control={control}
-                    name="fileUploadMaxSize"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Maximum File Size (MB)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="5"
-                            min="1"
-                            max="100"
-                            {...field}
-                            value={field.value ?? ''}
-                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                          />
-                        </FormControl>
-                        <FormDescription>Maximum allowed file size for uploads (1-100 MB)</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={control}
+                      name="fileUploadMaxSize"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Maximum File Size (MB)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="5"
+                              min="1"
+                              max="100"
+                              {...field}
+                              value={field.value ?? ''}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                            />
+                          </FormControl>
+                          <FormDescription>Maximum size per file in MB</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={control}
+                      name="maxFileUploads"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Max Concurrent Uploads</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="5"
+                              min="1"
+                              max="20"
+                              {...field}
+                              value={field.value ?? ''}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                            />
+                          </FormControl>
+                          <FormDescription>Maximum number of files per upload batch</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <FormField
                     control={control}

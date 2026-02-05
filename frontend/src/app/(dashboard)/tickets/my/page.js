@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, LayoutGrid, Kanban, List } from 'lucide-react';
+import { Loader2, LayoutGrid, Kanban, List, Plus } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
-import { columns } from '../columns';
+import { createColumns } from '../columns';
 import { DataTableToolbar } from '../data-table-toolbar';
 import PageHeader from '@/components/common/PageHeader';
 import KanbanBoard from '@/components/tickets/KanbanBoard';
@@ -74,41 +75,50 @@ export default function MyTicketsPage() {
             <PageHeader
                 heading="My Tickets"
                 text="View and track tickets you have created."
-            />
-
-            {/* View Mode Toggle */}
-            <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-muted-foreground">View:</span>
-                <div className="flex items-center bg-muted/50 p-1 rounded-lg border border-border/50">
-                    <Button
-                        variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
-                        size="sm"
+            >
+                {/* View Mode Toggle */}
+                <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 h-9">
+                    <button
                         onClick={() => setViewMode('kanban')}
-                        className="h-7 px-2 gap-1.5 text-xs font-medium"
+                        className={`flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${viewMode === 'kanban'
+                            ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5'
+                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                            }`}
                     >
                         <Kanban className="h-3.5 w-3.5" />
                         Kanban
-                    </Button>
-                    <Button
-                        variant={viewMode === 'table' ? 'secondary' : 'ghost'}
-                        size="sm"
+                    </button>
+                    <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+                    <button
                         onClick={() => setViewMode('table')}
-                        className="h-7 px-2 gap-1.5 text-xs font-medium"
+                        className={`flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${viewMode === 'table'
+                            ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5'
+                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                            }`}
                     >
                         <List className="h-3.5 w-3.5" />
                         Table
-                    </Button>
-                    <Button
-                        variant={viewMode === 'card' ? 'secondary' : 'ghost'}
-                        size="sm"
+                    </button>
+                    <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+                    <button
                         onClick={() => setViewMode('card')}
-                        className="h-7 px-2 gap-1.5 text-xs font-medium"
+                        className={`flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${viewMode === 'card'
+                            ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5'
+                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                            }`}
                     >
                         <LayoutGrid className="h-3.5 w-3.5" />
-                        Card
-                    </Button>
+                        Cards
+                    </button>
                 </div>
-            </div>
+
+                <Button asChild>
+                    <Link href="/tickets/new">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Ticket
+                    </Link>
+                </Button>
+            </PageHeader>
 
             {/* Content */}
             <div className="flex-1">
@@ -124,6 +134,7 @@ export default function MyTicketsPage() {
                     <KanbanBoard
                         initialTickets={tickets}
                         onTicketUpdate={fetchMyTickets}
+                        readOnly={true}
                     />
                 ) : viewMode === 'card' ? (
                     <TicketCardView
@@ -133,7 +144,7 @@ export default function MyTicketsPage() {
                 ) : (
                     <DataTable
                         data={tickets}
-                        columns={columns}
+                        columns={createColumns(true)}
                         toolbar={DataTableToolbar}
                     />
                 )}

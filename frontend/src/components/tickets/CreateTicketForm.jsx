@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, Send, AlertCircle, Paperclip } from 'lucide-react';
+import { Loader2, Send, Paperclip, Building2, FolderOpen, FileText, MessageSquare, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -148,115 +149,170 @@ export default function CreateTicketForm() {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
-                <FormField
-                    control={form.control}
-                    name="subject"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Subject</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Brief summary of the issue" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                                Provide a concise title for your request.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <div className="grid gap-6 md:grid-cols-2">
-                    <FormField
-                        control={form.control}
-                        name="departmentId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Department</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingDepartments}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder={isLoadingDepartments ? "Loading..." : "Select a department"} />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {departments.map((department) => (
-                                            <SelectItem key={department.id || department._id} value={department.id || department._id}>
-                                                {department.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                {/* Subject Section */}
+                <div className="space-y-6">
+                    <div className="flex items-center gap-3 pb-2 border-b border-border/50">
+                        <div className="p-2 rounded-lg bg-primary/10">
+                            <FileText className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-foreground">Ticket Details</h3>
+                            <p className="text-sm text-muted-foreground">Describe your issue or request</p>
+                        </div>
+                    </div>
 
                     <FormField
                         control={form.control}
-                        name="categoryId"
+                        name="subject"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Category</FormLabel>
-                                <Select
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                    disabled={isLoadingCategories || !selectedDepartmentId || categories.length === 0}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder={
-                                                isLoadingCategories
-                                                    ? "Loading..."
-                                                    : !selectedDepartmentId
-                                                        ? "Select a department first"
-                                                        : categories.length === 0
-                                                            ? "No categories available"
-                                                            : "Select a category"
-                                            } />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {categories.map((category) => (
-                                            <SelectItem key={category.id || category._id} value={category.id || category._id}>
-                                                {category.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <FormLabel className="text-sm font-medium">Subject *</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        placeholder="e.g., Unable to access email on mobile device"
+                                        className="h-11 text-base"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormDescription className="text-xs">
+                                    A brief, descriptive title for your request
+                                </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
                 </div>
 
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                                <Textarea
-                                    placeholder="Detailed description of the problem..."
-                                    className="min-h-[150px]"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormDescription>
-                                Please include any error messages or steps to reproduce the issue.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                {/* Classification Section */}
+                <div className="space-y-6">
+                    <div className="flex items-center gap-3 pb-2 border-b border-border/50">
+                        <div className="p-2 rounded-lg bg-blue-500/10">
+                            <Building2 className="h-5 w-5 text-blue-500" />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-foreground">Classification</h3>
+                            <p className="text-sm text-muted-foreground">Help us route your ticket to the right team</p>
+                        </div>
+                    </div>
 
-                {/* File Upload */}
-                <div className="space-y-3">
-                    <FormLabel className="flex items-center gap-2">
-                        <Paperclip className="h-4 w-4" />
-                        Attachments
-                    </FormLabel>
+                    <div className="grid gap-6 sm:grid-cols-2">
+                        <FormField
+                            control={form.control}
+                            name="departmentId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-sm font-medium flex items-center gap-2">
+                                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                                        Department *
+                                    </FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingDepartments}>
+                                        <FormControl>
+                                            <SelectTrigger className="h-11">
+                                                <SelectValue placeholder={isLoadingDepartments ? "Loading departments..." : "Select a department"} />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {departments.map((department) => (
+                                                <SelectItem key={department.id || department._id} value={department.id || department._id}>
+                                                    {department.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="categoryId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-sm font-medium flex items-center gap-2">
+                                        <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                                        Category *
+                                    </FormLabel>
+                                    <Select
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                        disabled={isLoadingCategories || !selectedDepartmentId || categories.length === 0}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger className="h-11">
+                                                <SelectValue placeholder={
+                                                    isLoadingCategories
+                                                        ? "Loading categories..."
+                                                        : !selectedDepartmentId
+                                                            ? "Select department first"
+                                                            : categories.length === 0
+                                                                ? "No categories available"
+                                                                : "Select a category"
+                                                } />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {categories.map((category) => (
+                                                <SelectItem key={category.id || category._id} value={category.id || category._id}>
+                                                    {category.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                </div>
+
+                {/* Description Section */}
+                <div className="space-y-6">
+                    <div className="flex items-center gap-3 pb-2 border-b border-border/50">
+                        <div className="p-2 rounded-lg bg-green-500/10">
+                            <MessageSquare className="h-5 w-5 text-green-500" />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-foreground">Description</h3>
+                            <p className="text-sm text-muted-foreground">Provide details about your issue</p>
+                        </div>
+                    </div>
+
+                    <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-sm font-medium">Detailed Description *</FormLabel>
+                                <FormControl>
+                                    <Textarea
+                                        placeholder="Please describe your issue in detail. Include:&#10;• What you were trying to do&#10;• What happened instead&#10;• Any error messages you saw&#10;• Steps to reproduce the issue"
+                                        className="min-h-[180px] text-base resize-none leading-relaxed"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormDescription className="text-xs">
+                                    The more detail you provide, the faster we can help you
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
+                {/* Attachments Section */}
+                <div className="space-y-6">
+                    <div className="flex items-center gap-3 pb-2 border-b border-border/50">
+                        <div className="p-2 rounded-lg bg-orange-500/10">
+                            <Paperclip className="h-5 w-5 text-orange-500" />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-foreground">Attachments</h3>
+                            <p className="text-sm text-muted-foreground">Add screenshots or relevant files (optional)</p>
+                        </div>
+                    </div>
+
                     <FileUpload
                         files={attachments}
                         onFilesSelected={(newFiles) => setAttachments([...attachments, ...newFiles])}
@@ -265,28 +321,45 @@ export default function CreateTicketForm() {
                     />
                 </div>
 
-                <div className="flex justify-end gap-4">
+                {/* Actions */}
+                <div className="flex items-center justify-between pt-6 border-t border-border/50">
                     <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         onClick={() => router.back()}
                         disabled={isSubmitting}
+                        className="gap-2"
                     >
-                        Cancel
+                        <ArrowLeft className="h-4 w-4" />
+                        Back
                     </Button>
-                    <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Creating...
-                            </>
-                        ) : (
-                            <>
-                                <Send className="mr-2 h-4 w-4" />
-                                Submit Ticket
-                            </>
-                        )}
-                    </Button>
+                    <div className="flex gap-3">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => router.push('/tickets')}
+                            disabled={isSubmitting}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="min-w-[140px] gap-2"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Creating...
+                                </>
+                            ) : (
+                                <>
+                                    <Send className="h-4 w-4" />
+                                    Submit Ticket
+                                </>
+                            )}
+                        </Button>
+                    </div>
                 </div>
             </form>
         </Form>

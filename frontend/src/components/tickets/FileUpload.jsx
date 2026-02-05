@@ -16,7 +16,7 @@ export default function FileUpload({
     onFilesSelected,
     onFileRemove,
     files = [],
-    maxFiles = 5,
+    maxFiles = FILE_UPLOAD.MAX_FILES,
     maxSize = FILE_UPLOAD.MAX_SIZE,
     allowedTypes = FILE_UPLOAD.ALLOWED_TYPES,
     disabled = false,
@@ -31,9 +31,13 @@ export default function FileUpload({
     }, [systemSettings, fetchPublicSettings]);
 
     // effective limits based on system settings or props/defaults
+    // effective limits based on system settings or props/defaults
     const effectiveMaxSize = systemSettings?.fileUploadMaxSize
-        ? systemSettings.fileUploadMaxSize * 1024 * 1024
+        ? systemSettings.fileUploadMaxSize * 1024 * 1024 // Convert MB to bytes
         : maxSize;
+
+    // Effective max files limit
+    const effectiveMaxFiles = systemSettings?.maxFileUploads || maxFiles;
 
     // Check if systemSettings.allowedFileTypes is array before using it
     const effectiveAllowedTypes = Array.isArray(systemSettings?.allowedFileTypes) && systemSettings.allowedFileTypes.length > 0
@@ -66,8 +70,8 @@ export default function FileUpload({
         const validFiles = [];
 
         // Check max files limit
-        if (files.length + newFiles.length > maxFiles) {
-            toast.error(`Maximum ${maxFiles} files allowed`);
+        if (files.length + newFiles.length > effectiveMaxFiles) {
+            toast.error(`Maximum ${effectiveMaxFiles} files allowed`);
             return;
         }
 
@@ -119,8 +123,8 @@ export default function FileUpload({
             const validFiles = [];
 
             // Check max files limit
-            if (files.length + droppedFiles.length > maxFiles) {
-                toast.error(`Maximum ${maxFiles} files allowed`);
+            if (files.length + droppedFiles.length > effectiveMaxFiles) {
+                toast.error(`Maximum ${effectiveMaxFiles} files allowed`);
                 return;
             }
 
@@ -153,7 +157,7 @@ export default function FileUpload({
                 onFilesSelected(validFiles);
             }
         }
-    }, [disabled, files.length, maxFiles, effectiveMaxSize, effectiveAllowedTypes, onFilesSelected]);
+    }, [disabled, files.length, effectiveMaxFiles, effectiveMaxSize, effectiveAllowedTypes, onFilesSelected]);
 
     const handleInputChange = (e) => {
         const selectedFiles = e.target.files;
@@ -251,7 +255,7 @@ export default function FileUpload({
                     </div>
 
                     <div className="text-xs text-muted-foreground space-y-1">
-                        <p>Maximum {maxFiles} files</p>
+                        <p>Maximum {effectiveMaxFiles} files</p>
                         <p>Max size: {formatFileSize(effectiveMaxSize)} per file</p>
                         <p>Allowed: {formattedAllowedTypes}</p>
                     </div>

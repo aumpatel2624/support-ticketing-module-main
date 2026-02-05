@@ -108,6 +108,7 @@ const getUploadSettings = async () => {
             const maxSizeInBytes = (settings.fileUploadMaxSize || 5) * 1024 * 1024;
             cachedSettings = {
                 maxFileSize: maxSizeInBytes,
+                maxFiles: settings.maxFileUploads || 5, // Cache max files
                 allowedTypes: settings.allowedFileTypes?.length > 0
                     ? settings.allowedFileTypes
                     : DEFAULT_ALLOWED_TYPES
@@ -175,6 +176,24 @@ const validateFileSize = async (req, res, next) => {
             }
         }
 
+        // Check file count
+        if (files.length > (settings.maxFiles || 5)) {
+            return res.status(400).json({
+                success: false,
+                error: `Too many files. Maximum allowed: ${settings.maxFiles || 5}`
+            });
+        }
+
+        for (const file of files) {
+            if (file.size > settings.maxFileSize) {
+                const maxMB = (settings.maxFileSize / (1024 * 1024)).toFixed(1);
+                return res.status(413).json({
+                    success: false,
+                    error: `File "${file.originalname}" exceeds maximum size of ${maxMB}MB`
+                });
+            }
+        }
+
         next();
     } catch (err) {
         next(err);
@@ -189,7 +208,7 @@ const uploadSingle = [
 
 // Middleware for multiple files upload (max 5) with size validation
 const uploadMultiple = [
-    upload.array('files', 5),
+    upload.array('files', 20), // Allow up to 20 initially, validate actual limit in middleware
     validateFileSize
 ];
 

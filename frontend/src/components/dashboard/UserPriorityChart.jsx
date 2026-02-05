@@ -76,12 +76,13 @@ export default function UserPriorityChart({ data = [], className }) {
                                 ))}
                             </Pie>
                             <Tooltip
+                                isAnimationActive={false}
                                 content={({ active, payload }) => {
                                     if (active && payload && payload.length) {
                                         const data = payload[0].payload;
                                         const percentage = total > 0 ? Math.round((data.value / total) * 100) : 0;
                                         return (
-                                            <div className="bg-background border border-border/50 rounded-lg p-3 shadow-premium">
+                                            <div key={data.name} className="bg-background border border-border/50 rounded-lg p-3 shadow-premium animate-in fade-in zoom-in-95 duration-200">
                                                 <p className="font-bold text-sm">{data.name}</p>
                                                 <p className="text-xs text-muted-foreground">
                                                     {data.value} tickets ({percentage}%)
