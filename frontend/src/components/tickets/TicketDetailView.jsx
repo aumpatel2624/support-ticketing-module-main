@@ -330,14 +330,13 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                         <span className="text-sm font-medium text-muted-foreground">
                             {ticket.ticketId}
                         </span>
-                        {ticket.status === 'Reopened' ? (
+                        <Badge variant="outline" className={getStatusColor(ticket.status)}>
+                            {ticket.status}
+                        </Badge>
+                        {ticket.wasReopened && ticket.status !== 'Resolved' && (
                             <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200 gap-1">
                                 <span className="flex h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
                                 Reopened
-                            </Badge>
-                        ) : (
-                            <Badge variant="outline" className={getStatusColor(ticket.status)}>
-                                {ticket.status}
                             </Badge>
                         )}
                     </div>
@@ -373,6 +372,22 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                             ↻ Reassign
                         </Button>
                     )}
+
+                    {/* Reassign to Me button for TeamMember in same department */}
+                    {user && user.role === 'TeamMember' &&
+                        user.department?.toString() === (ticket.departmentId?._id || ticket.departmentId)?.toString() &&
+                        ticket.assignedTo?._id?.toString() !== user._id?.toString() &&
+                        ticket.assignedTo?.toString() !== user._id?.toString() && (
+                            <Button
+                                onClick={() => handleReassignUser(user)}
+                                variant="outline"
+                                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                                disabled={isUpdatingStatus}
+                            >
+                                <User className="mr-2 h-4 w-4" />
+                                Reassign to Self
+                            </Button>
+                        )}
 
                     {/* Only show action buttons for staff members */}
                     {isStaff && (

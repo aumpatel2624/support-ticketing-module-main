@@ -27,17 +27,20 @@ export function useNotifications() {
                 addNotification(notification);
             });
 
-            // Handle notification read status update
-            const cleanupNotificationRead = onSocketEvent(
-                'notification_read',
-                (notificationId) => {
-                    markAsRead(notificationId);
+            // Handle all notifications read
+            const cleanupNotificationAllRead = onSocketEvent(
+                'notification_all_read',
+                () => {
+                    if (useNotificationStore.getState().unreadCount > 0) {
+                        useNotificationStore.getState().markAllAsReadLocal();
+                    }
                 }
             );
 
             return () => {
                 cleanupNotification?.();
                 cleanupNotificationRead?.();
+                cleanupNotificationAllRead?.();
             };
         } catch (error) {
             console.error('Failed to initialize notifications:', error);

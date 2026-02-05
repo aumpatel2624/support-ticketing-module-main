@@ -39,17 +39,12 @@ const getTickets = asyncHandler(async (req, res) => {
     if (req.user.role === 'NormalUser') {
         filter.createdBy = req.user._id;
     } else if (req.user.role === 'TeamMember') {
-        // Team Members see:
-        // 1. Tickets assigned to them
-        // 2. Unassigned tickets in their department (so they can self-assign)
+        // Team Members see ALL tickets in their department
+        // This allows them to view department workload and self-assign unassigned tickets
         if (req.user.department) {
-            filter.$or = [
-                { assignedTo: req.user._id },
-                { assignedTo: null, departmentId: req.user.department },
-                { assignedTo: { $exists: false }, departmentId: req.user.department } // Handle missing assignedTo field
-            ];
+            filter.departmentId = req.user.department;
         } else {
-            // Fallback if no department: just see assigned to them
+            // Fallback if no department: just see tickets assigned to them
             filter.assignedTo = req.user._id;
         }
     } else if (req.user.role === 'Admin') {
@@ -154,9 +149,10 @@ const getTicketById = asyncHandler(async (req, res) => {
     const isCreator = ticket.createdBy._id.toString() === req.user._id.toString();
     const isAssigned = ticket.assignedTo && ticket.assignedTo._id.toString() === req.user._id.toString();
     const isAdminInDept = req.user.role === 'Admin' && req.user.department?.toString() === ticket.departmentId._id.toString();
+    const isTeamMemberInDept = req.user.role === 'TeamMember' && req.user.department?.toString() === ticket.departmentId._id.toString();
     const isSuperAdmin = req.user.role === 'SuperAdmin';
 
-    if (!isCreator && !isAssigned && !isAdminInDept && !isSuperAdmin) {
+    if (!isCreator && !isAssigned && !isAdminInDept && !isTeamMemberInDept && !isSuperAdmin) {
         throw new AuthorizationError('You do not have permission to view this ticket');
     }
 
@@ -272,7 +268,13 @@ const updateTicket = asyncHandler(async (req, res) => {
         ticket.status = newStatus;
 
         // Update timestamps based on status
-        if (newStatus === 'Resolved') ticket.resolvedAt = new Date();
+        if (newStatus === 'Resolved') {
+            ticket.resolvedAt = new Date();
+            ticket.wasReopened = false;
+        }
+        if (newStatus === 'Reopened') {
+            ticket.wasReopened = true;
+        }
 
         // Add to status history
         ticket.addStatusHistory(newStatus, req.user._id, req.body.comment || null);
@@ -393,7 +395,13 @@ const updateStatus = asyncHandler(async (req, res) => {
     ticket.status = status;
 
     // Update timestamps
-    if (status === 'Resolved') ticket.resolvedAt = new Date();
+    if (status === 'Resolved') {
+        ticket.resolvedAt = new Date();
+        ticket.wasReopened = false;
+    }
+    if (status === 'Reopened') {
+        ticket.wasReopened = true;
+    }
 
     ticket.addStatusHistory(status, req.user._id, comment);
     await ticket.save();
@@ -421,6 +429,15 @@ const updateStatus = asyncHandler(async (req, res) => {
         // Socket: Notify creator with full notification object
         socketService.emitToUser(ticket.createdBy._id, 'notification', notification);
         socketService.emitToTicket(ticket._id, 'status_updated', populatedTicket);
+
+        // Broadcast status change to all connected users
+        socketService.emitToAll('ticketUpdated', {
+            ticketId: ticket._id,
+            status: ticket.status,
+            assignedTo: ticket.assignedTo,
+            updatedBy: req.user._id,
+            updatedAt: ticket.updatedAt
+        });
     }
 
     res.status(200).json({
@@ -522,6 +539,15 @@ const assignTicket = asyncHandler(async (req, res) => {
     // Emit new comment event to update activity feed immediately
     const systemComment = ticket.comments[ticket.comments.length - 1];
     socketService.emitToTicket(ticket._id, 'new_comment', systemComment);
+
+    // Broadcast ticket update to all connected users (for list view refresh)
+    socketService.emitToAll('ticketUpdated', {
+        ticketId: ticket._id,
+        status: ticket.status,
+        assignedTo: populatedTicket.assignedTo,
+        updatedBy: req.user._id,
+        updatedAt: ticket.updatedAt
+    });
 
     res.status(200).json({
         success: true,
@@ -651,9 +677,11 @@ const submitFeedback = asyncHandler(async (req, res) => {
     if (action === 'close') {
         // Confirm resolution
         ticket.status = 'Resolved'; // Stays resolved
+        ticket.wasReopened = false;
     } else if (action === 'reopen') {
         // Reopen the ticket - change to Reopened
         ticket.status = 'Reopened';
+        ticket.wasReopened = true;
         ticket.addStatusHistory('Reopened', req.user._id, 'Ticket reopened by creator - not satisfied with completion');
     }
 

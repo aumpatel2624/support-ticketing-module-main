@@ -174,6 +174,7 @@ export const NAVIGATION_ITEMS = {
             items: [
                 { name: 'My Tickets', href: '/tickets/my' },
                 { name: 'Assigned Tickets', href: '/tickets/assigned' },
+                { name: 'Department Tickets', href: '/tickets' },
             ]
         },
         { name: 'Create Ticket', href: '/tickets/new', icon: 'Plus' },

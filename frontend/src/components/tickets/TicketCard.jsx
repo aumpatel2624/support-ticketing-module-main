@@ -109,7 +109,7 @@ export default function TicketCard({ ticket, onQuickAction }) {
                             <Badge variant="outline" className={`${getStatusColor(ticket.status)} border-transparent bg-opacity-10 px-2 py-0.5 font-medium`}>
                                 {ticket.status}
                             </Badge>
-                            {ticket.status === 'Reopened' && (
+                            {ticket.wasReopened && ticket.status !== 'Resolved' && (
                                 <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200 gap-1 px-2">
                                     <span className="flex h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
                                     Reopened

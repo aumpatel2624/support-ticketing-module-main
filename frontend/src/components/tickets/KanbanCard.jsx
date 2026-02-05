@@ -81,7 +81,7 @@ export default function KanbanCard({ ticket, isDragging, onMenuAction }) {
                         <span className="h-[20px] flex items-center text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 rounded-sm whitespace-nowrap">
                             {ticket.ticketId}
                         </span>
-                        {ticket.status === 'Reopened' && (
+                        {ticket.wasReopened && ticket.status !== 'Resolved' && (
                             <Badge variant="outline" className="h-[20px] flex items-center px-1 bg-orange-50 text-orange-600 border-orange-200 text-[9px] shrink-0">
                                 Reopened
                             </Badge>

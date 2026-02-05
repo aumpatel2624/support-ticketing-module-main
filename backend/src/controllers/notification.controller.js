@@ -52,6 +52,10 @@ const markAsRead = asyncHandler(async (req, res) => {
     notification.isRead = true;
     await notification.save();
 
+    // Socket: Notify user that notification is read (for other tabs)
+    const socketService = require('../services/socket.service');
+    socketService.emitToUser(req.user._id, 'notification_read', notification._id);
+
     res.status(200).json({
         success: true,
         message: 'Notification marked as read',
@@ -74,6 +78,10 @@ const markAllAsRead = asyncHandler(async (req, res) => {
         success: true,
         message: 'All notifications marked as read'
     });
+
+    // Socket: Notify user that all notifications are read (for other tabs)
+    const socketService = require('../services/socket.service');
+    socketService.emitToUser(req.user._id, 'notification_all_read', null);
 });
 
 /**

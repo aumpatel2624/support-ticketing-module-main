@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { getInitials, getAvatarColor } from '@/lib/utils';
 import userService from '@/lib/services/userService';
+import useAuthStore from '@/store/authStore';
 import toast from 'react-hot-toast';
 import { USER_ROLES } from '@/lib/constants';
 
@@ -33,6 +34,7 @@ export default function AssignTicketModal({
     const [filteredUsers, setFilteredUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [isFetchingUsers, setIsFetchingUsers] = useState(false);
+    const { user: currentUser } = useAuthStore();
 
     // Fetch users on mount
     useEffect(() => {
@@ -45,6 +47,17 @@ export default function AssignTicketModal({
     const fetchUsers = async () => {
         try {
             setIsFetchingUsers(true);
+
+            // TeamMembers can only self-assign
+            if (currentUser?.role === USER_ROLES.TEAM_MEMBER) {
+                // Only show the current user for self-assignment
+                setUsers([currentUser]);
+                setFilteredUsers([currentUser]);
+                setSelectedUser(currentUser); // Auto-select self
+                return;
+            }
+
+            // Admins and SuperAdmins can assign to anyone
             const response = await userService.getUsers();
             let usersData = response;
             if (response.data) usersData = response.data;

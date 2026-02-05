@@ -67,8 +67,7 @@ const useNotificationStore = create((set, get) => ({
         }
     },
 
-    markAllAsRead: async () => {
-        // Optimistic update
+    markAllAsReadLocal: () => {
         set((state) => {
             const updated = state.notifications.map((n) => ({
                 ...n,
@@ -76,6 +75,11 @@ const useNotificationStore = create((set, get) => ({
             }));
             return { notifications: updated, unreadCount: 0 };
         });
+    },
+
+    markAllAsRead: async () => {
+        // Optimistic update
+        get().markAllAsReadLocal();
 
         // API call
         try {

@@ -109,7 +109,7 @@ export const columns = [
                         <span className="max-w-[500px] truncate font-medium">
                             {row.getValue('subject')}
                         </span>
-                        {row.getValue('status') === 'Reopened' && (
+                        {(row.original.wasReopened && row.getValue('status') !== 'Resolved') && (
                             <Badge variant="outline" className="h-5 px-1.5 bg-orange-100 text-orange-700 border-orange-200 text-[10px] gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
                                 Reopened

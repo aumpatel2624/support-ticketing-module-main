@@ -80,13 +80,21 @@ export default function NotificationItem({ notification, onClose }) {
 
     const href = ticketId ? `/tickets?id=${ticketId}` : '#';
 
+    const handleClick = () => {
+        handleMarkAsRead();
+        onClose?.();
+        if (ticketId) {
+            window.location.href = href;
+        }
+    };
+
     return (
         <div
             className={`flex gap-3 p-3 rounded-lg border transition-all cursor-pointer ${notification.isRead
                 ? 'bg-background border-border hover:border-primary/40'
                 : 'bg-primary/5 border-primary/20 hover:bg-primary/10'
                 } group`}
-            onClick={handleMarkAsRead}
+            onClick={handleClick}
         >
             {/* Icon */}
             <div className="shrink-0 mt-1">
@@ -106,14 +114,7 @@ export default function NotificationItem({ notification, onClose }) {
 
                 {notification.ticketId ? (
                     <div className="text-sm break-words">
-                        <Link
-                            href={href}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onClose?.();
-                            }}
-                            className="hover:underline"
-                        >
+                        <div className="hover:text-primary transition-colors">
                             {/* Display ticket ID with priority color if available */}
                             {ticketDisplayId && ticketPriority ? (
                                 <span>
@@ -126,7 +127,7 @@ export default function NotificationItem({ notification, onClose }) {
                             ) : (
                                 <span className="font-medium text-foreground">{notification.message}</span>
                             )}
-                        </Link>
+                        </div>
                         {ticketPriority && (
                             <Badge
                                 variant="outline"

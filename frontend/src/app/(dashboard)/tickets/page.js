@@ -202,7 +202,7 @@ export default function TicketsPage() {
             return <div className="p-8 text-center text-muted-foreground">Ticket not found</div>;
         }
 
-        return <TicketDetailView ticket={ticketDetail} />;
+        return <TicketDetailView ticket={ticketDetail} onTicketUpdate={() => fetchTickets(searchQuery, filters)} />;
     }
 
     // RENDER LIST VIEW
@@ -224,8 +224,8 @@ export default function TicketsPage() {
                         <button
                             onClick={() => setViewMode('kanban')}
                             className={`flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${viewMode === 'kanban'
-                                    ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5'
-                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                                ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5'
+                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
                                 }`}
                         >
                             <Kanban className="h-3.5 w-3.5" />
@@ -235,8 +235,8 @@ export default function TicketsPage() {
                         <button
                             onClick={() => setViewMode('table')}
                             className={`flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${viewMode === 'table'
-                                    ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5'
-                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                                ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5'
+                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
                                 }`}
                         >
                             <List className="h-3.5 w-3.5" />
@@ -246,8 +246,8 @@ export default function TicketsPage() {
                         <button
                             onClick={() => setViewMode('card')}
                             className={`flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${viewMode === 'card'
-                                    ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5'
-                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                                ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5'
+                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
                                 }`}
                         >
                             <LayoutGrid className="h-3.5 w-3.5" />
