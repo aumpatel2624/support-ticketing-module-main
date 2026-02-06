@@ -5,38 +5,50 @@ let io;
  */
 const init = (server) => {
     const { Server } = require('socket.io');
-    const { createAdapter } = require('@socket.io/redis-adapter');
-    const redis = require('../config/redis');
+    const redisConfig = require('../config/redis');
     const logger = require('../utils/logger');
 
     // Parse origins from environment variable (comma-separated)
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const origins = frontendUrl.split(',').map(url => url.trim());
 
-    // Create Redis pub/sub clients
-    const pubClient = redis;
-    const subClient = redis.duplicate();
-
-    io = new Server(server, {
+    const serverOptions = {
         cors: {
             origin: origins,
             methods: ['GET', 'POST'],
             credentials: true
         },
-        adapter: createAdapter(pubClient, subClient),
-        pingTimeout: 60000, // Increase timeout to 60s
-        pingInterval: 25000 // Send ping every 25s
-    });
+        transports: ['websocket', 'polling'],
+        allowUpgrades: true,
+        pingTimeout: 60000,
+        pingInterval: 25000
+    };
+
+    io = new Server(server, serverOptions);
+
+    // Attach Redis adapter if Redis is available (needed for multi-instance scaling)
+    if (redisConfig.isAvailable()) {
+        try {
+            const { createAdapter } = require('@socket.io/redis-adapter');
+            const redis = redisConfig.getClient();
+            const pubClient = redis;
+            const subClient = redis.duplicate();
+            io.adapter(createAdapter(pubClient, subClient));
+            logger.info('Socket.io using Redis adapter for scaling');
+        } catch (err) {
+            logger.warn(`Socket.io Redis adapter failed: ${err.message}. Running without it.`);
+        }
+    } else {
+        logger.info('Socket.io running without Redis adapter (single instance mode)');
+    }
 
     // Add logging middleware
     io.use((socket, next) => {
-        // Removed sensitive handshake query log
         next();
     });
 
     io.on('connection', (socket) => {
         logger.info(`User connected: ${socket.id}`);
-        // Removed sensitive auth and headers logs
 
         // Join room based on user role/id if needed
         socket.on('join', (userId) => {

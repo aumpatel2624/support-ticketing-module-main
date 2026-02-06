@@ -427,7 +427,8 @@ const uploadLogo = asyncHandler(async (req, res) => {
     }
   } else {
     // Local storage
-    logoUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/uploads/${req.file.filename}`;
+    const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
+    logoUrl = `${backendUrl}/uploads/${req.file.filename}`;
   }
 
   res.status(200).json({

@@ -1,14 +1,12 @@
-# Auto Claude data directory
-.auto-claude/
-.claude/
-
 # Dependencies
 node_modules/
 
-# Environment files
+# Environment files (NEVER commit secrets)
 .env
 .env.local
 .env.*.local
+backend/.env
+frontend/.env.local
 
 # Build outputs
 .next/
@@ -19,6 +17,7 @@ build/
 # Logs
 *.log
 npm-debug.log*
+logs/
 
 # IDE
 .idea/
@@ -36,12 +35,14 @@ coverage/
 # Misc
 *.pem
 
+# Unwanted directories - keep only backend/ and frontend/
 Frontend-designs/
 docs/
 Apidel-Assets/
 
-
-# Auto Claude generated files
+# Claude / AI tool files
+.auto-claude/
+.claude/
 .auto-claude-security.json
 .auto-claude-status
 .claude_settings.json
@@ -49,3 +50,9 @@ Apidel-Assets/
 .security-key
 logs/security/
 shell_scripts/
+
+# GitHub Actions (optional - remove this line if you want CI/CD)
+# .github/
+
+# Uploads (local file storage - not for git)
+backend/uploads/

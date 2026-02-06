@@ -1,36 +1,45 @@
 import { io } from 'socket.io-client';
 
 let socket = null;
+let currentToken = null;
 
 /**
  * Initialize Socket.io connection
  */
 export const initSocket = (token) => {
-    if (socket) {
-        console.log('[Socket] Returning existing instance');
+    // If socket exists with same token, reuse it
+    if (socket && socket.connected && currentToken === token) {
         return socket;
     }
+
+    // If token changed or socket is stale, disconnect old one
+    if (socket) {
+        socket.disconnect();
+        socket = null;
+    }
+
+    if (!token) return null;
 
     try {
         let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-        // Remove /api suffix for socket connection to avoid namespace error
+        // Remove /api suffix for socket connection
         if (apiUrl.endsWith('/api')) {
             apiUrl = apiUrl.replace(/\/api$/, '');
         }
 
-        console.log('[Socket] Initializing new connection...', apiUrl);
+        currentToken = token;
+
         socket = io(apiUrl, {
             path: '/socket.io/',
-            transports: ['websocket'], // Force WebSocket only to avoid sticky session issues
+            transports: ['websocket', 'polling'], // WebSocket first, polling fallback
             reconnection: true,
             reconnectionDelay: 1000,
-            reconnectionDelayMax: 5000,
-            reconnectionAttempts: 10,
+            reconnectionDelayMax: 10000,
+            reconnectionAttempts: Infinity,
             timeout: 20000,
-            withCredentials: true,
-            extraHeaders: {
-                Authorization: `Bearer ${token}`
+            auth: {
+                token: token
             }
         });
 
@@ -42,14 +51,17 @@ export const initSocket = (token) => {
             // Silent error for socket connection
         });
 
-        socket.on('disconnect', () => {
-            // Socket disconnected
+        socket.on('disconnect', (reason) => {
+            // If server disconnected us, try to reconnect
+            if (reason === 'io server disconnect') {
+                socket.connect();
+            }
         });
 
         return socket;
     } catch (error) {
-        // Silent initialization error
         socket = null;
+        currentToken = null;
         return null;
     }
 };
@@ -66,9 +78,9 @@ export const getSocket = () => {
  */
 export const disconnectSocket = () => {
     if (socket) {
-        console.log('[Socket] Disconnecting...');
         socket.disconnect();
         socket = null;
+        currentToken = null;
     }
 };
 
@@ -76,7 +88,7 @@ export const disconnectSocket = () => {
  * Emit event to server
  */
 export const emitSocketEvent = (event, data) => {
-    if (socket) {
+    if (socket && socket.connected) {
         socket.emit(event, data);
     }
 };

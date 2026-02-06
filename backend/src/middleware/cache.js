@@ -1,4 +1,4 @@
-const redis = require('../config/redis');
+const redisConfig = require('../config/redis');
 
 /**
  * Cache middleware
@@ -7,10 +7,12 @@ const redis = require('../config/redis');
  */
 const cache = (duration) => {
     return async (req, res, next) => {
-        // Skip caching for non-GET requests
-        if (req.method !== 'GET') {
+        // Skip caching for non-GET requests or if Redis is unavailable
+        if (req.method !== 'GET' || !redisConfig.isAvailable()) {
             return next();
         }
+
+        const redis = redisConfig.getClient();
 
         // Generate cache key
         // Include user ID to ensure data isolation (since stats depend on user role/dept)
@@ -21,8 +23,6 @@ const cache = (duration) => {
             const cachedResponse = await redis.get(key);
 
             if (cachedResponse) {
-                // Determine if we need to parse it or send strictly string
-                // Ideally store as stringified JSON
                 res.setHeader('X-Cache', 'HIT');
                 return res.json(JSON.parse(cachedResponse));
             }
@@ -34,7 +34,6 @@ const cache = (duration) => {
                 res.json = originalJson;
 
                 // Cache the response asynchronously
-                // We don't await this to avoid delaying the response
                 redis.setex(key, duration, JSON.stringify(body)).catch(err => {
                     console.error('Redis cache set error:', err);
                 });

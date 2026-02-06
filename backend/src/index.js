@@ -11,7 +11,11 @@ const swaggerSpec = require('./config/swagger');
 const { mongoSanitize, xssSanitize } = require('./middleware/sanitizer');
 const compression = require('compression');
 
+const path = require('path');
 const app = express();
+
+// Serve uploaded files (local storage fallback when S3 is not configured)
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Connect to database
 connectDB();
@@ -107,7 +111,7 @@ if (process.env.NODE_ENV !== 'test') {
     const logger = require('./utils/logger'); // Ensure this is required if not already
     // ... inside server.listen
     logger.info(`Server running on port ${PORT}`);
-    logger.info(`API Docs available at https://api.ticket.apideltech.de/api-docs`);
+    logger.info(`API Docs available at http://localhost:${PORT}/api-docs`);
   });
 }
 

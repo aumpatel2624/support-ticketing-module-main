@@ -145,10 +145,15 @@ class ExportService {
             charts = null
         } = options;
 
-        const browser = await puppeteer.launch({
+        const launchOptions = {
             headless: 'new',
             args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
+        };
+        // Use system Chromium on Linux servers (set via PUPPETEER_EXECUTABLE_PATH env var)
+        if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+            launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+        }
+        const browser = await puppeteer.launch(launchOptions);
 
         try {
             const page = await browser.newPage();
