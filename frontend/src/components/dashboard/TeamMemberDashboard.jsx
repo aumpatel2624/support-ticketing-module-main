@@ -126,13 +126,12 @@ export default function TeamMemberDashboard({ user }) {
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Team Dashboard</h2>
-                    <p className="text-muted-foreground">
-                        Overview of your assigned tickets and performance metrics.
+                    <p className="text-muted-foreground mt-1">
+                        Here&apos;s what&apos;s happening with your tickets today.
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" asChild>
+                    <Button variant="outline" className="shadow-sm border-primary/20 hover:bg-primary/5 hover:text-primary transition-all duration-300" asChild>
                         <Link href="/tickets">
                             <ClipboardList className="mr-2 h-4 w-4" />
                             View All Tickets
@@ -142,142 +141,45 @@ export default function TeamMemberDashboard({ user }) {
             </div>
 
             {/* Primary KPI Cards - Row 1 */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 animate-in slide-in-from-bottom-4 fade-in duration-500 delay-100">
                 <StatsCard
                     title="Assigned to Me"
                     value={stats.assigned}
                     icon={ClipboardList}
                     description="Total active tickets"
-                    href="/tickets?assignedToMe=true"
+                    href="/tickets/assigned"
+                    className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20"
                 />
                 <StatsCard
-                    title="In Progress"
-                    value={stats.inProgress}
-                    icon={PlayCircle}
-                    className="bg-blue-50/50 dark:bg-blue-900/10"
-                    href="/tickets?status=InProgress&assignedToMe=true"
-                />
-                <StatsCard
-                    title="Completed"
+                    title="Resolved"
                     value={stats.completed}
                     icon={CheckCircle2}
-                    className="bg-green-50/50 dark:bg-green-900/10"
-                    href="/tickets?status=Completed,Closed&assignedToMe=true"
+                    className="bg-green-50/50 dark:bg-green-900/10 border-green-100 dark:border-green-900/20"
+                    href="/tickets?status=Resolved&assignedToMe=true"
                 />
                 <StatsCard
                     title="Avg Resolution"
                     value={stats.avgResolution}
                     icon={Clock}
+                    description="Average turnaround time"
+                    className="bg-purple-50/50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-900/20"
+                />
+                <StatsCard
+                    title="Completed Today"
+                    value={stats.completedToday}
+                    icon={Target}
+                    description="vs daily target"
+                    className="bg-orange-50/50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900/20"
                 />
             </div>
 
-            {/* Secondary KPI Cards - Row 2 */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="border-none shadow-premium overflow-hidden">
-                    <CardContent className="p-5">
-                        <div className="flex items-start justify-between">
-                            <div className="space-y-2">
-                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Completed Today</p>
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-2xl font-extrabold">{stats.completedToday}</span>
-                                </div>
-                                <p className="text-xs text-muted-foreground">vs daily target</p>
-                            </div>
-                            <div className="h-10 w-10 rounded-xl bg-success/10 flex items-center justify-center">
-                                <CheckCircle2 className="h-5 w-5 text-success" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-none shadow-premium overflow-hidden">
-                    <CardContent className="p-5">
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Current Workload</p>
-                                <span className="text-xs font-bold text-primary">{stats.currentWorkload}%</span>
-                            </div>
-                            <Progress value={stats.currentWorkload} className="h-2" />
-                            <div className="flex items-center justify-center">
-                                <Gauge className="h-5 w-5 text-primary mr-2" />
-                                <p className="text-xs text-muted-foreground">
-                                    {stats.currentWorkload < 50 ? 'Low' : stats.currentWorkload < 80 ? 'Moderate' : 'High'} capacity
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-none shadow-premium overflow-hidden">
-                    <CardContent className="p-5">
-                        <div className="flex items-start justify-between">
-                            <div className="space-y-2">
-                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">First Response Time</p>
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-2xl font-extrabold">{stats.firstResponseTime}</span>
-                                </div>
-                                <p className="text-xs text-muted-foreground">vs team avg</p>
-                            </div>
-                            <div className="h-10 w-10 rounded-xl bg-blue/10 flex items-center justify-center">
-                                <TrendingUp className="h-5 w-5 text-blue-500" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-none shadow-premium overflow-hidden">
-                    <CardContent className="p-5">
-                        <div className="flex items-start justify-between">
-                            <div className="space-y-2">
-                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">First Contact Resolution</p>
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-2xl font-extrabold">{stats.fcrPercentage}%</span>
-                                </div>
-                                <p className="text-xs text-muted-foreground">resolved on first response</p>
-                            </div>
-                            <div className="h-10 w-10 rounded-xl bg-success/10 flex items-center justify-center">
-                                <Target className="h-5 w-5 text-success" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Tertiary KPI Cards - Row 3 */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-                <Card className="border-none shadow-premium overflow-hidden">
-                    <CardContent className="p-5">
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Weekly Target</p>
-                                <span className="text-xs font-bold text-primary">{stats.weeklyTarget} completed</span>
-                            </div>
-                            <Progress value={Math.min((stats.weeklyTarget / 10) * 100, 100)} className="h-2" />
-                            <p className="text-xs text-muted-foreground">Target: 10 tickets/week</p>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-none shadow-premium overflow-hidden">
-                    <CardContent className="p-5">
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">SLA Compliance</p>
-                                <span className="text-xs font-bold text-success">{stats.slaCompliance}%</span>
-                            </div>
-                            <Progress value={stats.slaCompliance} className="h-2" />
-                            <p className="text-xs text-muted-foreground">Within SLA targets</p>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
 
             {/* Charts Section - Row 1 */}
-            <div className="grid gap-6 lg:grid-cols-3">
-                <div className="lg:col-span-1">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
+                <div className="col-span-1">
                     <MyTicketsPriorityChart data={tickets} />
                 </div>
-                <div className="lg:col-span-1">
+                <div className="col-span-1">
                     <MyTicketsStatusChart data={tickets} />
                 </div>
             </div>

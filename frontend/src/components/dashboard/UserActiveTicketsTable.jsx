@@ -16,7 +16,7 @@ import EmptyState from '@/components/common/EmptyState';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 export default function UserActiveTicketsTable({ tickets = [], loading = false }) {
-    const activeTickets = tickets.filter(t => t.status !== 'Completed' && t.status !== 'Closed');
+    const activeTickets = tickets.filter(t => t.status !== 'Resolved');
 
     if (loading) {
         return (

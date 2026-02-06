@@ -38,9 +38,8 @@ export function useNotifications() {
             );
 
             return () => {
-                cleanupNotification?.();
-                cleanupNotificationRead?.();
-                cleanupNotificationAllRead?.();
+                if (cleanupNotification) cleanupNotification();
+                if (cleanupNotificationAllRead) cleanupNotificationAllRead();
             };
         } catch (error) {
             console.error('Failed to initialize notifications:', error);

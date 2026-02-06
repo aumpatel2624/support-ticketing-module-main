@@ -13,7 +13,8 @@ import {
     CheckCircle2,
     Calendar,
     Upload,
-    ArrowLeft
+    ArrowLeft,
+    RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -100,9 +101,13 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
         );
 
         if (ticket?.status === 'Resolved' && isReady && isCreator) {
-            setShowResolutionModal(true);
+            // Check if user has already dismissed the resolution modal for this ticket
+            const hasDismissed = localStorage.getItem(`resolution_dismissed_${ticket._id}`);
+            if (!hasDismissed) {
+                setShowResolutionModal(true);
+            }
         }
-    }, [ticket?.status, isReady, user?._id, ticket.createdBy]);
+    }, [ticket?.status, isReady, user?._id, ticket.createdBy, ticket._id]);
 
     const handleStatusChangeClick = () => {
         setShowChangeStatusModal(true);
@@ -352,13 +357,13 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                     {ticket.status === 'Resolved' &&
                         (ticket.createdBy?._id === user?._id || ticket.createdBy === user?._id) && (
                             <Button
-                                onClick={() => setShowResolutionModal(true)}
+                                onClick={handleReopenCallback}
                                 variant="outline"
                                 size="sm"
-                                className="border-green-500 text-green-600 hover:bg-green-50"
+                                className="border-orange-500 text-orange-600 hover:bg-orange-50"
                             >
-                                <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
-                                Resolved
+                                <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                                Reopen Ticket
                             </Button>
                         )}
 
@@ -631,7 +636,13 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
             {/* Resolution Modal */}
             <ResolutionModal
                 isOpen={showResolutionModal}
-                onClose={() => setShowResolutionModal(false)}
+                onClose={() => {
+                    setShowResolutionModal(false);
+                    // Remember that user dismissed the modal
+                    if (ticket._id) {
+                        localStorage.setItem(`resolution_dismissed_${ticket._id}`, 'true');
+                    }
+                }}
                 onReopen={handleReopenCallback}
             />
 

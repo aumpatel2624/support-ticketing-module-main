@@ -38,9 +38,9 @@ export default function UserTicketHistoryChart({ data = [], className }) {
                 }
             }
 
-            if (ticket.completedAt) {
-                const completedDate = new Date(ticket.completedAt);
-                const monthKey = completedDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+            if (ticket.resolvedAt) {
+                const resolvedDate = new Date(ticket.resolvedAt);
+                const monthKey = resolvedDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
                 if (months[monthKey]) {
                     months[monthKey].resolved++;
                 }

@@ -66,6 +66,8 @@ const useAuthStore = create(
             },
 
             logout: () => {
+                const { disconnectSocket } = require('@/lib/socket');
+                disconnectSocket();
                 set({
                     user: null,
                     token: null,

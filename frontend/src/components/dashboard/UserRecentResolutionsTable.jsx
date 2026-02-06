@@ -17,8 +17,8 @@ import EmptyState from '@/components/common/EmptyState';
 export default function UserRecentResolutionsTable({ tickets = [] }) {
     // Filter only completed/closed tickets and sort by completion date
     const resolvedTickets = tickets
-        .filter(t => t.status === 'Completed' || t.status === 'Closed')
-        .sort((a, b) => new Date(b.completedAt || b.updatedAt) - new Date(a.completedAt || a.updatedAt))
+        .filter(t => t.status === 'Resolved')
+        .sort((a, b) => new Date(b.resolvedAt || b.updatedAt) - new Date(a.resolvedAt || a.updatedAt))
         .slice(0, 3);
 
     if (resolvedTickets.length === 0) {
@@ -74,7 +74,7 @@ export default function UserRecentResolutionsTable({ tickets = [] }) {
                             <TableCell className="text-right pr-6 font-medium text-muted-foreground group-hover:text-foreground transition-colors">
                                 <div className="flex items-center justify-end gap-1.5 text-xs">
                                     <Clock className="h-3.5 w-3.5 text-muted-foreground group-hover:text-success transition-colors" />
-                                    {formatRelativeTime(ticket.completedAt || ticket.updatedAt)}
+                                    {formatRelativeTime(ticket.resolvedAt || ticket.updatedAt)}
                                 </div>
                             </TableCell>
                         </TableRow>

@@ -49,26 +49,26 @@ export default function NormalUserDashboard({ user }) {
           const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
           const myOpenTickets = ticketArray.filter(t =>
-            t.status !== 'Completed' && t.status !== 'Closed'
+            t.status !== 'Resolved'
           ).length;
 
           const awaitingResponse = ticketArray.filter(t =>
-            t.status !== 'Completed' && t.status !== 'Closed' && t.status !== 'InProgress'
+            t.status !== 'Resolved' && t.status !== 'InProgress'
           ).length;
 
           const resolvedThisMonth = ticketArray.filter(t =>
-            (t.status === 'Completed' || t.status === 'Closed') &&
-            t.completedAt && new Date(t.completedAt) >= monthStart
+            t.status === 'Resolved' &&
+            t.resolvedAt && new Date(t.resolvedAt) >= monthStart
           ).length;
 
           // Calculate average resolution time
-          const resolvedTickets = ticketArray.filter(t => t.completedAt && t.createdAt);
+          const resolvedTickets = ticketArray.filter(t => t.resolvedAt && t.createdAt);
           let avgResolutionTime = '0h';
           if (resolvedTickets.length > 0) {
             const totalHours = resolvedTickets.reduce((sum, t) => {
               const created = new Date(t.createdAt);
-              const completed = new Date(t.completedAt);
-              return sum + ((completed - created) / (1000 * 60 * 60));
+              const resolved = new Date(t.resolvedAt);
+              return sum + ((resolved - created) / (1000 * 60 * 60));
             }, 0);
             const avgHours = Math.round(totalHours / resolvedTickets.length);
             avgResolutionTime = avgHours > 24 ? `${Math.round(avgHours / 24)}d` : `${avgHours}h`;
@@ -98,7 +98,6 @@ export default function NormalUserDashboard({ user }) {
     [TICKET_STATUS.IN_PROGRESS]: [],
     [TICKET_STATUS.COMPLETED]: [],
     [TICKET_STATUS.ESCALATED]: [],
-    [TICKET_STATUS.CLOSED]: [],
     // catch-all for others if needed, using a generic 'Other' or sticking to main flow
   };
 
@@ -242,18 +241,21 @@ export default function NormalUserDashboard({ user }) {
             value={stats.myOpenTickets}
             icon={AlertCircle}
             description="Tickets needing action"
+            href="/tickets/my"
           />
           <StatsCard
             title="Awaiting Response"
             value={stats.awaitingResponse}
             icon={MessageSquare}
             className="bg-blue-50/50 dark:bg-blue-900/10"
+            href="/tickets/my"
           />
           <StatsCard
             title="Resolved This Month"
             value={stats.resolvedThisMonth}
             icon={CheckCircle2}
             className="bg-green-50/50 dark:bg-green-900/10"
+            href="/tickets/my?status=Resolved"
           />
           <StatsCard
             title="Avg Resolution Time"
@@ -301,7 +303,6 @@ export default function NormalUserDashboard({ user }) {
     { id: TICKET_STATUS.IN_PROGRESS, label: 'In Progress', color: 'bg-amber-500/10 border-amber-500/20 text-amber-700' },
     { id: TICKET_STATUS.COMPLETED, label: 'Resolved', color: 'bg-green-500/10 border-green-500/20 text-green-700' },
     { id: TICKET_STATUS.ESCALATED, label: 'Escalated', color: 'bg-red-500/10 border-red-500/20 text-red-700' },
-    { id: TICKET_STATUS.CLOSED, label: 'Closed', color: 'bg-slate-500/10 border-slate-500/20 text-slate-700' },
   ];
 
   return (

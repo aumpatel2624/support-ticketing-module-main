@@ -6,7 +6,10 @@ let socket = null;
  * Initialize Socket.io connection
  */
 export const initSocket = (token) => {
-    if (socket) return socket;
+    if (socket) {
+        console.log('[Socket] Returning existing instance');
+        return socket;
+    }
 
     try {
         let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -16,12 +19,16 @@ export const initSocket = (token) => {
             apiUrl = apiUrl.replace(/\/api$/, '');
         }
 
+        console.log('[Socket] Initializing new connection...', apiUrl);
         socket = io(apiUrl, {
             path: '/socket.io/',
+            transports: ['websocket'], // Force WebSocket only to avoid sticky session issues
             reconnection: true,
             reconnectionDelay: 1000,
             reconnectionDelayMax: 5000,
-            reconnectionAttempts: 5,
+            reconnectionAttempts: 10,
+            timeout: 20000,
+            withCredentials: true,
             extraHeaders: {
                 Authorization: `Bearer ${token}`
             }
@@ -59,6 +66,7 @@ export const getSocket = () => {
  */
 export const disconnectSocket = () => {
     if (socket) {
+        console.log('[Socket] Disconnecting...');
         socket.disconnect();
         socket = null;
     }
@@ -81,7 +89,7 @@ export const onSocketEvent = (event, callback) => {
         socket.on(event, callback);
         return () => socket.off(event, callback);
     }
-    return () => {};
+    return () => { };
 };
 
 /**
