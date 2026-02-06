@@ -56,3 +56,4 @@ shell_scripts/
 
 # Uploads (local file storage - not for git)
 backend/uploads/
+deploy/
