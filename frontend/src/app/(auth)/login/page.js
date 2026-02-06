@@ -19,7 +19,7 @@ export default function LoginPage() {
 
             <div className="text-center text-sm text-muted-foreground">
                 New to the platform?{' '}
-                <Link href="/register" className="font-semibold text-primary hover:text-primary/80 hover:underline">
+                <Link href="/register" prefetch={false} className="font-semibold text-primary hover:text-primary/80 hover:underline">
                     Request Access
                 </Link>
             </div>

@@ -137,6 +137,7 @@ export default function LoginForm() {
 
                     <Link
                         href="/forgot-password"
+                        prefetch={false}
                         className="text-sm font-medium text-primary hover:underline hover:text-primary/80"
                         tabIndex={-1}
                     >

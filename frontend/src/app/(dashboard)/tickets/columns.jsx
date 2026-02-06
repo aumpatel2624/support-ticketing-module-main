@@ -82,6 +82,7 @@ export const createColumns = (readOnly = false) => [
         cell: ({ row }) => (
             <Link
                 href={`/tickets?id=${row.original.id}`}
+                prefetch={false}
                 className="font-medium hover:underline text-primary"
             >
                 {row.getValue('ticketId')}
@@ -213,7 +214,7 @@ export const createColumns = (readOnly = false) => [
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                            <Link href={`/tickets?id=${ticket._id || ticket.id}`}>View details</Link>
+                            <Link href={`/tickets?id=${ticket._id || ticket.id}`} prefetch={false}>View details</Link>
                         </DropdownMenuItem>
                         {!readOnly && (
                             <DropdownMenuItem onClick={handleMarkResolved}>

@@ -104,7 +104,7 @@ export default function CriticalTicketsTable({ tickets = [], loading = false }) 
                             )}
                         >
                             <TableCell className="pl-6">
-                                <Link href={`/tickets/${ticket._id || ticket.id}`}>
+                                <Link href={`/tickets/${ticket._id || ticket.id}`} prefetch={false}>
                                     <span className="bg-primary/5 px-2 py-1 rounded text-[11px] uppercase tracking-tighter font-bold text-primary/70 group-hover:text-primary transition-colors">
                                         {ticket.ticketId || `#${ticket._id?.slice(-6)}`}
                                     </span>
@@ -115,6 +115,7 @@ export default function CriticalTicketsTable({ tickets = [], loading = false }) 
                                 <div className="flex flex-col gap-0.5 max-w-[250px]">
                                     <Link
                                         href={`/tickets/${ticket._id || ticket.id}`}
+                                        prefetch={false}
                                         className="font-bold text-sm text-foreground group-hover:underline decoration-primary/30 underline-offset-4 truncate"
                                     >
                                         {ticket.subject}
@@ -171,7 +172,7 @@ export default function CriticalTicketsTable({ tickets = [], loading = false }) 
             {tickets.length > 10 && (
                 <div className="p-4 border-t border-border/50">
                     <Button variant="ghost" className="w-full text-xs font-medium text-muted-foreground hover:text-primary" asChild>
-                        <Link href="/tickets?priority=Urgent,High">
+                        <Link href="/tickets?priority=Urgent,High" prefetch={false}>
                             View All Critical Tickets
                             <ArrowRight className="ml-2 h-3 w-3" />
                         </Link>

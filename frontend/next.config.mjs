@@ -20,7 +20,7 @@ const nextConfig = {
     unoptimized: true,
   },
   distDir: 'out',
-  trailingSlash: false,
+  trailingSlash: true,
 };
 
 export default nextConfig;

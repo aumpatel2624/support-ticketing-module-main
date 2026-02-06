@@ -54,7 +54,7 @@ export default function UserActiveTicketsTable({ tickets = [], loading = false }
                     {activeTickets.map((ticket) => (
                         <TableRow key={ticket._id || ticket.id} className="group cursor-pointer hover:bg-primary/[0.02] transition-colors border-b/5 border-border/40">
                             <TableCell className="pl-6 font-bold text-primary/70 group-hover:text-primary transition-colors">
-                                <Link href={`/tickets/${ticket._id || ticket.id}`} className="flex items-center gap-2">
+                                <Link href={`/tickets/${ticket._id || ticket.id}`} prefetch={false} className="flex items-center gap-2">
                                     <span className="bg-primary/5 px-2 py-1 rounded text-[11px] uppercase tracking-tighter">
                                         {ticket.ticketId}
                                     </span>
@@ -62,7 +62,7 @@ export default function UserActiveTicketsTable({ tickets = [], loading = false }
                             </TableCell>
 
                             <TableCell>
-                                <Link href={`/tickets/${ticket._id || ticket.id}`}>
+                                <Link href={`/tickets/${ticket._id || ticket.id}`} prefetch={false}>
                                     <span className="font-bold text-foreground group-hover:underline decoration-primary/30 underline-offset-4 truncate max-w-[250px] line-clamp-1">
                                         {ticket.subject}
                                     </span>

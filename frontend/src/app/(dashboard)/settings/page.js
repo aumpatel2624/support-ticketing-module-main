@@ -70,7 +70,7 @@ export default function SettingsPage() {
                 {filteredSections.map((section) => {
                     const Icon = section.icon;
                     return (
-                        <Link key={section.href} href={section.href}>
+                        <Link key={section.href} href={section.href} prefetch={false}>
                             <Card className="h-full hover:bg-muted/50 transition-colors cursor-pointer">
                                 <CardHeader>
                                     <div className="bg-primary/10 w-10 h-10 rounded-lg flex items-center justify-center mb-2">

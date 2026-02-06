@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
             </CardContent>
             <CardFooter className="flex flex-col">
                 <div className="text-sm text-center text-muted-foreground w-full">
-                    <Link href="/login" className="text-primary font-medium hover:underline flex items-center justify-center">
+                    <Link href="/login" prefetch={false} className="text-primary font-medium hover:underline flex items-center justify-center">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="24"

@@ -226,7 +226,7 @@ export default function NormalUserDashboard({ user }) {
               Board View
             </Button>
             <Button asChild>
-              <Link href="/tickets/new">
+              <Link href="/tickets/new" prefetch={false}>
                 <Plus className="mr-2 h-4 w-4" />
                 New Ticket
               </Link>
@@ -319,7 +319,7 @@ export default function NormalUserDashboard({ user }) {
             Dashboard
           </Button>
           <Button asChild>
-            <Link href="/tickets/new">
+            <Link href="/tickets/new" prefetch={false}>
               <Plus className="mr-2 h-4 w-4" />
               New Ticket
             </Link>
@@ -348,7 +348,7 @@ export default function NormalUserDashboard({ user }) {
               <ScrollArea className="flex-1">
                 <div className="flex flex-col gap-3 pb-4">
                   {groupedTickets[col.id]?.map(ticket => (
-                    <Link key={ticket._id || ticket.id} href={`/tickets/${ticket._id || ticket.id}`}>
+                    <Link key={ticket._id || ticket.id} href={`/tickets/${ticket._id || ticket.id}`} prefetch={false}>
                       <Card className="hover:shadow-md transition-all cursor-pointer border-l-4 group"
                         style={{
                           borderLeftColor: ticket.priority === 'Urgent' ? '#ef4444' :

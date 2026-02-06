@@ -113,7 +113,7 @@ export default function MyTicketsPage() {
                 </div>
 
                 <Button asChild>
-                    <Link href="/tickets/new">
+                    <Link href="/tickets/new" prefetch={false}>
                         <Plus className="mr-2 h-4 w-4" />
                         Create Ticket
                     </Link>

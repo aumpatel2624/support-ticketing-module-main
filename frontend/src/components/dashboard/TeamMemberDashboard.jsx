@@ -132,7 +132,7 @@ export default function TeamMemberDashboard({ user }) {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" className="shadow-sm border-primary/20 hover:bg-primary/5 hover:text-primary transition-all duration-300" asChild>
-                        <Link href="/tickets">
+                        <Link href="/tickets" prefetch={false}>
                             <ClipboardList className="mr-2 h-4 w-4" />
                             View All Tickets
                         </Link>

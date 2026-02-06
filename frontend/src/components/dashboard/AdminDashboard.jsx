@@ -94,7 +94,7 @@ function SecondaryKPICard({ title, value, subtext, icon: Icon, trend, trendDirec
 
     if (href) {
         return (
-            <Link href={href} className="block">
+            <Link href={href} prefetch={false} className="block">
                 <Content />
             </Link>
         );
@@ -478,7 +478,7 @@ export default function AdminDashboard({ user }) {
                             <CardDescription>High priority tickets requiring immediate attention.</CardDescription>
                         </div>
                         <Button variant="ghost" className="rounded-xl group" asChild>
-                            <Link href="/tickets?priority=Urgent,High">
+                            <Link href="/tickets?priority=Urgent,High" prefetch={false}>
                                 View All
                                 <ArrowRight className="ml-2 h-4 w-4 transition-all group-hover:translate-x-1" />
                             </Link>
@@ -500,7 +500,7 @@ export default function AdminDashboard({ user }) {
                             <CardDescription>Performance metrics for all active agents.</CardDescription>
                         </div>
                         <Button variant="ghost" className="rounded-xl group" asChild>
-                            <Link href="/users">
+                            <Link href="/users" prefetch={false}>
                                 View All
                                 <ArrowRight className="ml-2 h-4 w-4 transition-all group-hover:translate-x-1" />
                             </Link>
@@ -520,7 +520,7 @@ export default function AdminDashboard({ user }) {
                         <CardDescription>Latest tickets across all departments.</CardDescription>
                     </div>
                     <Button variant="ghost" className="rounded-xl group" asChild>
-                        <Link href="/tickets">
+                        <Link href="/tickets" prefetch={false}>
                             View Full Console
                             <ArrowRight className="ml-2 h-4 w-4 transition-all group-hover:translate-x-1" />
                         </Link>

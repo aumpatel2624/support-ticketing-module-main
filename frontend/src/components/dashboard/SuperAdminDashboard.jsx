@@ -103,7 +103,7 @@ function PlatformTotalsBanner({ totals, loading }) {
             </CardHeader>
             <CardContent className="pt-0">
                 <div className="grid gap-4 md:grid-cols-5">
-                    <Link href="/tickets" className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
+                    <Link href="/tickets" prefetch={false} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
                         <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
                             <Ticket className="h-5 w-5 text-blue-500" />
                         </div>
@@ -113,7 +113,7 @@ function PlatformTotalsBanner({ totals, loading }) {
                         </div>
                     </Link>
 
-                    <Link href="/tickets?status=New,Assigned,InProgress" className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
+                    <Link href="/tickets?status=New,Assigned,InProgress" prefetch={false} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
                         <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center">
                             <Clock className="h-5 w-5 text-warning" />
                         </div>
@@ -123,7 +123,7 @@ function PlatformTotalsBanner({ totals, loading }) {
                         </div>
                     </Link>
 
-                    <Link href="/tickets?status=Completed,Closed" className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
+                    <Link href="/tickets?status=Completed,Closed" prefetch={false} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
                         <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
                             <CheckCircle className="h-5 w-5 text-success" />
                         </div>
@@ -133,7 +133,7 @@ function PlatformTotalsBanner({ totals, loading }) {
                         </div>
                     </Link>
 
-                    <Link href="/users" className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
+                    <Link href="/users" prefetch={false} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
                         <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                             <Users className="h-5 w-5 text-primary" />
                         </div>
@@ -190,7 +190,7 @@ export default function SuperAdminDashboard({ user }) {
                 </div>
                 <div className="flex items-center gap-3">
                     <Button className="rounded-xl h-12 px-6 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20" asChild>
-                        <Link href="/settings/system">
+                        <Link href="/settings/system" prefetch={false}>
                             <Settings className="mr-2 h-4 w-4" />
                             System Settings
                         </Link>
@@ -209,7 +209,7 @@ export default function SuperAdminDashboard({ user }) {
                         <p className="text-muted-foreground">Statistics breakdown by department</p>
                     </div>
                     <Button variant="outline" className="rounded-xl" asChild>
-                        <Link href="/departments">
+                        <Link href="/departments" prefetch={false}>
                             <Building2 className="mr-2 h-4 w-4" />
                             Manage Departments
                         </Link>
@@ -259,13 +259,13 @@ export default function SuperAdminDashboard({ user }) {
                         </div>
                         <div className="flex gap-3">
                             <Button variant="outline" className="rounded-xl" asChild>
-                                <Link href="/users">
+                                <Link href="/users" prefetch={false}>
                                     <Users className="mr-2 h-4 w-4" />
                                     Manage Users
                                 </Link>
                             </Button>
                             <Button className="rounded-xl" asChild>
-                                <Link href="/settings/system">
+                                <Link href="/settings/system" prefetch={false}>
                                     <Settings className="mr-2 h-4 w-4" />
                                     System Settings
                                 </Link>

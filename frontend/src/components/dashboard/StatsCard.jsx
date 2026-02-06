@@ -82,7 +82,7 @@ export default function StatsCard({
   );
 
   if (href) {
-    return <Link href={href} className="block">{cardContent}</Link>;
+    return <Link href={href} prefetch={false} className="block">{cardContent}</Link>;
   }
 
   return cardContent;

@@ -101,6 +101,7 @@ export default function TicketCard({ ticket, onQuickAction }) {
                         <div className="flex items-center gap-2 flex-wrap">
                             <Link
                                 href={`/tickets?id=${ticket._id}`}
+                                prefetch={false}
                                 className="font-bold text-sm text-indigo-600 hover:text-indigo-700 hover:underline tracking-wide"
                                 onClick={(e) => e.stopPropagation()}
                             >
@@ -131,7 +132,7 @@ export default function TicketCard({ ticket, onQuickAction }) {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg border-slate-100 p-1">
                                     <DropdownMenuItem asChild className="rounded-lg cursor-pointer focus:bg-indigo-50 focus:text-indigo-600">
-                                        <Link href={`/tickets?id=${ticket._id}`}>
+                                        <Link href={`/tickets?id=${ticket._id}`} prefetch={false}>
                                             <ArrowUpRight className="mr-2 h-4 w-4" />
                                             View details
                                         </Link>
@@ -150,6 +151,7 @@ export default function TicketCard({ ticket, onQuickAction }) {
                         <TooltipTrigger asChild>
                             <Link
                                 href={`/tickets?id=${ticket._id}`}
+                                prefetch={false}
                                 className="block text-base font-semibold text-slate-800 mb-4 line-clamp-2 hover:text-indigo-600 transition-colors leading-snug"
                                 onClick={(e) => e.stopPropagation()}
                             >
