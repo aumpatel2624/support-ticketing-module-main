@@ -142,7 +142,7 @@ while [ -z "$MONGODB_URI" ]; do
 done
 
 # Redis
-read -p "Redis URI [press Enter to skip - will use local fallback]: " REDIS_URI
+read -p "Redis URI [press Enter to skip - app works without it]: " REDIS_URI
 
 # AWS S3
 echo ""
@@ -183,7 +183,7 @@ S3_FOLDER_PREFIX=$S3_FOLDER_PREFIX
 PRESIGNED_URL_EXPIRY=3600
 
 # Redis
-REDIS_URI=${REDIS_URI:-redis://localhost:6379}
+REDIS_URI=${REDIS_URI}
 
 # Puppeteer
 PUPPETEER_EXECUTABLE_PATH=$CHROMIUM_PATH

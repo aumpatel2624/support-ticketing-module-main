@@ -2,48 +2,83 @@ const Redis = require('ioredis');
 const logger = require('../utils/logger');
 
 let redis = null;
+let redisAvailable = false;
 
-const getRedisUrl = () => {
-    if (process.env.REDIS_URI) {
-        return process.env.REDIS_URI;
-    }
-    return null;
-};
+const redisUrl = process.env.REDIS_URI || '';
 
-const redisUrl = getRedisUrl();
+// Only attempt Redis if a real URI is provided (not empty, not localhost without a running server)
+if (redisUrl && redisUrl.trim() !== '') {
+    try {
+        redis = new Redis(redisUrl, {
+            retryStrategy: (times) => {
+                if (times > 5) {
+                    logger.warn('Redis: max retries reached, disabling Redis.');
+                    redisAvailable = false;
+                    return null; // stop retrying
+                }
+                return Math.min(times * 200, 2000);
+            },
+            maxRetriesPerRequest: null, // prevent MaxRetriesPerRequestError crashes
+            enableOfflineQueue: false,  // don't queue commands when disconnected
+            lazyConnect: true
+        });
 
-if (redisUrl) {
-    redis = new Redis(redisUrl, {
-        retryStrategy: (times) => {
-            if (times > 10) {
-                logger.warn('Redis: max retries reached, giving up');
-                return null; // stop retrying
-            }
-            const delay = Math.min(times * 50, 2000);
-            return delay;
-        },
-        maxRetriesPerRequest: 3,
-        lazyConnect: true
-    });
+        redis.on('connect', () => {
+            redisAvailable = true;
+            logger.info('Redis Connected');
+        });
 
-    redis.on('connect', () => {
-        logger.info('Redis Connected');
-    });
+        redis.on('error', (err) => {
+            logger.error(`Redis Connection Error: ${err.message}`);
+        });
 
-    redis.on('error', (err) => {
-        logger.error(`Redis Connection Error: ${err.message}`);
-    });
+        redis.on('close', () => {
+            redisAvailable = false;
+        });
 
-    // Attempt connection but don't crash if it fails
-    redis.connect().catch((err) => {
-        logger.warn(`Redis unavailable: ${err.message}. Running without Redis.`);
+        redis.on('end', () => {
+            redisAvailable = false;
+        });
+
+        // Try connecting once
+        redis.connect().then(() => {
+            redisAvailable = true;
+        }).catch((err) => {
+            logger.warn(`Redis unavailable: ${err.message}. Running without Redis.`);
+            redisAvailable = false;
+            // Disconnect to stop reconnection attempts
+            redis.disconnect();
+            redis = null;
+        });
+    } catch (err) {
+        logger.warn(`Redis init failed: ${err.message}. Running without Redis.`);
         redis = null;
-    });
+        redisAvailable = false;
+    }
 } else {
-    logger.info('Redis URI not configured. Running without Redis (no caching, no Socket.io scaling).');
+    logger.info('REDIS_URI not set. Running without Redis (no caching, no Socket.io scaling).');
 }
+
+/**
+ * Create a duplicate Redis client with proper error handling.
+ * Returns null if Redis is not available.
+ */
+const createDuplicate = () => {
+    if (!redis || !redisAvailable) return null;
+    try {
+        const dup = redis.duplicate();
+        dup.on('error', (err) => {
+            logger.error(`Redis duplicate client error: ${err.message}`);
+        });
+        return dup;
+    } catch (err) {
+        logger.warn(`Failed to duplicate Redis client: ${err.message}`);
+        return null;
+    }
+};
 
 module.exports = {
     getClient: () => redis,
-    isAvailable: () => redis !== null && redis.status === 'ready'
+    isAvailable: () => redisAvailable && redis !== null,
+    createDuplicate
 };

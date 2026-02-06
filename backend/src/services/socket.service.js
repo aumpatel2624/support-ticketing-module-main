@@ -30,11 +30,14 @@ const init = (server) => {
     if (redisConfig.isAvailable()) {
         try {
             const { createAdapter } = require('@socket.io/redis-adapter');
-            const redis = redisConfig.getClient();
-            const pubClient = redis;
-            const subClient = redis.duplicate();
-            io.adapter(createAdapter(pubClient, subClient));
-            logger.info('Socket.io using Redis adapter for scaling');
+            const pubClient = redisConfig.getClient();
+            const subClient = redisConfig.createDuplicate();
+            if (pubClient && subClient) {
+                io.adapter(createAdapter(pubClient, subClient));
+                logger.info('Socket.io using Redis adapter for scaling');
+            } else {
+                logger.info('Socket.io running without Redis adapter (single instance mode)');
+            }
         } catch (err) {
             logger.warn(`Socket.io Redis adapter failed: ${err.message}. Running without it.`);
         }
