@@ -190,6 +190,7 @@ export default function Sidebar({ isMobile = false }) {
                                                     <Link
                                                         key={subIndex}
                                                         href={subItem.href}
+                                                        prefetch={false}
                                                         className={cn(
                                                             "text-xs px-2 py-1 rounded block w-full text-left transition-colors",
                                                             pathname === subItem.href
@@ -220,6 +221,7 @@ export default function Sidebar({ isMobile = false }) {
                                                     <Link
                                                         key={subIndex}
                                                         href={subItem.href}
+                                                        prefetch={false}
                                                         className={cn(
                                                             "group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200",
                                                             isSubActive
@@ -250,6 +252,7 @@ export default function Sidebar({ isMobile = false }) {
                                     <TooltipTrigger asChild>
                                         <Link
                                             href={item.href}
+                                            prefetch={false}
                                             className={cn(
                                                 "group relative flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-all duration-300",
                                                 isActive
