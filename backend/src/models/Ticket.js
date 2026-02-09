@@ -32,7 +32,7 @@ const mongoose = require('mongoose');
  *           enum: [Low, Medium, High, Urgent]
  *         status:
  *           type: string
- *           enum: [New, Assigned, InProgress, Resolved, Reopened, Escalated]
+ *           enum: [New, Assigned, InProgress, Resolved, Reopened, Escalated, Closed]
  *         createdBy:
  *           type: string
  *           description: User who created the ticket
@@ -115,7 +115,7 @@ const attachmentSchema = new mongoose.Schema({
 const statusHistorySchema = new mongoose.Schema({
     status: {
         type: String,
-        enum: ['New', 'Assigned', 'InProgress', 'Resolved', 'Reopened', 'Escalated'],
+        enum: ['New', 'Assigned', 'InProgress', 'Resolved', 'Reopened', 'Escalated', 'Closed'],
         required: true
     },
     changedBy: {
@@ -171,7 +171,7 @@ const ticketSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['New', 'Assigned', 'InProgress', 'Resolved', 'Reopened', 'Escalated'],
+        enum: ['New', 'Assigned', 'InProgress', 'Resolved', 'Reopened', 'Escalated', 'Closed'],
         default: 'New',
         index: true
     },
@@ -409,8 +409,9 @@ ticketSchema.methods.canTransitionTo = function (newStatus) {
         'Assigned': ['InProgress', 'New', 'Assigned'], // Added self-loop for re-assignment
         'InProgress': ['Resolved', 'Escalated', 'Assigned'], // Added Assigned for transfer flow
         'Resolved': ['Reopened'],
-        'Reopened': ['Assigned'], // Strict: Must be assigned first
-        'Escalated': ['Assigned', 'InProgress']
+        'Reopened': ['Closed'], // Reopened tickets can only be closed
+        'Escalated': ['Assigned', 'InProgress'],
+        'Closed': [] // Terminal state
     };
 
     return transitions[this.status]?.includes(newStatus) || false;

@@ -44,59 +44,61 @@ export default function MyTicketsStatusChart({ data = [], className }) {
                 <CardTitle className="text-xl font-bold">My Tickets by Status</CardTitle>
                 <CardDescription>Ticket status breakdown.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+            <CardContent className="flex-1 min-h-[300px] flex flex-col">
+                <div className="flex-1 w-full h-full min-h-[250px] flex flex-col">
                     {hasData ? (
-                        <BarChart
-                            data={statusDistribution}
-                            margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.1} />
-                            <XAxis
-                                dataKey="name"
-                                stroke="hsl(var(--muted-foreground))"
-                                fontSize={11}
-                                tickLine={false}
-                                axisLine={false}
-                                tick={{ fill: 'hsl(var(--foreground))', fontWeight: 500 }}
-                            />
-                            <YAxis
-                                stroke="hsl(var(--muted-foreground))"
-                                fontSize={10}
-                                tickLine={false}
-                                axisLine={false}
-                            />
-                            <Tooltip
-                                contentStyle={{
-                                    borderRadius: '12px',
-                                    backgroundColor: 'hsl(var(--background))',
-                                    borderColor: 'hsl(var(--border)/0.5)',
-                                    boxShadow: 'var(--shadow-premium)',
-                                    fontSize: '12px',
-                                    fontWeight: 'bold'
-                                }}
-                                formatter={(value) => [`${value} tickets`, 'Count']}
-                            />
-                            <Bar
-                                dataKey="count"
-                                radius={[8, 8, 0, 0]}
-                                animationBegin={100}
-                                animationDuration={800}
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={statusDistribution}
+                                margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
                             >
-                                {statusDistribution.map((entry, index) => (
-                                    <Cell
-                                        key={`cell-${index}`}
-                                        fill={STATUS_COLORS[entry.name] || 'hsl(var(--muted))'}
-                                    />
-                                ))}
-                            </Bar>
-                        </BarChart>
+                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.1} />
+                                <XAxis
+                                    dataKey="name"
+                                    stroke="hsl(var(--muted-foreground))"
+                                    fontSize={11}
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tick={{ fill: 'hsl(var(--foreground))', fontWeight: 500 }}
+                                />
+                                <YAxis
+                                    stroke="hsl(var(--muted-foreground))"
+                                    fontSize={10}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        borderRadius: '12px',
+                                        backgroundColor: 'hsl(var(--background))',
+                                        borderColor: 'hsl(var(--border)/0.5)',
+                                        boxShadow: 'var(--shadow-premium)',
+                                        fontSize: '12px',
+                                        fontWeight: 'bold'
+                                    }}
+                                    formatter={(value) => [`${value} tickets`, 'Count']}
+                                />
+                                <Bar
+                                    dataKey="count"
+                                    radius={[8, 8, 0, 0]}
+                                    animationBegin={100}
+                                    animationDuration={800}
+                                >
+                                    {statusDistribution.map((entry, index) => (
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={STATUS_COLORS[entry.name] || 'hsl(var(--muted))'}
+                                        />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
                     ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground italic animate-pulse">
-                            No status data available...
+                        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-4 text-center">
+                            <p className="text-sm">No data available</p>
                         </div>
                     )}
-                </ResponsiveContainer>
+                </div>
             </CardContent>
         </Card>
     );

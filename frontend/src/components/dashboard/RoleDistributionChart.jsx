@@ -69,48 +69,50 @@ export default function RoleDistributionChart({ data = [], className }) {
             <CardContent>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Pie Chart */}
-                    <ResponsiveContainer width="100%" height={280}>
+                    <div className="min-h-[280px] flex flex-col">
                         {hasData ? (
-                            <PieChart>
-                                <Pie
-                                    data={sortedData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={90}
-                                    paddingAngle={4}
-                                    dataKey="value"
-                                    animationBegin={200}
-                                    animationDuration={1200}
-                                >
-                                    {sortedData.map((entry, index) => (
-                                        <Cell
-                                            key={`cell-${index}`}
-                                            fill={ROLE_COLORS[entry.name] || `hsl(${index * 90}, 70%, 50%)`}
-                                            strokeWidth={0}
-                                        />
-                                    ))}
-                                </Pie>
-                                <Tooltip
-                                    contentStyle={{
-                                        borderRadius: '12px',
-                                        backgroundColor: 'hsl(var(--background))',
-                                        borderColor: 'hsl(var(--border)/0.5)',
-                                        boxShadow: 'var(--shadow-premium)',
-                                        fontSize: '12px',
-                                    }}
-                                    formatter={(value, name) => {
-                                        const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                                        return [`${value} (${percentage}%)`, ROLE_NAMES[name] || name];
-                                    }}
-                                />
-                            </PieChart>
+                            <ResponsiveContainer width="100%" height={280}>
+                                <PieChart>
+                                    <Pie
+                                        data={sortedData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={90}
+                                        paddingAngle={4}
+                                        dataKey="value"
+                                        animationBegin={200}
+                                        animationDuration={1200}
+                                    >
+                                        {sortedData.map((entry, index) => (
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={ROLE_COLORS[entry.name] || `hsl(${index * 90}, 70%, 50%)`}
+                                                strokeWidth={0}
+                                            />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{
+                                            borderRadius: '12px',
+                                            backgroundColor: 'hsl(var(--background))',
+                                            borderColor: 'hsl(var(--border)/0.5)',
+                                            boxShadow: 'var(--shadow-premium)',
+                                            fontSize: '12px',
+                                        }}
+                                        formatter={(value, name) => {
+                                            const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                            return [`${value} (${percentage}%)`, ROLE_NAMES[name] || name];
+                                        }}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
                         ) : (
-                            <div className="flex items-center justify-center h-full text-muted-foreground italic">
-                                No role data available...
+                            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-4 text-center min-h-[280px]">
+                                <p className="text-sm">No data available</p>
                             </div>
                         )}
-                    </ResponsiveContainer>
+                    </div>
 
                     {/* Legend / Stats List */}
                     <div className="flex flex-col justify-center space-y-3">

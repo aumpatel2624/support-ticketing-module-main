@@ -1,30 +1,44 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { X, AlertCircle, CheckCircle2, Inbox, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import useNotificationStore from '@/store/notificationStore';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 /**
  * NotificationItem - Individual notification in the dropdown
  */
 export default function NotificationItem({ notification, onClose }) {
     const { markAsRead, removeNotification } = useNotificationStore();
+    const [showMarkAsReadDialog, setShowMarkAsReadDialog] = useState(false);
+    const [showRemoveDialog, setShowRemoveDialog] = useState(false);
 
     const handleMarkAsRead = (e) => {
         if (e) {
             e.stopPropagation();
         }
         if (!notification.isRead) {
-            markAsRead(notification._id);
+            setShowMarkAsReadDialog(true);
         }
+    };
+
+    const confirmMarkAsRead = () => {
+        markAsRead(notification._id);
+        setShowMarkAsReadDialog(false);
     };
 
     const handleRemove = (e) => {
         e.stopPropagation();
+        setShowRemoveDialog(true);
+    };
+
+    const confirmRemove = () => {
         removeNotification(notification._id);
+        setShowRemoveDialog(false);
     };
 
     const getNotificationIcon = (type) => {
@@ -179,6 +193,29 @@ export default function NotificationItem({ notification, onClose }) {
                     </Button>
                 )}
             </div>
+
+            {/* Mark as Read Confirmation Dialog */}
+            <ConfirmDialog
+                open={showMarkAsReadDialog}
+                onOpenChange={setShowMarkAsReadDialog}
+                title="Mark as Read?"
+                description="Are you sure you want to mark this notification as read?"
+                confirmText="Mark as Read"
+                cancelText="Cancel"
+                onConfirm={confirmMarkAsRead}
+            />
+
+            {/* Remove Notification Confirmation Dialog */}
+            <ConfirmDialog
+                open={showRemoveDialog}
+                onOpenChange={setShowRemoveDialog}
+                title="Remove Notification?"
+                description="Are you sure you want to remove this notification? This action cannot be undone."
+                confirmText="Remove"
+                cancelText="Cancel"
+                onConfirm={confirmRemove}
+                variant="destructive"
+            />
         </div>
     );
 }

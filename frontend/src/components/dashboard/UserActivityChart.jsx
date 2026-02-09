@@ -111,69 +111,71 @@ export default function UserActivityChart({ data, className }) {
                     </div>
                 </div>
 
-                <ResponsiveContainer width="100%" height={300}>
+                <div className="min-h-[300px] flex flex-col">
                     {hasData ? (
-                        <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.1} />
-                            <XAxis
-                                dataKey="date"
-                                stroke="hsl(var(--muted-foreground))"
-                                fontSize={10}
-                                tickLine={false}
-                                axisLine={false}
-                            />
-                            <YAxis
-                                stroke="hsl(var(--muted-foreground))"
-                                fontSize={10}
-                                tickLine={false}
-                                axisLine={false}
-                            />
-                            <Tooltip
-                                contentStyle={{
-                                    borderRadius: '12px',
-                                    backgroundColor: 'hsl(var(--background))',
-                                    borderColor: 'hsl(var(--border)/0.5)',
-                                    boxShadow: 'var(--shadow-premium)',
-                                    fontSize: '12px',
-                                    fontWeight: 'bold'
-                                }}
-                            />
-                            <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                            <Line
-                                type="monotone"
-                                dataKey="dau"
-                                stroke="hsl(217, 91%, 60%)"
-                                strokeWidth={2}
-                                dot={{ r: 3, fill: 'hsl(217, 91%, 60%)' }}
-                                activeDot={{ r: 5 }}
-                                name="Daily Active Users"
-                            />
-                            <Line
-                                type="monotone"
-                                dataKey="wau"
-                                stroke="hsl(142, 76%, 36%)"
-                                strokeWidth={2}
-                                dot={{ r: 3, fill: 'hsl(142, 76%, 36%)' }}
-                                activeDot={{ r: 5 }}
-                                name="Weekly Active Users"
-                            />
-                            <Line
-                                type="monotone"
-                                dataKey="newRegistrations"
-                                stroke="hsl(38, 92%, 50%)"
-                                strokeWidth={2}
-                                strokeDasharray="5 5"
-                                dot={{ r: 3, fill: 'hsl(38, 92%, 50%)' }}
-                                activeDot={{ r: 5 }}
-                                name="New Registrations"
-                            />
-                        </LineChart>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.1} />
+                                <XAxis
+                                    dataKey="date"
+                                    stroke="hsl(var(--muted-foreground))"
+                                    fontSize={10}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <YAxis
+                                    stroke="hsl(var(--muted-foreground))"
+                                    fontSize={10}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        borderRadius: '12px',
+                                        backgroundColor: 'hsl(var(--background))',
+                                        borderColor: 'hsl(var(--border)/0.5)',
+                                        boxShadow: 'var(--shadow-premium)',
+                                        fontSize: '12px',
+                                        fontWeight: 'bold'
+                                    }}
+                                />
+                                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                                <Line
+                                    type="monotone"
+                                    dataKey="dau"
+                                    stroke="hsl(217, 91%, 60%)"
+                                    strokeWidth={2}
+                                    dot={{ r: 3, fill: 'hsl(217, 91%, 60%)' }}
+                                    activeDot={{ r: 5 }}
+                                    name="Daily Active Users"
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="wau"
+                                    stroke="hsl(142, 76%, 36%)"
+                                    strokeWidth={2}
+                                    dot={{ r: 3, fill: 'hsl(142, 76%, 36%)' }}
+                                    activeDot={{ r: 5 }}
+                                    name="Weekly Active Users"
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="newRegistrations"
+                                    stroke="hsl(38, 92%, 50%)"
+                                    strokeWidth={2}
+                                    strokeDasharray="5 5"
+                                    dot={{ r: 3, fill: 'hsl(38, 92%, 50%)' }}
+                                    activeDot={{ r: 5 }}
+                                    name="New Registrations"
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
                     ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground italic animate-pulse">
-                            No activity data available...
+                        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-4 text-center min-h-[300px]">
+                            <p className="text-sm">No data available</p>
                         </div>
                     )}
-                </ResponsiveContainer>
+                </div>
             </CardContent>
         </Card>
     );

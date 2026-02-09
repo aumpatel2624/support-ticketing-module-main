@@ -36,7 +36,7 @@ export default function ChangeStatusModal({
             'Assigned': ['InProgress', 'New'],
             'InProgress': ['Resolved', 'Escalated'],
             'Resolved': ['Reopened'],
-            'Reopened': ['InProgress', 'Assigned', 'Resolved'],
+            'Reopened': ['Closed'],
             'Escalated': ['Assigned', 'InProgress']
         };
         return output[status] || [];

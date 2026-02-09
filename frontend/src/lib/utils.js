@@ -58,7 +58,7 @@ export function getStatusColor(status) {
     pending: 'bg-status-pending/10 text-status-pending border-status-pending/20',
     resolved: 'bg-status-completed/10 text-status-completed border-status-completed/20',
     reopened: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
-
+    closed: 'bg-gray-500/10 text-gray-600 border-gray-500/20',
     escalated: 'bg-status-escalated/10 text-status-escalated border-status-escalated/20',
   };
 

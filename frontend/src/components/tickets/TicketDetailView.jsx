@@ -37,6 +37,7 @@ import ResolutionModal from './ResolutionModal';
 import ReopenDialog from './ReopenDialog';
 import ActivityFeed from './ActivityFeed';
 import EscalateTicketDialog from './EscalateTicketDialog';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import useAuth from '@/hooks/useAuth';
 import useTicketUpdates from '@/hooks/useTicketUpdates';
 import ticketService from '@/lib/services/ticketService';
@@ -58,6 +59,8 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
     const [showReopenDialog, setShowReopenDialog] = useState(false);
     const [assignmentMode, setAssignmentMode] = useState(null); // 'assign' or 'reassign'
     const [showEscalateDialog, setShowEscalateDialog] = useState(false);
+    const [showStatusConfirmDialog, setShowStatusConfirmDialog] = useState(false);
+    const [pendingStatusChange, setPendingStatusChange] = useState(null);
 
     if (!ticket) return <div>Ticket not found</div>;
 
@@ -525,6 +528,9 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                                     buttonVariant = 'success';
                                                     break;
                                                 case 'Reopened':
+                                                    nextStatus = 'Closed';
+                                                    buttonText = 'Close Ticket';
+                                                    break;
                                                 case 'Escalated':
                                                     nextStatus = 'InProgress';
                                                     buttonText = 'Start Progress';
@@ -538,7 +544,10 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                                     <Button
                                                         size="sm"
                                                         className={`w-full shadow-sm transition-all hover:shadow-md ${nextStatus === 'Resolved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                                                        onClick={() => handleStatusUpdate(nextStatus)}
+                                                        onClick={() => {
+                                                            setPendingStatusChange({ status: nextStatus, buttonText });
+                                                            setShowStatusConfirmDialog(true);
+                                                        }}
                                                         disabled={isUpdatingStatus || !isReady}
                                                     >
                                                         {buttonText}
@@ -688,6 +697,29 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                             console.error('Failed to refetch ticket:', error);
                         });
                 }}
+            />
+
+            {/* Status Change Confirmation Dialog */}
+            <ConfirmDialog
+                open={showStatusConfirmDialog}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setShowStatusConfirmDialog(false);
+                        setPendingStatusChange(null);
+                    }
+                }}
+                title="Confirm Status Change"
+                description={`Are you sure you want to change the ticket status to "${pendingStatusChange?.status}"?`}
+                confirmText={pendingStatusChange?.buttonText || 'Confirm'}
+                cancelText="Cancel"
+                onConfirm={() => {
+                    if (pendingStatusChange?.status) {
+                        handleStatusUpdate(pendingStatusChange.status);
+                    }
+                    setShowStatusConfirmDialog(false);
+                    setPendingStatusChange(null);
+                }}
+                isLoading={isUpdatingStatus}
             />
         </div >
     );

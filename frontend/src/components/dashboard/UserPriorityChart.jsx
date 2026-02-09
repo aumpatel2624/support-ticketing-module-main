@@ -51,81 +51,83 @@ export default function UserPriorityChart({ data = [], className }) {
                 <CardTitle className="text-xl font-bold">My Tickets by Priority</CardTitle>
                 <CardDescription>Current open ticket distribution.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+            <CardContent className="flex-1 min-h-[300px] flex flex-col">
+                <div className="flex-1 w-full h-full min-h-[250px] flex flex-col">
                     {hasData ? (
-                        <PieChart>
-                            <Pie
-                                data={sortedData}
-                                cx="50%"
-                                cy="45%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                paddingAngle={5}
-                                dataKey="value"
-                                animationBegin={200}
-                                animationDuration={1200}
-                            >
-                                {sortedData.map((entry, index) => (
-                                    <Cell
-                                        key={`cell-${index}`}
-                                        fill={PRIORITY_COLORS[entry.name] || 'hsl(var(--muted))'}
-                                        strokeWidth={0}
-                                        className="hover:opacity-80 transition-opacity cursor-pointer"
-                                    />
-                                ))}
-                            </Pie>
-                            <Tooltip
-                                isAnimationActive={false}
-                                content={({ active, payload }) => {
-                                    if (active && payload && payload.length) {
-                                        const data = payload[0].payload;
-                                        const percentage = total > 0 ? Math.round((data.value / total) * 100) : 0;
-                                        return (
-                                            <div key={data.name} className="bg-background border border-border/50 rounded-lg p-3 shadow-premium animate-in fade-in zoom-in-95 duration-200">
-                                                <p className="font-bold text-sm">{data.name}</p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {data.value} tickets ({percentage}%)
-                                                </p>
-                                            </div>
-                                        );
-                                    }
-                                    return null;
-                                }}
-                            />
-                            <text
-                                x="50%"
-                                y="45%"
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                                className="fill-foreground"
-                                style={{ fontSize: '24px', fontWeight: 'bold' }}
-                            >
-                                {total}
-                            </text>
-                            <text
-                                x="50%"
-                                y="55%"
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                                className="fill-muted-foreground"
-                                style={{ fontSize: '12px' }}
-                            >
-                                Open
-                            </text>
-                            <Legend
-                                verticalAlign="bottom"
-                                height={36}
-                                iconType="circle"
-                                wrapperStyle={{ fontSize: '11px', fontWeight: '500', paddingTop: '10px' }}
-                            />
-                        </PieChart>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={sortedData}
+                                    cx="50%"
+                                    cy="45%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                    animationBegin={200}
+                                    animationDuration={1200}
+                                >
+                                    {sortedData.map((entry, index) => (
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={PRIORITY_COLORS[entry.name] || 'hsl(var(--muted))'}
+                                            strokeWidth={0}
+                                            className="hover:opacity-80 transition-opacity cursor-pointer"
+                                        />
+                                    ))}
+                                </Pie>
+                                <Tooltip
+                                    isAnimationActive={false}
+                                    content={({ active, payload }) => {
+                                        if (active && payload && payload.length) {
+                                            const data = payload[0].payload;
+                                            const percentage = total > 0 ? Math.round((data.value / total) * 100) : 0;
+                                            return (
+                                                <div key={data.name} className="bg-background border border-border/50 rounded-lg p-3 shadow-premium animate-in fade-in zoom-in-95 duration-200">
+                                                    <p className="font-bold text-sm">{data.name}</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {data.value} tickets ({percentage}%)
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
+                                <text
+                                    x="50%"
+                                    y="45%"
+                                    textAnchor="middle"
+                                    dominantBaseline="middle"
+                                    className="fill-foreground"
+                                    style={{ fontSize: '24px', fontWeight: 'bold' }}
+                                >
+                                    {total}
+                                </text>
+                                <text
+                                    x="50%"
+                                    y="55%"
+                                    textAnchor="middle"
+                                    dominantBaseline="middle"
+                                    className="fill-muted-foreground"
+                                    style={{ fontSize: '12px' }}
+                                >
+                                    Open
+                                </text>
+                                <Legend
+                                    verticalAlign="bottom"
+                                    height={36}
+                                    iconType="circle"
+                                    wrapperStyle={{ fontSize: '11px', fontWeight: '500', paddingTop: '10px' }}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
                     ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground italic animate-pulse">
-                            No ticket data available...
+                        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-4 text-center">
+                            <p className="text-sm">No data available</p>
                         </div>
                     )}
-                </ResponsiveContainer>
+                </div>
             </CardContent>
         </Card>
     );
