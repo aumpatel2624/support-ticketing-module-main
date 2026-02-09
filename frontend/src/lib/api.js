@@ -1,5 +1,8 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { API_ENDPOINTS } from './constants';
+import useAuthStore from '@/store/authStore';
+import { disconnectSocket } from '@/lib/socket';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -9,6 +12,26 @@ const api = axios.create({
     },
     timeout: 30000, // 30 seconds
 });
+
+/**
+ * Handle forced logout due to 401/session expiry
+ * Mimics the manual logout behavior for consistency
+ */
+const handleForcedLogout = () => {
+    // Disconnect socket
+    disconnectSocket();
+
+    // Clear auth store (this also clears localStorage)
+    useAuthStore.getState().logout();
+
+    // Show toast notification
+    toast.error('Session expired. Please login again.');
+
+    // Redirect to login
+    if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+    }
+};
 
 // Request interceptor - Attach JWT token
 api.interceptors.request.use(
@@ -58,21 +81,13 @@ api.interceptors.response.use(
                     originalRequest.headers.Authorization = `Bearer ${token}`;
                     return api(originalRequest);
                 } else {
-                    // No refresh token available - redirect to login
-                    if (typeof window !== 'undefined') {
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('refreshToken');
-                        window.location.href = '/login';
-                    }
+                    // No refresh token available - force logout
+                    handleForcedLogout();
                     return Promise.reject(error);
                 }
             } catch (refreshError) {
-                // Refresh failed - logout user
-                if (typeof window !== 'undefined') {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('refreshToken');
-                    window.location.href = '/login';
-                }
+                // Refresh failed - force logout
+                handleForcedLogout();
                 return Promise.reject(refreshError);
             }
         }
