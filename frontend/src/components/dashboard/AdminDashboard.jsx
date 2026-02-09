@@ -351,7 +351,7 @@ export default function AdminDashboard({ user }) {
     }
 
     // Calculate active tickets count
-    const activeTicketsCount = stats.totalTickets - (stats.statusStats?.Closed || 0) - (stats.statusStats?.Completed || 0);
+    const activeTicketsCount = stats.totalTickets - (stats.statusStats?.Closed || 0) - (stats.statusStats?.Resolved || 0);
 
     // Calculate SLA risk percentage
     const slaRiskPercentage = activeTicketsCount > 0
@@ -369,7 +369,7 @@ export default function AdminDashboard({ user }) {
                     trend={{ value: Math.abs(stats.trends.activeTickets), label: "from last week" }}
                     trendDirection={stats.trends.activeTickets >= 0 ? 'up' : 'down'}
                     invertedTrend={true}
-                    href="/tickets?status=New,Assigned,InProgress"
+                    href="/tickets?status=New,Assigned,InProgress,Reopened"
                 />
                 <StatsCard
                     title="SLA Risk"
@@ -397,7 +397,7 @@ export default function AdminDashboard({ user }) {
                     trend={{ value: Math.abs(stats.trends.resolutionTime), label: "from last week" }}
                     trendDirection={stats.trends.resolutionTime <= 0 ? 'up' : 'down'}
                     invertedTrend={true}
-                    href="/tickets?status=Completed,Closed"
+                    href="/tickets?status=Resolved,Closed"
                 />
             </div>
 

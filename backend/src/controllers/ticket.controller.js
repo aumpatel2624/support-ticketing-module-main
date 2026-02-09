@@ -275,6 +275,14 @@ const updateTicket = asyncHandler(async (req, res) => {
         if (newStatus === 'Reopened') {
             ticket.wasReopened = true;
         }
+        if (newStatus === 'Closed') {
+            ticket.closedAt = new Date();
+            // If not already resolved (which shouldn't happen given the flow, but for safety), set resolvedAt
+            if (!ticket.resolvedAt) {
+                ticket.resolvedAt = new Date();
+            }
+            ticket.wasReopened = false;
+        }
 
         // Add to status history
         ticket.addStatusHistory(newStatus, req.user._id, req.body.comment || null);
@@ -401,6 +409,14 @@ const updateStatus = asyncHandler(async (req, res) => {
     }
     if (status === 'Reopened') {
         ticket.wasReopened = true;
+    }
+    if (status === 'Closed') {
+        ticket.closedAt = new Date();
+        // Ensure resolvedAt is set if not already
+        if (!ticket.resolvedAt) {
+            ticket.resolvedAt = new Date();
+        }
+        ticket.wasReopened = false;
     }
 
     ticket.addStatusHistory(status, req.user._id, comment);

@@ -196,7 +196,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         {
             $match: {
                 ...match,
-                status: 'Resolved',
+                status: { $in: ['Resolved', 'Closed'] },
                 resolvedAt: { $ne: null }
             }
         },
@@ -315,7 +315,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         {
             $match: {
                 ...match,
-                status: 'Resolved',
+                status: { $in: ['Resolved', 'Closed'] },
                 resolvedAt: { $gte: oneWeekAgo }
             }
         },
@@ -356,7 +356,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         {
             $match: {
                 ...match,
-                status: 'Resolved'
+                status: { $in: ['Resolved', 'Closed'] }
             }
         },
         {
@@ -392,7 +392,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
 
     const resolvedToday = await Ticket.countDocuments({
         ...match,
-        status: 'Resolved',
+        status: { $in: ['Resolved', 'Closed'] },
         resolvedAt: { $gte: startOfToday }
     });
 
@@ -408,12 +408,12 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     // Calculate overall SLA compliance
     const totalClosedTickets = await Ticket.countDocuments({
         ...match,
-        status: 'Resolved'
+        status: { $in: ['Resolved', 'Closed'] }
     });
 
     const slaMetTickets = await Ticket.countDocuments({
         ...match,
-        status: 'Resolved',
+        status: { $in: ['Resolved', 'Closed'] },
         slaBreach: false
     });
 
@@ -433,7 +433,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
                 total: await Ticket.countDocuments(match),
                 open: await Ticket.countDocuments({ ...match, status: { $nin: ['Resolved', 'Closed'] } }),
                 atRisk: await Ticket.countDocuments({ ...match, status: { $ne: 'Resolved' }, slaBreach: true }),
-                resolved: await Ticket.countDocuments({ ...match, status: 'Resolved' }),
+                resolved: await Ticket.countDocuments({ ...match, status: { $in: ['Resolved', 'Closed'] } }),
                 avgResolutionTime
             },
             trends,
@@ -512,7 +512,7 @@ const getTicketTrends = asyncHandler(async (req, res) => {
         {
             $match: {
                 ...match,
-                status: 'Resolved',
+                status: { $in: ['Resolved', 'Closed'] },
                 resolvedAt: { $gte: startDate, $lte: endDate }
             }
         },
@@ -585,7 +585,7 @@ const getAgentStats = asyncHandler(async (req, res) => {
             // Tickets resolved
             const resolvedTickets = await Ticket.countDocuments({
                 assignedTo: agentId,
-                status: 'Resolved'
+                status: { $in: ['Resolved', 'Closed'] }
             });
 
             // Average resolution time
@@ -593,7 +593,7 @@ const getAgentStats = asyncHandler(async (req, res) => {
                 {
                     $match: {
                         assignedTo: agentId,
-                        status: 'Resolved',
+                        status: { $in: ['Resolved', 'Closed'] },
                         resolvedAt: { $ne: null }
                     }
                 },
@@ -614,7 +614,7 @@ const getAgentStats = asyncHandler(async (req, res) => {
                 {
                     $match: {
                         assignedTo: agentId,
-                        status: 'Resolved'
+                        status: { $in: ['Resolved', 'Closed'] }
                     }
                 },
                 {
@@ -733,11 +733,11 @@ const getCategoryStats = asyncHandler(async (req, res) => {
                 _id: '$categoryId',
                 totalTickets: { $sum: 1 },
                 openTickets: { $sum: { $cond: [{ $and: [{ $ne: ['$status', 'Resolved'] }, { $ne: ['$status', 'Closed'] }] }, 1, 0] } },
-                resolvedTickets: { $sum: { $cond: [{ $eq: ['$status', 'Resolved'] }, 1, 0] } },
+                resolvedTickets: { $sum: { $cond: [{ $in: ['$status', ['Resolved', 'Closed']] }, 1, 0] } },
                 avgResolutionTime: {
                     $avg: {
                         $cond: [
-                            { $and: [{ $eq: ['$status', 'Resolved'] }, { $ne: ['$resolvedAt', null] }] },
+                            { $and: [{ $in: ['$status', ['Resolved', 'Closed']] }, { $ne: ['$resolvedAt', null] }] },
                             { $subtract: ['$resolvedAt', '$createdAt'] },
                             null
                         ]
@@ -977,20 +977,20 @@ const getAgentKPIs = asyncHandler(async (req, res) => {
     // Tickets resolved
     const totalResolved = await Ticket.countDocuments({
         assignedTo: agentId,
-        status: 'Resolved'
+        status: { $in: ['Resolved', 'Closed'] }
     });
 
     // Tickets resolved in last 30 days
     const recentResolved = await Ticket.countDocuments({
         assignedTo: agentId,
-        status: 'Resolved',
+        status: { $in: ['Resolved', 'Closed'] },
         resolvedAt: { $gte: thirtyDaysAgo }
     });
 
     // Current workload
     const currentWorkload = await Ticket.countDocuments({
         assignedTo: agentId,
-        status: { $ne: 'Resolved' }
+        status: { $nin: ['Resolved', 'Closed'] }
     });
 
     // Average resolution time
@@ -998,7 +998,7 @@ const getAgentKPIs = asyncHandler(async (req, res) => {
         {
             $match: {
                 assignedTo: new mongoose.Types.ObjectId(agentId),
-                status: 'Resolved',
+                status: { $in: ['Resolved', 'Closed'] },
                 resolvedAt: { $ne: null }
             }
         },
@@ -1019,7 +1019,7 @@ const getAgentKPIs = asyncHandler(async (req, res) => {
         {
             $match: {
                 assignedTo: new mongoose.Types.ObjectId(agentId),
-                status: 'Resolved'
+                status: { $in: ['Resolved', 'Closed'] }
             }
         },
         {
@@ -1040,7 +1040,7 @@ const getAgentKPIs = asyncHandler(async (req, res) => {
         {
             $match: {
                 assignedTo: new mongoose.Types.ObjectId(agentId),
-                status: 'Resolved'
+                status: { $in: ['Resolved', 'Closed'] }
             }
         },
         {
@@ -1139,7 +1139,7 @@ const getLeaderboard = asyncHandler(async (req, res) => {
 
             const monthlyResolved = await Ticket.countDocuments({
                 assignedTo: agentId,
-                status: 'Resolved',
+                status: { $in: ['Resolved', 'Closed'] },
                 resolvedAt: { $gte: startOfMonth }
             });
 
@@ -1148,7 +1148,7 @@ const getLeaderboard = asyncHandler(async (req, res) => {
                 {
                     $match: {
                         assignedTo: agentId,
-                        status: 'Resolved'
+                        status: { $in: ['Resolved', 'Closed'] }
                     }
                 },
                 {
@@ -1234,11 +1234,11 @@ const getUserStats = asyncHandler(async (req, res) => {
     const totalTickets = await Ticket.countDocuments({ createdBy: userId });
     const openTickets = await Ticket.countDocuments({
         createdBy: userId,
-        status: { $ne: 'Resolved' }
+        status: { $nin: ['Resolved', 'Closed'] }
     });
     const resolvedTickets = await Ticket.countDocuments({
         createdBy: userId,
-        status: 'Resolved'
+        status: { $in: ['Resolved', 'Closed'] }
     });
 
     // Average resolution time for user's tickets
@@ -1246,7 +1246,7 @@ const getUserStats = asyncHandler(async (req, res) => {
         {
             $match: {
                 createdBy: new mongoose.Types.ObjectId(userId),
-                status: 'Resolved',
+                status: { $in: ['Resolved', 'Closed'] },
                 resolvedAt: { $ne: null }
             }
         },
@@ -1334,7 +1334,7 @@ const getSystemHealth = asyncHandler(async (req, res) => {
     const ticketStats = {
         createdToday: await Ticket.countDocuments({ createdAt: { $gte: twentyFourHoursAgo } }),
         resolvedToday: await Ticket.countDocuments({
-            status: 'Resolved',
+            status: { $in: ['Resolved', 'Closed'] },
             resolvedAt: { $gte: twentyFourHoursAgo }
         }),
         openTickets: await Ticket.countDocuments({ status: { $nin: ['Resolved', 'Closed'] } }),
@@ -1446,7 +1446,7 @@ const getDetailedReports = asyncHandler(async (req, res) => {
 
     // 1. Avg Resolution Time by Category
     const categoryPerformance = await Ticket.aggregate([
-        { $match: { ...filter, status: 'Resolved', resolvedAt: { $ne: null } } },
+        { $match: { ...filter, status: { $in: ['Resolved', 'Closed'] }, resolvedAt: { $ne: null } } },
         {
             $group: {
                 _id: '$categoryId',
@@ -1538,7 +1538,7 @@ const getDepartmentBreakdown = asyncHandler(async (req, res) => {
             // Resolved tickets
             const resolvedTickets = await Ticket.countDocuments({
                 departmentId: deptId,
-                status: 'Resolved'
+                status: { $in: ['Resolved', 'Closed'] }
             });
 
             // SLA compliance
@@ -1546,7 +1546,7 @@ const getDepartmentBreakdown = asyncHandler(async (req, res) => {
                 {
                     $match: {
                         departmentId: deptId,
-                        status: 'Resolved'
+                        status: { $in: ['Resolved', 'Closed'] }
                     }
                 },
                 {
@@ -1567,7 +1567,7 @@ const getDepartmentBreakdown = asyncHandler(async (req, res) => {
                 {
                     $match: {
                         departmentId: deptId,
-                        status: 'Resolved',
+                        status: { $in: ['Resolved', 'Closed'] },
                         resolvedAt: { $ne: null }
                     }
                 },
@@ -1615,7 +1615,7 @@ const getDepartmentBreakdown = asyncHandler(async (req, res) => {
     const overallSLA = await Ticket.aggregate([
         {
             $match: {
-                status: 'Resolved'
+                status: { $in: ['Resolved', 'Closed'] }
             }
         },
         {
@@ -1664,7 +1664,7 @@ const getMyPerformance = asyncHandler(async (req, res) => {
     // Tickets resolved
     const totalResolved = await Ticket.countDocuments({
         assignedTo: userId,
-        status: 'Resolved'
+        status: { $in: ['Resolved', 'Closed'] }
     });
 
     // Current active tickets
@@ -1676,14 +1676,14 @@ const getMyPerformance = asyncHandler(async (req, res) => {
     // Tickets completed today
     const completedToday = await Ticket.countDocuments({
         assignedTo: userId,
-        status: 'Resolved',
+        status: { $in: ['Resolved', 'Closed'] },
         resolvedAt: { $gte: todayStart }
     });
 
     // Tickets completed this week
     const completedThisWeek = await Ticket.countDocuments({
         assignedTo: userId,
-        status: 'Resolved',
+        status: { $in: ['Resolved', 'Closed'] },
         resolvedAt: { $gte: weekStart }
     });
 
@@ -1717,7 +1717,7 @@ const getMyPerformance = asyncHandler(async (req, res) => {
         {
             $match: {
                 assignedTo: new mongoose.Types.ObjectId(userId),
-                status: 'Resolved',
+                status: { $in: ['Resolved', 'Closed'] },
                 resolvedAt: { $ne: null }
             }
         },
@@ -1738,7 +1738,7 @@ const getMyPerformance = asyncHandler(async (req, res) => {
         {
             $match: {
                 assignedTo: new mongoose.Types.ObjectId(userId),
-                status: 'Resolved'
+                status: { $in: ['Resolved', 'Closed'] }
             }
         },
         {
@@ -1759,7 +1759,7 @@ const getMyPerformance = asyncHandler(async (req, res) => {
         {
             $match: {
                 assignedTo: new mongoose.Types.ObjectId(userId),
-                status: 'Resolved'
+                status: { $in: ['Resolved', 'Closed'] }
             }
         },
         {
@@ -1785,7 +1785,7 @@ const getMyPerformance = asyncHandler(async (req, res) => {
         {
             $match: {
                 assignedTo: new mongoose.Types.ObjectId(userId),
-                status: { $ne: 'Resolved' }
+                status: { $nin: ['Resolved', 'Closed'] }
             }
         },
         {
