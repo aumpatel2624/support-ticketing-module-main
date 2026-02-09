@@ -99,7 +99,7 @@ export default function EditDepartmentDialog({ department, open, onOpenChange, o
         try {
             // Clean up values
             const payload = { ...values };
-            if (!payload.headUserId) delete payload.headUserId;
+            if (payload.headUserId === 'none' || !payload.headUserId) delete payload.headUserId;
 
             await departmentService.updateDepartment(department._id, payload);
 
@@ -174,7 +174,7 @@ export default function EditDepartmentDialog({ department, open, onOpenChange, o
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="">None</SelectItem>
+                                                <SelectItem value="none">None</SelectItem>
                                                 {users.map((u) => (
                                                     <SelectItem key={u.id || u._id} value={u.id || u._id}>
                                                         {u.name} ({u.role})

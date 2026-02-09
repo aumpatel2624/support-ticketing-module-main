@@ -100,8 +100,9 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
         setIsSubmitting(true);
         try {
             const payload = { ...values };
-            if (!payload.department) {
-                delete payload.department;
+            // Handle department 'none'
+            if (payload.department === 'none' || !payload.department) {
+                payload.department = null;
             }
 
             await userService.updateUser(user._id, payload);
@@ -197,7 +198,7 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="">None</SelectItem>
+                                                <SelectItem value="none">None</SelectItem>
                                                 {departments.map((dept) => (
                                                     <SelectItem key={dept.id || dept._id} value={dept.id || dept._id}>
                                                         {dept.name}
