@@ -20,8 +20,15 @@ const {
     updateUserSchema,
     updateProfileSchema,
     userListQuerySchema,
+    userListQuerySchema,
     objectIdSchema
 } = require('../validators/user.validator');
+
+// Debug middleware
+router.use((req, res, next) => {
+    console.log(`[UserRoutes] ${req.method} ${req.path}`);
+    next();
+});
 
 // Configure multer for Excel file uploads (memory storage)
 const upload = multer({

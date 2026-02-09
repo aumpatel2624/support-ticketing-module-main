@@ -513,6 +513,7 @@ const bulkImportUsers = asyncHandler(async (req, res) => {
  * @access  Private (SuperAdmin)
  */
 const downloadSampleTemplate = asyncHandler(async (req, res) => {
+    console.log('[UserController] downloadSampleTemplate hit');
     const ExcelJS = require('exceljs');
 
     const workbook = new ExcelJS.Workbook();
