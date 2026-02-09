@@ -220,13 +220,13 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     // Current week stats
     const currentWeekActive = await Ticket.countDocuments({
         ...match,
-        status: { $ne: 'Resolved' },
+        status: { $nin: ['Resolved', 'Closed'] },
         createdAt: { $gte: oneWeekAgo }
     });
 
     const currentWeekSLARisk = await Ticket.countDocuments({
         ...match,
-        status: { $ne: 'Resolved' },
+        status: { $nin: ['Resolved', 'Closed'] },
         $or: [
             { slaBreach: true },
             { slaDeadline: { $lte: new Date(now.getTime() + 4 * 60 * 60 * 1000) } } // SLA deadline within 4 hours
@@ -236,13 +236,13 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     // Previous week stats
     const previousWeekActive = await Ticket.countDocuments({
         ...match,
-        status: { $ne: 'Resolved' },
+        status: { $nin: ['Resolved', 'Closed'] },
         createdAt: { $gte: twoWeeksAgo, $lt: oneWeekAgo }
     });
 
     const previousWeekSLARisk = await Ticket.countDocuments({
         ...match,
-        status: { $ne: 'Resolved' },
+        status: { $nin: ['Resolved', 'Closed'] },
         createdAt: { $gte: twoWeeksAgo, $lt: oneWeekAgo },
         $or: [
             { slaBreach: true },
@@ -431,7 +431,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
             activeAgents,
             overview: {
                 total: await Ticket.countDocuments(match),
-                open: await Ticket.countDocuments({ ...match, status: { $ne: 'Resolved' } }),
+                open: await Ticket.countDocuments({ ...match, status: { $nin: ['Resolved', 'Closed'] } }),
                 atRisk: await Ticket.countDocuments({ ...match, status: { $ne: 'Resolved' }, slaBreach: true }),
                 resolved: await Ticket.countDocuments({ ...match, status: 'Resolved' }),
                 avgResolutionTime
@@ -633,7 +633,7 @@ const getAgentStats = asyncHandler(async (req, res) => {
             // Current workload (active tickets)
             const currentWorkload = await Ticket.countDocuments({
                 assignedTo: agentId,
-                status: { $ne: 'Resolved' }
+                status: { $nin: ['Resolved', 'Closed'] }
             });
 
             return {
@@ -666,7 +666,7 @@ const getCriticalTickets = asyncHandler(async (req, res) => {
     // Base match for critical/high priority tickets
     const match = {
         priority: { $in: ['High', 'Urgent'] },
-        status: { $ne: 'Resolved' }
+        status: { $nin: ['Resolved', 'Closed'] }
     };
 
     if (role === 'Admin' && userDep) {
@@ -732,7 +732,7 @@ const getCategoryStats = asyncHandler(async (req, res) => {
             $group: {
                 _id: '$categoryId',
                 totalTickets: { $sum: 1 },
-                openTickets: { $sum: { $cond: [{ $ne: ['$status', 'Resolved'] }, 1, 0] } },
+                openTickets: { $sum: { $cond: [{ $and: [{ $ne: ['$status', 'Resolved'] }, { $ne: ['$status', 'Closed'] }] }, 1, 0] } },
                 resolvedTickets: { $sum: { $cond: [{ $eq: ['$status', 'Resolved'] }, 1, 0] } },
                 avgResolutionTime: {
                     $avg: {
@@ -1339,7 +1339,7 @@ const getSystemHealth = asyncHandler(async (req, res) => {
         }),
         openTickets: await Ticket.countDocuments({ status: { $nin: ['Resolved', 'Closed'] } }),
         overdueTickets: await Ticket.countDocuments({
-            status: { $ne: 'Resolved' },
+            status: { $nin: ['Resolved', 'Closed'] },
             slaBreach: true
         })
     };
@@ -1532,7 +1532,7 @@ const getDepartmentBreakdown = asyncHandler(async (req, res) => {
             // Open tickets
             const openTickets = await Ticket.countDocuments({
                 departmentId: deptId,
-                status: { $ne: 'Resolved' }
+                status: { $nin: ['Resolved', 'Closed'] }
             });
 
             // Resolved tickets
@@ -1670,7 +1670,7 @@ const getMyPerformance = asyncHandler(async (req, res) => {
     // Current active tickets
     const activeTickets = await Ticket.countDocuments({
         assignedTo: userId,
-        status: { $ne: 'Resolved' }
+        status: { $nin: ['Resolved', 'Closed'] }
     });
 
     // Tickets completed today
