@@ -38,7 +38,7 @@ import {
 import categoryService from '@/lib/services/categoryService';
 import departmentService from '@/lib/services/departmentService';
 import useAuthStore from '@/store/authStore';
-import { TICKET_PRIORITY } from '@/lib/constants';
+import { TICKET_PRIORITY, SLA_DEFAULTS } from '@/lib/constants';
 
 // Schema
 const categorySchema = z.object({
@@ -86,6 +86,15 @@ export default function CreateCategoryDialog({ trigger, onCategoryCreated }) {
             defaultSLA: 48,
         },
     });
+
+    // Watch priority changes to update SLA
+    const selectedPriority = form.watch('defaultPriority');
+
+    useEffect(() => {
+        if (selectedPriority && SLA_DEFAULTS[selectedPriority]) {
+            form.setValue('defaultSLA', SLA_DEFAULTS[selectedPriority]);
+        }
+    }, [selectedPriority, form]);
 
     const onSubmit = async (values) => {
         setIsSubmitting(true);
@@ -178,7 +187,7 @@ export default function CreateCategoryDialog({ trigger, onCategoryCreated }) {
                             />
                         )}
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4">
                             <FormField
                                 control={form.control}
                                 name="defaultPriority"
@@ -202,19 +211,8 @@ export default function CreateCategoryDialog({ trigger, onCategoryCreated }) {
                                 )}
                             />
 
-                            <FormField
-                                control={form.control}
-                                name="defaultSLA"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Default SLA (Hours)</FormLabel>
-                                        <FormControl>
-                                            <Input type="number" min="1" max="720" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            {/* Hidden SLA field included in submission */}
+                            <input type="hidden" {...form.register('defaultSLA')} />
                         </div>
 
                         <FormField

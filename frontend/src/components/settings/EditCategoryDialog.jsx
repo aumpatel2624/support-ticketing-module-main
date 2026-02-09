@@ -37,7 +37,7 @@ import {
 import categoryService from '@/lib/services/categoryService';
 import departmentService from '@/lib/services/departmentService';
 import useAuthStore from '@/store/authStore';
-import { TICKET_PRIORITY } from '@/lib/constants';
+import { TICKET_PRIORITY, SLA_DEFAULTS } from '@/lib/constants';
 
 // Schema
 const categorySchema = z.object({
@@ -97,6 +97,35 @@ export default function EditCategoryDialog({ category, open, onOpenChange, onCat
             });
         }
     }, [category, open, form]);
+
+    // Watch priority changes to update SLA
+    const selectedPriority = form.watch('defaultPriority');
+
+    // Only update SLA on priority change if it's a user interaction (not initial load dependent)
+    // Actually, for edit, we might want to respect existing SLA if it differs from default?
+    // The requirement says "remove SLA option... SLA is mapped with priority".
+    // This implies strict mapping. So if priority changes, SLA changes.
+    // If I open a category with High priority and SLA 24, and change to Urgent, SLA should become 4.
+    // If I change back to High, it should be 24.
+    // What if the loaded category has a custom SLA? usage says "SLA is mapped".
+    // I will enforce the mapping when priority changes.
+    useEffect(() => {
+        if (selectedPriority && SLA_DEFAULTS[selectedPriority]) {
+            // Check if it's different to avoid loops or overrides on initial load?
+            // On initial load, form.reset sets the values.
+            // This effect runs when selectedPriority changes.
+            // If I just opened the dialog, selectedPriority is set from category.
+            // If the category matches the default, great.
+            // If I change priority, it updates.
+            // One catch: `form.reset` might trigger this effect?
+            // Yes, because `defaultPriority` changes.
+            // But that's fine, it will just set SLA to the default for that priority.
+            form.setValue('defaultSLA', SLA_DEFAULTS[selectedPriority], {
+                shouldValidate: true,
+                shouldDirty: true
+            });
+        }
+    }, [selectedPriority, form]);
 
     const onSubmit = async (values) => {
         setIsSubmitting(true);
@@ -178,7 +207,7 @@ export default function EditCategoryDialog({ category, open, onOpenChange, onCat
                             />
                         )}
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4">
                             <FormField
                                 control={form.control}
                                 name="defaultPriority"
@@ -202,19 +231,8 @@ export default function EditCategoryDialog({ category, open, onOpenChange, onCat
                                 )}
                             />
 
-                            <FormField
-                                control={form.control}
-                                name="defaultSLA"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Default SLA (Hours)</FormLabel>
-                                        <FormControl>
-                                            <Input type="number" min="1" max="720" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            {/* Hidden SLA field included in submission */}
+                            <input type="hidden" {...form.register('defaultSLA')} />
                         </div>
 
                         <FormField

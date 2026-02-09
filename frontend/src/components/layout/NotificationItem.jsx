@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { X, AlertCircle, CheckCircle2, Inbox } from 'lucide-react';
+import { X, AlertCircle, CheckCircle2, Inbox, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
@@ -13,7 +13,10 @@ import useNotificationStore from '@/store/notificationStore';
 export default function NotificationItem({ notification, onClose }) {
     const { markAsRead, removeNotification } = useNotificationStore();
 
-    const handleMarkAsRead = () => {
+    const handleMarkAsRead = (e) => {
+        if (e) {
+            e.stopPropagation();
+        }
         if (!notification.isRead) {
             markAsRead(notification._id);
         }
@@ -81,7 +84,9 @@ export default function NotificationItem({ notification, onClose }) {
     const href = ticketId ? `/tickets?id=${ticketId}` : '#';
 
     const handleClick = () => {
-        handleMarkAsRead();
+        if (!notification.isRead) {
+            markAsRead(notification._id);
+        }
         onClose?.();
         if (ticketId) {
             window.location.href = href;
@@ -93,7 +98,7 @@ export default function NotificationItem({ notification, onClose }) {
             className={`flex gap-3 p-3 rounded-lg border transition-all cursor-pointer ${notification.isRead
                 ? 'bg-background border-border hover:border-primary/40'
                 : 'bg-primary/5 border-primary/20 hover:bg-primary/10'
-                } group`}
+                } group relative`}
             onClick={handleClick}
         >
             {/* Icon */}
@@ -102,7 +107,7 @@ export default function NotificationItem({ notification, onClose }) {
             </div>
 
             {/* Content */}
-            <div className="flex-1 min-w-0 pr-2">
+            <div className="flex-1 min-w-0 pr-8">
                 <div className="flex items-start gap-2 mb-1 flex-wrap">
                     <Badge
                         variant="outline"
@@ -150,15 +155,30 @@ export default function NotificationItem({ notification, onClose }) {
                 </p>
             </div>
 
-            {/* Close Button */}
-            <Button
-                variant="ghost"
-                size="sm"
-                className="shrink-0 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={handleRemove}
-            >
-                <X className="h-4 w-4" />
-            </Button>
+            {/* Actions */}
+            <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={handleRemove}
+                    title="Remove notification"
+                >
+                    <X className="h-3 w-3" />
+                </Button>
+
+                {!notification.isRead && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+                        onClick={handleMarkAsRead}
+                        title="Mark as read"
+                    >
+                        <Check className="h-3 w-3" />
+                    </Button>
+                )}
+            </div>
         </div>
     );
 }
