@@ -29,7 +29,7 @@ export default function DashboardPage() {
     };
 
     return (
-        <div className="p-6 md:p-8 lg:p-10">
+        <div className="p-4 md:p-8 lg:p-8 xl:p-10">
             {getDashboardComponent()}
         </div>
     );

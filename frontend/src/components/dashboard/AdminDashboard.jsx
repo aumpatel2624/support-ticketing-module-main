@@ -361,7 +361,7 @@ export default function AdminDashboard({ user }) {
     return (
         <div className="space-y-8">
             {/* Primary KPIs Section */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
                 <StatsCard
                     title="Active Tickets"
                     value={activeTicketsCount}
@@ -404,7 +404,7 @@ export default function AdminDashboard({ user }) {
 
 
             {/* Secondary Metrics Section */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
                 <SecondaryKPICard
                     title="Team Capacity"
                     value={`${stats.teamCapacity.active}/${stats.teamCapacity.total}`}
@@ -439,15 +439,15 @@ export default function AdminDashboard({ user }) {
             </div>
 
             {/* Charts Section - Row 1 */}
-            <div className="grid gap-6 lg:grid-cols-7">
-                <div className="lg:col-span-4">
+            <div className="grid gap-6 xl:grid-cols-7">
+                <div className="xl:col-span-4">
                     <TicketTrendLineChart
                         data={trendData}
                         period={trendPeriod}
                         onPeriodChange={setTrendPeriod}
                     />
                 </div>
-                <div className="lg:col-span-3">
+                <div className="xl:col-span-3">
                     <SLAComplianceGauge percentage={stats.slaCompliance} />
                 </div>
             </div>
@@ -468,7 +468,7 @@ export default function AdminDashboard({ user }) {
             <PeakHoursHeatmap data={peakHoursData} />
 
             {/* Data Tables Section */}
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 xl:grid-cols-2">
                 {/* Critical Tickets Table */}
                 <Card className="border-none shadow-premium overflow-hidden">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-5 bg-secondary">
