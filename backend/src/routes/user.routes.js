@@ -20,7 +20,6 @@ const {
     updateUserSchema,
     updateProfileSchema,
     userListQuerySchema,
-    userListQuerySchema,
     objectIdSchema
 } = require('../validators/user.validator');
 
