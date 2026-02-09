@@ -7,7 +7,10 @@ import KanbanCard from './KanbanCard';
 /**
  * KanbanCardSortable - Wrapper for KanbanCard with drag-and-drop support
  */
-export default function KanbanCardSortable({ ticket, onMenuAction, isStaff }) {
+export default function KanbanCardSortable({ ticket, onMenuAction, isStaff, readOnly = false }) {
+    // Disable dragging if readOnly mode OR if user is not staff
+    const isDragDisabled = readOnly || !isStaff;
+
     const {
         attributes,
         listeners,
@@ -21,7 +24,7 @@ export default function KanbanCardSortable({ ticket, onMenuAction, isStaff }) {
             type: 'Ticket',
             ticket,
         },
-        disabled: !isStaff, // Disable dragging for non-staff users
+        disabled: isDragDisabled,
     });
 
     const style = {
@@ -34,7 +37,7 @@ export default function KanbanCardSortable({ ticket, onMenuAction, isStaff }) {
             ref={setNodeRef}
             style={style}
             {...attributes}
-            {...(isStaff && listeners)} // Only apply listeners if user is staff
+            {...(!isDragDisabled && listeners)} // Only apply listeners if dragging is enabled
             className="touch-none"
         >
             <KanbanCard

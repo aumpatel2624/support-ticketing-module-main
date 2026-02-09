@@ -338,6 +338,7 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate, readO
                             tickets={getTicketsByStatus(status)}
                             onMenuAction={handleMenuAction}
                             isStaff={isStaff}
+                            readOnly={readOnly}
                         />
                     ))}
                 </div>
