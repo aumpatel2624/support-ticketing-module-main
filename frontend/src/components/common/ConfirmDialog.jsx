@@ -119,6 +119,7 @@ export default function ConfirmDialog({
                     <AlertDialogAction
                         onClick={(e) => {
                             e.preventDefault();
+                            e.stopPropagation();
                             onConfirm();
                         }}
                         disabled={isLoading}
