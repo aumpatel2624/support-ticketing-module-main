@@ -47,9 +47,9 @@ export default function SLAPerformanceChart({ data = [], className }) {
                 <CardDescription>SLA compliance by priority level.</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 min-h-[300px] flex flex-col">
-                <div className="flex-1 w-full h-full min-h-[250px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        {hasData ? (
+                <div className="flex-1 w-full h-full min-h-[250px] flex flex-col">
+                    {hasData ? (
+                        <ResponsiveContainer width="100%" height="100%">
                             <BarChart
                                 data={sortedData}
                                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -108,12 +108,12 @@ export default function SLAPerformanceChart({ data = [], className }) {
                                 <Bar dataKey="At Risk" stackId="a" fill={COLORS.atRisk} />
                                 <Bar dataKey="Breached" stackId="a" fill={COLORS.breached} radius={[4, 4, 0, 0]} />
                             </BarChart>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground animate-pulse p-4 text-center">
-                                <p className="text-sm italic">No SLA data available...</p>
-                            </div>
-                        )}
-                    </ResponsiveContainer>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground animate-pulse p-4 text-center">
+                            <p className="text-sm italic">No SLA data available...</p>
+                        </div>
+                    )}
                 </div>
             </CardContent>
         </Card>

@@ -34,9 +34,9 @@ export default function CategoryBarChart({ data = [], className }) {
                 <CardDescription>Ticket volume by category (top 10).</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 min-h-[350px] flex flex-col">
-                <div className="flex-1 w-full h-full min-h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        {hasData ? (
+                <div className="flex-1 w-full h-full min-h-[300px] flex flex-col">
+                    {hasData ? (
+                        <ResponsiveContainer width="100%" height="100%">
                             <BarChart
                                 data={sortedData}
                                 layout="vertical"
@@ -96,12 +96,12 @@ export default function CategoryBarChart({ data = [], className }) {
                                     ))}
                                 </Bar>
                             </BarChart>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground animate-pulse p-4 text-center">
-                                <p className="text-sm italic">No category data available...</p>
-                            </div>
-                        )}
-                    </ResponsiveContainer>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground animate-pulse p-4 text-center">
+                            <p className="text-sm italic">No category data available...</p>
+                        </div>
+                    )}
                 </div>
             </CardContent>
         </Card>

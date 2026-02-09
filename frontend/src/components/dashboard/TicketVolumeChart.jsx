@@ -24,9 +24,9 @@ export default function TicketVolumeChart({ data = [], className }) {
                 <CardDescription>Visual representation of support requests over the last 30 days.</CardDescription>
             </CardHeader>
             <CardContent className="px-2 pt-4 flex-1 min-h-[350px] flex flex-col">
-                <div className="flex-1 w-full h-full min-h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        {hasData ? (
+                <div className="flex-1 w-full h-full min-h-[300px] flex flex-col">
+                    {hasData ? (
+                        <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
@@ -75,12 +75,12 @@ export default function TicketVolumeChart({ data = [], className }) {
                                     animationEasing="ease-in-out"
                                 />
                             </AreaChart>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground font-medium italic animate-pulse p-4 text-center">
-                                <p className="text-sm">No telemetry data available for this cycle</p>
-                            </div>
-                        )}
-                    </ResponsiveContainer>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground font-medium italic animate-pulse p-4 text-center">
+                            <p className="text-sm">No telemetry data available for this cycle</p>
+                        </div>
+                    )}
                 </div>
             </CardContent>
         </Card>

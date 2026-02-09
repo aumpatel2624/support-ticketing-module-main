@@ -32,9 +32,9 @@ export default function TicketStatusPieChart({ data = [], className }) {
                 <CardDescription>Live distribution of ticket states across the system.</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 min-h-[300px] flex flex-col">
-                <div className="flex-1 w-full h-full min-h-[250px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        {hasData ? (
+                <div className="flex-1 w-full h-full min-h-[250px] flex flex-col">
+                    {hasData ? (
+                        <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
                                     data={data}
@@ -101,12 +101,12 @@ export default function TicketStatusPieChart({ data = [], className }) {
                                     wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '10px' }}
                                 />
                             </PieChart>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground animate-pulse p-4 text-center">
-                                <p className="text-sm italic">Awaiting status updates...</p>
-                            </div>
-                        )}
-                    </ResponsiveContainer>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground animate-pulse p-4 text-center">
+                            <p className="text-sm italic">Awaiting status updates...</p>
+                        </div>
+                    )}
                 </div>
             </CardContent>
         </Card>

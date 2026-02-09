@@ -38,9 +38,9 @@ export default function PriorityDonutChart({ data = [], className }) {
                 <CardDescription>Ticket distribution by priority level.</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 min-h-[300px] flex flex-col">
-                <div className="flex-1 w-full h-full min-h-[250px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        {hasData ? (
+                <div className="flex-1 w-full h-full min-h-[250px] flex flex-col">
+                    {hasData ? (
+                        <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
                                     data={sortedData}
@@ -128,12 +128,12 @@ export default function PriorityDonutChart({ data = [], className }) {
                                     wrapperStyle={{ fontSize: '11px', fontWeight: '500', paddingTop: '10px' }}
                                 />
                             </PieChart>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground animate-pulse p-4 text-center">
-                                <p className="text-sm italic">No priority data available...</p>
-                            </div>
-                        )}
-                    </ResponsiveContainer>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground animate-pulse p-4 text-center">
+                            <p className="text-sm italic">No priority data available...</p>
+                        </div>
+                    )}
                 </div>
             </CardContent>
         </Card>
