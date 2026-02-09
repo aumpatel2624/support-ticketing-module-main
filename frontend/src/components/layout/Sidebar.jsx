@@ -91,8 +91,8 @@ export default function Sidebar({ isMobile = false }) {
     return (
         <div
             className={cn(
-                "relative flex flex-col border-r bg-card transition-all duration-500 ease-in-out",
-                isMobile ? "h-full w-full border-none" : (isCollapsed ? "h-full w-[88px]" : "h-full w-[200px]")
+                "relative flex flex-col border-r bg-card transition-all duration-500 ease-in-out overflow-hidden",
+                isMobile ? "h-[100dvh] w-full border-none" : (isCollapsed ? "h-full w-[88px]" : "h-full w-[200px]")
             )}
         >
             {/* Sidebar Header - Premium User Profile */}
