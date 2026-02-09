@@ -117,8 +117,8 @@ function TicketTrendLineChart({ data, period, onPeriodChange }) {
     const hasData = chartData.length > 0;
 
     return (
-        <Card className="border-none shadow-premium bg-card overflow-hidden">
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+        <Card className="border-none shadow-premium bg-card overflow-hidden flex flex-col h-full">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between shrink-0">
                 <div>
                     <CardTitle className="text-xl font-bold">Ticket Volume Trends</CardTitle>
                     <CardDescription>Created vs Resolved tickets over time.</CardDescription>
@@ -131,62 +131,64 @@ function TicketTrendLineChart({ data, period, onPeriodChange }) {
                     </TabsList>
                 </Tabs>
             </CardHeader>
-            <CardContent className="px-2 pt-4">
-                <ResponsiveContainer width="100%" height={350}>
+            <CardContent className="px-2 pt-4 flex-1 min-h-[350px] flex flex-col">
+                <div className="flex-1 w-full h-full min-h-[300px] flex flex-col">
                     {hasData ? (
-                        <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.1} />
-                            <XAxis
-                                dataKey="date"
-                                stroke="hsl(var(--muted-foreground))"
-                                fontSize={10}
-                                tickLine={false}
-                                axisLine={false}
-                                tickFormatter={(value) => {
-                                    const date = new Date(value);
-                                    return `${date.getMonth() + 1}/${date.getDate()}`;
-                                }}
-                            />
-                            <YAxis
-                                stroke="hsl(var(--muted-foreground))"
-                                fontSize={10}
-                                tickLine={false}
-                                axisLine={false}
-                            />
-                            <Tooltip
-                                contentStyle={{
-                                    borderRadius: '12px',
-                                    backgroundColor: 'hsl(var(--background))',
-                                    borderColor: 'hsl(var(--border)/0.5)',
-                                    boxShadow: 'var(--shadow-premium)',
-                                    fontSize: '12px',
-                                    fontWeight: 'bold'
-                                }}
-                            />
-                            <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                            <Line
-                                type="monotone"
-                                dataKey="created"
-                                stroke="hsl(217, 91%, 60%)"
-                                strokeWidth={2}
-                                dot={false}
-                                name="Created"
-                            />
-                            <Line
-                                type="monotone"
-                                dataKey="resolved"
-                                stroke="hsl(142, 76%, 36%)"
-                                strokeWidth={2}
-                                dot={false}
-                                name="Resolved"
-                            />
-                        </LineChart>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.1} />
+                                <XAxis
+                                    dataKey="date"
+                                    stroke="hsl(var(--muted-foreground))"
+                                    fontSize={10}
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickFormatter={(value) => {
+                                        const date = new Date(value);
+                                        return `${date.getMonth() + 1}/${date.getDate()}`;
+                                    }}
+                                />
+                                <YAxis
+                                    stroke="hsl(var(--muted-foreground))"
+                                    fontSize={10}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        borderRadius: '12px',
+                                        backgroundColor: 'hsl(var(--background))',
+                                        borderColor: 'hsl(var(--border)/0.5)',
+                                        boxShadow: 'var(--shadow-premium)',
+                                        fontSize: '12px',
+                                        fontWeight: 'bold'
+                                    }}
+                                />
+                                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                                <Line
+                                    type="monotone"
+                                    dataKey="created"
+                                    stroke="hsl(217, 91%, 60%)"
+                                    strokeWidth={2}
+                                    dot={false}
+                                    name="Created"
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="resolved"
+                                    stroke="hsl(142, 76%, 36%)"
+                                    strokeWidth={2}
+                                    dot={false}
+                                    name="Resolved"
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
                     ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground italic animate-pulse">
+                        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground italic animate-pulse p-4 text-center">
                             No trend data available...
                         </div>
                     )}
-                </ResponsiveContainer>
+                </div>
             </CardContent>
         </Card>
     );
