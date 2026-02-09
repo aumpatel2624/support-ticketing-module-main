@@ -1337,7 +1337,7 @@ const getSystemHealth = asyncHandler(async (req, res) => {
             status: 'Resolved',
             resolvedAt: { $gte: twentyFourHoursAgo }
         }),
-        openTickets: await Ticket.countDocuments({ status: { $ne: 'Resolved' } }),
+        openTickets: await Ticket.countDocuments({ status: { $nin: ['Resolved', 'Closed'] } }),
         overdueTickets: await Ticket.countDocuments({
             status: { $ne: 'Resolved' },
             slaBreach: true
