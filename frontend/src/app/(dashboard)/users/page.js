@@ -10,6 +10,7 @@ import { UserDataTableToolbar } from './user-data-table-toolbar';
 import PageHeader from '@/components/common/PageHeader';
 import CreateUserDialog from '@/components/settings/CreateUserDialog';
 import EditUserDialog from '@/components/settings/EditUserDialog';
+import ImportUsersDialog from '@/components/settings/ImportUsersDialog';
 import userService from '@/lib/services/userService';
 import toast from 'react-hot-toast';
 import useAuthStore from '@/store/authStore';
@@ -89,7 +90,12 @@ export default function UsersPage() {
                 heading="User Management"
                 text="Manage system users, roles, and permissions."
             >
-                {isSuperAdmin && <CreateUserDialog onUserCreated={handleUserCreated} />}
+                {isSuperAdmin && (
+                    <div className="flex items-center gap-2">
+                        <ImportUsersDialog onUsersImported={fetchUsers} />
+                        <CreateUserDialog onUserCreated={handleUserCreated} />
+                    </div>
+                )}
             </PageHeader>
 
             <div className="flex-1">

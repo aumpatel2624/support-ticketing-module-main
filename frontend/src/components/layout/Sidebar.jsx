@@ -131,12 +131,14 @@ export default function Sidebar({ isMobile = false }) {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator className="opacity-50" />
-                        <DropdownMenuItem asChild className="rounded-xl py-2.5 my-0.5 focus:bg-primary/5 focus:text-primary cursor-pointer">
-                            <Link href="/settings/system" prefetch={false} className="flex items-center">
-                                <Settings className="mr-3 h-4 w-4" />
-                                <span className="font-medium">Settings</span>
-                            </Link>
-                        </DropdownMenuItem>
+                        {user?.role === 'SuperAdmin' && (
+                            <DropdownMenuItem asChild className="rounded-xl py-2.5 my-0.5 focus:bg-primary/5 focus:text-primary cursor-pointer">
+                                <Link href="/settings/system" prefetch={false} className="flex items-center">
+                                    <Settings className="mr-3 h-4 w-4" />
+                                    <span className="font-medium">Settings</span>
+                                </Link>
+                            </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator className="opacity-50" />
                     </DropdownMenuContent>
                 </DropdownMenu>

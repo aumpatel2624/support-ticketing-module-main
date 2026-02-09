@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const {
     getUsers,
     getUserById,
@@ -8,7 +9,8 @@ const {
     deleteUser,
     getMe,
     updateMe,
-    bulkImportUsers
+    bulkImportUsers,
+    downloadSampleTemplate
 } = require('../controllers/user.controller');
 const { authenticate } = require('../middleware/auth');
 const { requireSuperAdmin, requireAdmin } = require('../middleware/rbac');
@@ -20,6 +22,20 @@ const {
     userListQuerySchema,
     objectIdSchema
 } = require('../validators/user.validator');
+
+// Configure multer for Excel file uploads (memory storage)
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+            file.mimetype === 'application/vnd.ms-excel') {
+            cb(null, true);
+        } else {
+            cb(new Error('Only Excel files (.xlsx, .xls) are allowed'), false);
+        }
+    }
+});
 
 /**
  * @swagger
@@ -171,10 +187,30 @@ router.post('/', authenticate, requireSuperAdmin, validateBody(createUserSchema)
 
 /**
  * @swagger
+ * /users/sample-template:
+ *   get:
+ *     summary: Download sample Excel template
+ *     description: Download sample Excel template for user import (SuperAdmin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Excel file downloaded
+ *         content:
+ *           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+ *             schema:
+ *               type: string
+ *               format: binary
+ */
+router.get('/sample-template', authenticate, requireSuperAdmin, downloadSampleTemplate);
+
+/**
+ * @swagger
  * /users/bulk-import:
  *   post:
  *     summary: Bulk import users
- *     description: Import multiple users from CSV (SuperAdmin only)
+ *     description: Import multiple users from Excel (SuperAdmin only)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -194,7 +230,7 @@ router.post('/', authenticate, requireSuperAdmin, validateBody(createUserSchema)
  *       400:
  *         description: Invalid file or data
  */
-router.post('/bulk-import', authenticate, requireAdmin, bulkImportUsers);
+router.post('/bulk-import', authenticate, requireSuperAdmin, upload.single('file'), bulkImportUsers);
 
 /**
  * @swagger

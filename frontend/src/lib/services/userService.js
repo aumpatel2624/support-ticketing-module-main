@@ -46,7 +46,41 @@ const userService = {
         // Assuming endpoint for team members or filter users
         const response = await api.get(API_ENDPOINTS.USERS, { params: { role: 'TeamMember' } });
         return response.data;
+    },
+
+    /**
+     * Import users from Excel file
+     * @param {File} file
+     */
+    async importUsers(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await api.post(`${API_ENDPOINTS.USERS}/bulk-import`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    },
+
+    /**
+     * Download sample Excel template for user import
+     */
+    async downloadSampleTemplate() {
+        const response = await api.get(`${API_ENDPOINTS.USERS}/sample-template`, {
+            responseType: 'blob'
+        });
+        // Create download link
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'user_import_template.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
     }
 };
 
 export default userService;
+
