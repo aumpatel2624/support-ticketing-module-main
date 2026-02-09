@@ -86,11 +86,7 @@ export const createColumns = (onEdit, onDelete) => [
             return <Badge variant="outline" className={colorClass}>{priority}</Badge>;
         },
     },
-    {
-        accessorKey: 'defaultSLA',
-        header: 'SLA (Hours)',
-        cell: ({ row }) => <span>{row.getValue('defaultSLA')}h</span>,
-    },
+
     {
         accessorKey: 'isActive',
         header: 'Status',
