@@ -69,7 +69,7 @@ export default function Header() {
                         <span className="sr-only">Toggle navigation menu</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="p-0 border-r-0 w-[300px]">
+                <SheetContent side="left" className="p-0 border-r-0 w-[85vw] max-w-[300px]">
                     <div className="h-full">
                         <Sidebar isMobile={true} />
                     </div>

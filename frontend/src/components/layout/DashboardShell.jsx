@@ -12,10 +12,21 @@ export default function DashboardShell({ children }) {
     const pathname = usePathname();
     const [mounted, setMounted] = useState(false);
 
-    // Prevent hydration mismatch
+    // Handle responsive sidebar behavior
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
+
+        const handleResize = () => {
+            if (window.innerWidth >= 768 && window.innerWidth < 1024) {
+                useUIStore.getState().setSidebarCollapsed(true);
+            }
+        };
+
+        // Initial check
+        handleResize();
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     if (!mounted) {
