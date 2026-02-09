@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { STORAGE_KEYS } from '@/lib/constants';
+import { disconnectSocket } from '@/lib/socket';
 
 /**
  * Authentication Store
@@ -66,7 +67,6 @@ const useAuthStore = create(
             },
 
             logout: () => {
-                const { disconnectSocket } = require('@/lib/socket');
                 disconnectSocket();
                 set({
                     user: null,

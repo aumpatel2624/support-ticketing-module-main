@@ -57,6 +57,14 @@ api.interceptors.response.use(
                     // Retry original request with new token
                     originalRequest.headers.Authorization = `Bearer ${token}`;
                     return api(originalRequest);
+                } else {
+                    // No refresh token available - redirect to login
+                    if (typeof window !== 'undefined') {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('refreshToken');
+                        window.location.href = '/login';
+                    }
+                    return Promise.reject(error);
                 }
             } catch (refreshError) {
                 // Refresh failed - logout user
