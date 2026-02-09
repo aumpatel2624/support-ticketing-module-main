@@ -744,46 +744,62 @@ const uploadAttachment = asyncHandler(async (req, res) => {
     const isCreator = ticket.createdBy.toString() === req.user._id.toString();
 
     if (!isStaff && !isCreator) {
+        // Only if we uploaded a file to S3 but permission failed, we should probably delete it
+        // But for now, just return error
         throw new AuthorizationError('You do not have permission to add attachments to this ticket');
     }
 
-    // Build attachment object - handle both S3 and local storage
-    const attachment = {
-        filename: req.file.filename || req.file.key?.split('/').pop(),
-        originalName: req.file.originalname,
-        mimetype: req.file.mimetype,
-        size: req.file.size,
-        uploadedBy: req.user._id,
-        uploadedAt: new Date()
-    };
+    try {
+        // Build attachment object - handle both S3 and local storage
+        const attachment = {
+            originalName: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+            uploadedBy: req.user._id,
+            uploadedAt: new Date()
+        };
 
-    // S3 upload (if using S3 storage)
-    if (req.file.location || req.file.key) {
-        attachment.s3Key = req.file.key;
-        // Generate presigned URL for S3 objects (more secure than public URLs)
-        try {
-            attachment.s3Url = await s3Service.generatePresignedUrl(req.file.key, 86400); // 24 hour expiry
-        } catch (error) {
-            logger.warn(`Failed to generate presigned URL: ${error.message}, using direct URL`);
-            // Fallback to direct URL if presigned fails
-            attachment.s3Url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${req.file.key}`;
+        // Determine filename and storage type
+        if (req.file.key) {
+            // S3 Upload
+            attachment.filename = req.file.key.split('/').pop();
+            attachment.s3Key = req.file.key;
+
+            // Generate presigned URL for S3 objects
+            try {
+                attachment.s3Url = await s3Service.generatePresignedUrl(req.file.key, 86400); // 24 hour expiry
+            } catch (error) {
+                logger.warn(`Failed to generate presigned URL: ${error.message}, using direct URL fallback`);
+                // Fallback to direct URL if presigned fails or if using public bucket
+                const bucket = process.env.S3_BUCKET_NAME;
+                const region = process.env.AWS_REGION || 'us-east-1';
+                attachment.s3Url = `https://${bucket}.s3.${region}.amazonaws.com/${req.file.key}`;
+            }
+        } else if (req.file.filename) {
+            // Local Storage
+            attachment.filename = req.file.filename;
+            attachment.path = req.file.path;
+        } else {
+            // Fallback for unexpected multer behavior
+            logger.warn('File uploaded but missing key/filename properties:', req.file);
+            attachment.filename = `upload-${Date.now()}-${req.file.originalname}`;
         }
-    } else {
-        // Local storage fallback
-        attachment.path = req.file.path;
+
+        ticket.attachments.push(attachment);
+        await ticket.save();
+
+        // Get the saved attachment with the _id assigned by MongoDB
+        const savedAttachment = ticket.attachments[ticket.attachments.length - 1];
+
+        res.status(201).json({
+            success: true,
+            message: 'File uploaded successfully',
+            data: savedAttachment
+        });
+    } catch (error) {
+        logger.error(`Attachment upload processing error: ${error.message}`, { error });
+        throw new ApiError(500, 'Failed to process attachment upload');
     }
-
-    ticket.attachments.push(attachment);
-    await ticket.save();
-
-    // Get the saved attachment with the _id assigned by MongoDB
-    const savedAttachment = ticket.attachments[ticket.attachments.length - 1];
-
-    res.status(201).json({
-        success: true,
-        message: 'File uploaded successfully',
-        data: savedAttachment
-    });
 });
 
 /**
