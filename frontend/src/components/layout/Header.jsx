@@ -29,7 +29,7 @@ import { getInitials, getAvatarColor } from '@/lib/utils';
 import Link from 'next/link';
 
 export default function Header() {
-    const { user, logout } = useAuthStore();
+    const { user } = useAuthStore();
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
 

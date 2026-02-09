@@ -39,6 +39,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import useAuthStore from '@/store/authStore';
+import useAuth from '@/hooks/useAuth';
 import useUIStore from '@/store/uiStore';
 import useSettingsStore from '@/store/settingsStore';
 import useNotificationStore from '@/store/notificationStore';
@@ -63,7 +64,8 @@ const IconMap = {
 
 export default function Sidebar({ isMobile = false }) {
     const pathname = usePathname();
-    const { user, logout } = useAuthStore();
+    const { user } = useAuthStore();
+    const { logout } = useAuth();
     const { sidebarCollapsed, toggleSidebar } = useUIStore();
     const { systemSettings, fetchSystemSettings } = useSettingsStore();
 
