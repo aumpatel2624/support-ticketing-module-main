@@ -63,6 +63,7 @@ const getUsers = asyncHandler(async (req, res) => {
         // If we want to keep the object but make it easy for the table:
         if (user.department) {
             userObj.departmentName = user.department.name;
+            userObj.departmentId = user.department._id;
             // The frontend columns.jsx uses row.getValue('department')
             // Let's replace the department object with just its name for the table's sake
             userObj.department = user.department.name;

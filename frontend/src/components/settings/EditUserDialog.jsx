@@ -90,7 +90,7 @@ export default function EditUserDialog({ user, open, onOpenChange, onUserUpdated
                 name: user.name || '',
                 email: user.email || '',
                 role: user.role || USER_ROLES.NORMAL_USER,
-                department: user.department || '',
+                department: user.departmentId || user.department?._id || user.department || '',
                 shift: user.shift || 'US',
             });
         }
