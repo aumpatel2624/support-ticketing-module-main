@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { X, AlertCircle, CheckCircle2, Inbox, Check } from 'lucide-react';
+import { X, AlertCircle, CheckCircle2, Inbox } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
@@ -14,22 +14,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog';
  */
 export default function NotificationItem({ notification, onClose }) {
     const { markAsRead, removeNotification } = useNotificationStore();
-    const [showMarkAsReadDialog, setShowMarkAsReadDialog] = useState(false);
     const [showRemoveDialog, setShowRemoveDialog] = useState(false);
-
-    const handleMarkAsRead = (e) => {
-        if (e) {
-            e.stopPropagation();
-        }
-        if (!notification.isRead) {
-            setShowMarkAsReadDialog(true);
-        }
-    };
-
-    const confirmMarkAsRead = () => {
-        markAsRead(notification._id);
-        setShowMarkAsReadDialog(false);
-    };
 
     const handleRemove = (e) => {
         e.stopPropagation();
@@ -97,6 +82,7 @@ export default function NotificationItem({ notification, onClose }) {
 
     const href = ticketId ? `/tickets?id=${ticketId}` : '#';
 
+    // Clicking notification marks it as read and navigates to ticket
     const handleClick = () => {
         if (!notification.isRead) {
             markAsRead(notification._id);
@@ -169,8 +155,8 @@ export default function NotificationItem({ notification, onClose }) {
                 </p>
             </div>
 
-            {/* Actions */}
-            <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Remove Button */}
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button
                     variant="ghost"
                     size="icon"
@@ -180,30 +166,7 @@ export default function NotificationItem({ notification, onClose }) {
                 >
                     <X className="h-3 w-3" />
                 </Button>
-
-                {!notification.isRead && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
-                        onClick={handleMarkAsRead}
-                        title="Mark as read"
-                    >
-                        <Check className="h-3 w-3" />
-                    </Button>
-                )}
             </div>
-
-            {/* Mark as Read Confirmation Dialog */}
-            <ConfirmDialog
-                open={showMarkAsReadDialog}
-                onOpenChange={setShowMarkAsReadDialog}
-                title="Mark as Read?"
-                description="Are you sure you want to mark this notification as read?"
-                confirmText="Mark as Read"
-                cancelText="Cancel"
-                onConfirm={confirmMarkAsRead}
-            />
 
             {/* Remove Notification Confirmation Dialog */}
             <ConfirmDialog
@@ -219,3 +182,4 @@ export default function NotificationItem({ notification, onClose }) {
         </div>
     );
 }
+
