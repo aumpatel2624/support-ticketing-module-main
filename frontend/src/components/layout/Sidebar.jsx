@@ -138,14 +138,6 @@ export default function Sidebar({ isMobile = false }) {
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="opacity-50" />
-                        <DropdownMenuItem onSelect={(e) => {
-                            e.preventDefault();
-                            logout();
-                        }}
-                            className="rounded-xl py-2.5 my-0.5 text-destructive focus:bg-destructive/5 focus:text-destructive cursor-pointer">
-	    		    <LogOut className="mr-3 h-4 w-4" />
-                            <span className="font-bold">Sign out</span>
-                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
