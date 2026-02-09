@@ -328,7 +328,7 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate, readO
             <div className="flex flex-col h-full">
                 <div
                     ref={scrollContainerRef}
-                    className="flex gap-4 overflow-x-auto p-4 flex-1 cursor-grab active:cursor-grabbing select-none h-full"
+                    className="flex gap-2 overflow-x-auto p-2 flex-1 cursor-grab active:cursor-grabbing select-none h-full"
                     data-scrollable="true"
                 >
                     {STATUSES.map((status) => (

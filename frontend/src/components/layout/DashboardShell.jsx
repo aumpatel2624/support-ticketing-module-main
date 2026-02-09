@@ -37,7 +37,7 @@ export default function DashboardShell({ children }) {
                 )}
             >
                 {!pathname.includes('/tickets') && <Header />}
-                <main className="flex-1 max-w-[1600px] mx-auto w-full">
+                <main className="flex-1 w-full h-full">
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
                         {children}
                     </div>

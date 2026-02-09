@@ -24,12 +24,12 @@ export default function KanbanColumn({ status, tickets, onMenuAction, isStaff, r
     };
 
     return (
-        <div className="flex flex-col bg-white rounded-lg border border-border w-[286px] min-w-[286px] shrink-0 h-full max-h-full shadow-sm">
+        <div className="flex flex-col bg-white rounded-lg border border-border w-[260px] min-w-[260px] shrink-0 h-full max-h-full shadow-sm">
             {/* Column Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border/50 min-h-[64px]">
-                <div className="flex items-center gap-3">
-                    <h3 className="font-semibold text-sm text-foreground">{status}</h3>
-                    <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none px-2 rounded-full font-mono text-xs">
+            <div className="flex items-center justify-between p-2 border-b border-border/50 min-h-[48px]">
+                <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-xs text-foreground uppercase tracking-wide">{status}</h3>
+                    <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none px-1.5 py-0 rounded-full font-mono text-[10px]">
                         {tickets.length}
                     </Badge>
                 </div>
@@ -42,7 +42,7 @@ export default function KanbanColumn({ status, tickets, onMenuAction, isStaff, r
             >
                 <div
                     ref={setNodeRef}
-                    className="flex-1 min-h-0 p-3 space-y-3 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
+                    className="flex-1 min-h-0 p-2 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
                 >
                     {tickets.length > 0 ? (
                         tickets.map((ticket) => (
