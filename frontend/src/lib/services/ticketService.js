@@ -68,9 +68,10 @@ const ticketService = {
      * @param {string} userId
      * @param {string} comment - Optional assignment comment
      */
-    async assignTicket(id, userId, comment = null) {
+    async assignTicket(id, userId, comment = null, status = null) {
         const payload = { assignedTo: userId };
         if (comment) payload.comment = comment;
+        if (status) payload.status = status;
         const response = await api.patch(`${API_ENDPOINTS.TICKETS}/${id}/assign`, payload);
         return response.data;
     },

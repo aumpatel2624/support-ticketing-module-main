@@ -486,7 +486,7 @@ const updateStatus = asyncHandler(async (req, res) => {
  * @access  Private (Admin or higher)
  */
 const assignTicket = asyncHandler(async (req, res) => {
-    const { assignedTo, comment } = req.body;
+    const { assignedTo, comment, status } = req.body;
     const ticket = await Ticket.findById(req.params.id);
 
     if (!ticket) throw new NotFoundError('Ticket not found');
@@ -510,15 +510,49 @@ const assignTicket = asyncHandler(async (req, res) => {
     // Fetch assignee user for notification and comment
     const assignee = await User.findById(assignedTo);
 
-    // If ticket is Reopened, automatically change to Assigned (was InProgress)
-    const wasReopened = ticket.status === 'Reopened';
-    if (wasReopened) {
-        ticket.status = 'Assigned';
+    // Status Update Logic
+    // 1. If explicit status provided, use it (validating transition)
+    // 2. Else if Reopened, auto-switch to Assigned
+    // 3. Else keep current status
+    let statusChanged = false;
+
+    if (status && status !== ticket.status) {
+        if (!ticket.canTransitionTo(status)) {
+            throw new ValidationError(`Invalid status transition from ${ticket.status} to ${status}`);
+        }
+        ticket.status = status;
+        statusChanged = true;
+    } else {
+        // Fallback checks
+        const wasReopened = ticket.status === 'Reopened';
+        if (wasReopened) {
+            ticket.status = 'Assigned';
+            statusChanged = true;
+        }
+    }
+
+    // Update timestamps if status changed
+    if (statusChanged) {
+        const newStatus = ticket.status;
+        if (newStatus === 'Resolved') {
+            ticket.resolvedAt = new Date();
+            ticket.wasReopened = false;
+        }
+        if (newStatus === 'Reopened') {
+            ticket.wasReopened = true;
+        }
+        if (newStatus === 'Closed') {
+            ticket.closedAt = new Date();
+            if (!ticket.resolvedAt) {
+                ticket.resolvedAt = new Date();
+            }
+            ticket.wasReopened = false;
+        }
     }
 
     // Add assignment to status history
-    const historyComment = wasReopened
-        ? `${comment || 'Ticket assigned to user'} - status changed from Reopened to Assigned`
+    const historyComment = statusChanged
+        ? `${comment || 'Ticket assigned'} - status changed to ${ticket.status}`
         : (comment || `Ticket assigned to user`);
 
     // Add system comment for reassignment log
@@ -528,6 +562,9 @@ const assignTicket = asyncHandler(async (req, res) => {
         isInternal: true,
         createdAt: new Date()
     });
+
+    // Add entry to status history
+    ticket.addStatusHistory(ticket.status, req.user._id, historyComment);
 
     ticket.addStatusHistory(ticket.status, req.user._id, historyComment);
 

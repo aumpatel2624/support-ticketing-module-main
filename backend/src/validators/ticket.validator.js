@@ -59,6 +59,8 @@ const assignTicketSchema = z.object({
     comment: z.string()
         .max(500, 'Comment must not exceed 500 characters')
         .trim()
+        .optional(),
+    status: z.enum(['New', 'Assigned', 'InProgress', 'Resolved', 'Reopened', 'Escalated', 'Closed'])
         .optional()
 });
 

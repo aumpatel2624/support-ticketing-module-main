@@ -206,11 +206,22 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate, readO
         setIsUpdating(ticketId);
         try {
             // First assign the ticket
-            await ticketService.assignTicket(ticketId, selectedUser._id, `Assigned to ${selectedUser.name}`);
-            // Only update status if it's different from current status (avoid "Assigned" -> "Assigned" error on reassignment)
+            await ticketService.assignTicket(
+                ticketId,
+                selectedUser._id,
+                `Assigned to ${selectedUser.name}`,
+                newStatus
+            );
+
+            // If status wasn't handled by assignTicket (e.g. backend didn't update it for some reason), 
+            // the subsequent optimistic update revert logic or UI update will handle it.
+            // But usually assignTicket with status param handles both.
+
             if (ticket.status !== newStatus) {
-                await ticketService.updateTicketStatus(ticketId, newStatus);
-                toast.success(`Assigned to ${selectedUser.name} and status updated`);
+                // If the assignTicket didn't return the updated status or we want to be doubly sure
+                // We can relying on the previous optimistic update. 
+                // However, with the new backend logic, assignTicket handles the status update.
+                toast.success(`Assigned to ${selectedUser.name}`);
             } else {
                 toast.success(`Assigned to ${selectedUser.name}`);
             }
