@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { emitMarkNotificationAsRead, emitMarkAllNotificationsAsRead } from '@/lib/socket';
+import useAuthStore from './authStore'; // Need user ID for socket events
 
 /**
  * Notification Store
@@ -37,7 +39,7 @@ const useNotificationStore = create((set, get) => ({
         });
     },
 
-    markAsRead: async (notificationId) => {
+    markAsRead: (notificationId) => {
         // Optimistic update
         set((state) => {
             const updated = state.notifications.map((n) =>
@@ -47,23 +49,14 @@ const useNotificationStore = create((set, get) => ({
             return { notifications: updated, unreadCount };
         });
 
-        // API call
+        // Socket emission
         try {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-
-            await fetch(`${apiUrl}/notifications/${notificationId}/read`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+            const user = useAuthStore.getState().user;
+            if (user && user._id) {
+                emitMarkNotificationAsRead(notificationId, user._id);
+            }
         } catch (error) {
-            console.error('Failed to mark notification as read:', error);
-            // Revert on error? For now, we'll just log it. 
-            // In a production app, we might want to revert the state.
+            console.error('Failed to mark notification as read via socket:', error);
         }
     },
 
@@ -77,25 +70,18 @@ const useNotificationStore = create((set, get) => ({
         });
     },
 
-    markAllAsRead: async () => {
+    markAllAsRead: () => {
         // Optimistic update
         get().markAllAsReadLocal();
 
-        // API call
+        // Socket emission
         try {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-
-            await fetch(`${apiUrl}/notifications/read-all`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+            const user = useAuthStore.getState().user;
+            if (user && user._id) {
+                emitMarkAllNotificationsAsRead(user._id);
+            }
         } catch (error) {
-            console.error('Failed to mark all notifications as read:', error);
+            console.error('Failed to mark all notifications as read via socket:', error);
         }
     },
 

@@ -116,3 +116,24 @@ export const offSocketEvent = (event, callback) => {
         socket.off(event, callback);
     }
 };
+
+/**
+ * Mark a single notification as read via socket (replaces PATCH /api/notifications/:id/read)
+ * @param {string} notificationId - The notification _id
+ * @param {string} userId - The current user's _id
+ */
+export const emitMarkNotificationAsRead = (notificationId, userId) => {
+    if (socket && socket.connected) {
+        socket.emit('mark_notification_read', { notificationId, userId });
+    }
+};
+
+/**
+ * Mark all notifications as read via socket (replaces PATCH /api/notifications/read-all)
+ * @param {string} userId - The current user's _id
+ */
+export const emitMarkAllNotificationsAsRead = (userId) => {
+    if (socket && socket.connected) {
+        socket.emit('mark_all_notifications_read', { userId });
+    }
+};
