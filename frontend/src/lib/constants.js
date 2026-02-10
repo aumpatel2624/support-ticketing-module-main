@@ -51,7 +51,19 @@ export const TICKET_STATUS = {
     COMPLETED: 'Resolved',
     REOPENED: 'Reopened',
     ESCALATED: 'Escalated',
+    CLOSED: 'Closed',
 };
+
+// Kanban Column Order
+export const KANBAN_COLUMN_ORDER = [
+    TICKET_STATUS.NEW,
+    TICKET_STATUS.ASSIGNED,
+    TICKET_STATUS.IN_PROGRESS,
+    TICKET_STATUS.COMPLETED,
+    TICKET_STATUS.REOPENED,
+    TICKET_STATUS.CLOSED,
+    TICKET_STATUS.ESCALATED,
+];
 
 // Ticket Priorities
 export const TICKET_PRIORITY = {
