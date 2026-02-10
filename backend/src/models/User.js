@@ -135,10 +135,7 @@ const userSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Hash password before saving
-// Hash password before saving
 userSchema.pre('save', async function () {
-    // Only hash if password is modified
     if (!this.isModified('password')) {
         return;
     }
@@ -147,12 +144,9 @@ userSchema.pre('save', async function () {
     this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Method to compare password
 userSchema.methods.comparePassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
-
-// Method to generate access token
 userSchema.methods.generateAccessToken = function () {
     return jwt.sign(
         {
@@ -165,7 +159,6 @@ userSchema.methods.generateAccessToken = function () {
     );
 };
 
-// Method to generate refresh token
 userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
         {
@@ -177,7 +170,6 @@ userSchema.methods.generateRefreshToken = function () {
     );
 };
 
-// Method to generate password reset token
 userSchema.methods.generateResetToken = function () {
     const resetToken = jwt.sign(
         { id: this._id },
@@ -191,7 +183,6 @@ userSchema.methods.generateResetToken = function () {
     return resetToken;
 };
 
-// Remove password from JSON output
 userSchema.methods.toJSON = function () {
     const user = this.toObject();
     delete user.password;

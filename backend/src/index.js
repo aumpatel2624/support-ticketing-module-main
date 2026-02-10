@@ -29,6 +29,11 @@ app.use(helmet());
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 const origins = frontendUrl.split(',').map(url => url.trim());
 
+// Explicitly allow production domain
+if (!origins.includes('https://ticket.apideltech.de')) {
+  origins.push('https://ticket.apideltech.de');
+}
+
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)

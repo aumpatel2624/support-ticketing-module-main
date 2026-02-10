@@ -217,18 +217,35 @@ const createTicket = asyncHandler(async (req, res) => {
 
     await ticket.save();
 
-    // Notify Department Head/Admins
-    if (department.headUserId) {
-        await Notification.create({
-            userId: department.headUserId,
+    // Notify Department Head, Admins, and Team Members of the department
+    // Find all users who should be notified:
+    // 1. Department Head (if exists) - already in department.headUserId
+    // 2. Admins/TeamMembers belonging to this department
+    const usersToNotify = await User.find({
+        $or: [
+            { _id: department.headUserId },
+            { role: { $in: ['Admin', 'TeamMember'] }, department: departmentId }
+        ],
+        _id: { $ne: req.user._id } // Don't notify creator if they are staff
+    }).select('_id');
+
+    // Create persistent notifications for all of them
+    const notifications = await Promise.all(usersToNotify.map(user =>
+        Notification.create({
+            userId: user._id,
             ticketId: ticket._id,
             type: 'TicketCreated',
             message: `New ticket created in your department: ${ticket.ticketId}`
-        });
-    }
+        })
+    ));
 
+    // Socket: Notify each user individually with their specific notification object
+    notifications.forEach(notification => {
+        socketService.emitToUser(notification.userId, 'notification', notification);
+    });
 
-    // Socket: Notify department workers
+    // We keep this for real-time dashboard updates (e.g. ticket lists), 
+    // but NotificationListener should NOT use it for toasts anymore to avoid duplicates/temp IDs.
     socketService.emitToDepartment(departmentId, 'ticket_created', ticket);
 
     res.status(201).json({
