@@ -369,7 +369,7 @@ export default function AdminDashboard({ user }) {
                     trend={{ value: Math.abs(stats.trends.activeTickets), label: "from last week" }}
                     trendDirection={stats.trends.activeTickets >= 0 ? 'up' : 'down'}
                     invertedTrend={true}
-                    href="/tickets?status=New,Assigned,InProgress,Reopened"
+                    href="/tickets?status=New,Assigned,InProgress,Reopened,Escalated"
                 />
                 <StatsCard
                     title="SLA Risk"
