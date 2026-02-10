@@ -351,7 +351,7 @@ export default function AdminDashboard({ user }) {
     }
 
     // Calculate active tickets count
-    const activeTicketsCount = stats.totalTickets - (stats.statusStats?.Closed || 0) - (stats.statusStats?.Resolved || 0);
+    const activeTicketsCount = stats.pendingTickets;
 
     // Calculate SLA risk percentage
     const slaRiskPercentage = activeTicketsCount > 0
