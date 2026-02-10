@@ -431,7 +431,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
             activeAgents,
             overview: {
                 total: await Ticket.countDocuments(match),
-                open: await Ticket.countDocuments({ ...match, status: { $nin: ['Resolved', 'Closed'] } }),
+                open: await Ticket.countDocuments({ ...match, status: { $in: ['New', 'Assigned', 'InProgress', 'Reopened', 'Escalated'] } }),
                 atRisk: await Ticket.countDocuments({ ...match, status: { $ne: 'Resolved' }, slaBreach: true }),
                 resolved: await Ticket.countDocuments({ ...match, status: { $in: ['Resolved', 'Closed'] } }),
                 avgResolutionTime
