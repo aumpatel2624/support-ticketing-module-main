@@ -99,7 +99,11 @@ export const emitSocketEvent = (event, data) => {
 export const onSocketEvent = (event, callback) => {
     if (socket) {
         socket.on(event, callback);
-        return () => socket.off(event, callback);
+        return () => {
+            if (socket) {
+                socket.off(event, callback);
+            }
+        };
     }
     return () => { };
 };
