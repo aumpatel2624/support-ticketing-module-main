@@ -371,19 +371,20 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                         )}
 
                     {/* Reassign button for Admin/SuperAdmin - Only if already assigned */}
-                    {user && ['Admin', 'SuperAdmin'].includes(user.role) && ticket.assignedTo && (
-                        <Button
-                            onClick={() => {
-                                setAssignmentMode('reassign');
-                                setShowAssignModal(true);
-                            }}
-                            variant="outline"
-                            size="sm"
-                            className="border-purple-500 text-purple-600 hover:bg-purple-50"
-                        >
-                            ↻ Reassign
-                        </Button>
-                    )}
+                    {user && ['Admin', 'SuperAdmin'].includes(user.role) && ticket.assignedTo &&
+                        ['Assigned', 'InProgress', 'Reopened', 'Escalated'].includes(ticket.status) && (
+                            <Button
+                                onClick={() => {
+                                    setAssignmentMode('reassign');
+                                    setShowAssignModal(true);
+                                }}
+                                variant="outline"
+                                size="sm"
+                                className="border-purple-500 text-purple-600 hover:bg-purple-50"
+                            >
+                                ↻ Reassign
+                            </Button>
+                        )}
 
                     {/* Reassign to Me button for TeamMember in same department */}
                     {user && user.role === 'TeamMember' &&
