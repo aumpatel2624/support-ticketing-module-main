@@ -99,6 +99,13 @@ export default function AssignTicketModal({
             toast.error('Please select a user');
             return;
         }
+
+        // Prevent assigning to the same user
+        if (currentAssignee && selectedUser._id === currentAssignee._id) {
+            toast.error(`Already assigned to ${selectedUser.name}`);
+            return;
+        }
+
         await onAssign(selectedUser);
         handleClose();
     };
