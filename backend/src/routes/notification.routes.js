@@ -2,8 +2,6 @@ const express = require('express');
 const router = express.Router();
 const {
     getNotifications,
-    markAsRead,
-    markAllAsRead,
     deleteNotification,
     deleteAllNotifications
 } = require('../controllers/notification.controller');
@@ -30,38 +28,8 @@ const { objectIdSchema } = require('../validators/user.validator');
  *     responses:
  *       200:
  *         description: Notifications retrieved
- */
+ * */
 router.get('/', authenticate, getNotifications);
-
-/**
- * @swagger
- * /notifications/read-all:
- *   patch:
- *     summary: Mark all as read
- *     description: Mark all notifications as read for current user
- *     tags: [Notifications]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: All notifications marked as read
- */
-router.patch('/read-all', authenticate, markAllAsRead);
-
-/**
- * @swagger
- * /notifications/{id}/read:
- *   patch:
- *     summary: Mark as read
- *     description: Mark a specific notification as read
- *     tags: [Notifications]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Notification marked as read
- */
-router.patch('/:id/read', authenticate, validateParams(objectIdSchema), markAsRead);
 
 /**
  * @swagger

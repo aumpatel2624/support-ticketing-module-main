@@ -69,6 +69,77 @@ const init = (server) => {
             logger.info(`User joined ticket room: ticket_${ticketId}`);
         });
 
+        // ─── Mark single notification as read via socket ───────────────────────
+        socket.on('mark_notification_read', async ({ notificationId, userId }) => {
+            try {
+                if (!notificationId || !userId) {
+                    socket.emit('notification_read_error', {
+                        notificationId,
+                        message: 'Missing notificationId or userId'
+                    });
+                    return;
+                }
+
+                const Notification = require('../models/Notification');
+                const notification = await Notification.findOne({
+                    _id: notificationId,
+                    userId: userId
+                });
+
+                if (!notification) {
+                    socket.emit('notification_read_error', {
+                        notificationId,
+                        message: 'Notification not found'
+                    });
+                    return;
+                }
+
+                if (!notification.isRead) {
+                    notification.isRead = true;
+                    await notification.save();
+                }
+
+                // Emit back to ALL tabs/devices of this user to sync read state
+                io.to(userId.toString()).emit('notification_read', notificationId);
+
+                logger.info(`Notification ${notificationId} marked as read for user ${userId}`);
+            } catch (err) {
+                logger.error(`mark_notification_read error: ${err.message}`);
+                socket.emit('notification_read_error', {
+                    notificationId,
+                    message: 'Server error while marking notification as read'
+                });
+            }
+        });
+
+        // ─── Mark all notifications as read via socket ──────────────────────────
+        socket.on('mark_all_notifications_read', async ({ userId }) => {
+            try {
+                if (!userId) {
+                    socket.emit('notification_read_error', {
+                        message: 'Missing userId'
+                    });
+                    return;
+                }
+
+                const Notification = require('../models/Notification');
+                await Notification.updateMany(
+                    { userId: userId, isRead: false },
+                    { $set: { isRead: true } }
+                );
+
+                // Emit back to ALL tabs/devices of this user to sync read state
+                io.to(userId.toString()).emit('notification_all_read', null);
+
+                logger.info(`All notifications marked as read for user ${userId}`);
+            } catch (err) {
+                logger.error(`mark_all_notifications_read error: ${err.message}`);
+                socket.emit('notification_read_error', {
+                    message: 'Server error while marking all notifications as read'
+                });
+            }
+        });
+
         socket.on('disconnect', (reason) => {
             logger.info(`User disconnected: ${socket.id}. Reason: ${reason}`);
         });
