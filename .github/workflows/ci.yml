@@ -82,29 +82,36 @@ jobs:
       - name: Audit frontend dependencies
         run: cd frontend && npm audit --audit-level=high || true
 
-  # ============ DEPLOY TO RENDER ============
-  deploy-backend:
-    name: Deploy Backend to Render
+  # ============ DEPLOY TO EC2 ============
+  deploy-ec2:
+    name: Deploy to EC2
     runs-on: ubuntu-latest
-    needs: [backend-lint-build, security-audit]
+    needs: [backend-lint-build, frontend-build, security-audit]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     steps:
-      - name: Trigger Render Deploy
-        run: |
-          curl -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}"
-        env:
-          RENDER_BACKEND_DEPLOY_HOOK: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}
-
-  deploy-frontend:
-    name: Deploy Frontend to Render
-    runs-on: ubuntu-latest
-    needs: [frontend-build, security-audit]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
-    steps:
-      - name: Trigger Render Deploy
-        run: |
-          curl -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}"
-        env:
-          RENDER_FRONTEND_DEPLOY_HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Navigate to project directory
+            cd /var/www/ticketing-system
+            
+            # Pull latest changes
+            git pull origin main
+            
+            # Frontend Build
+            echo "Building Frontend..."
+            cd frontend
+            npm run build
+            cd ..
+            
+            # Restart Processes
+            echo "Restarting PM2 processes..."
+            pm2 reload ecosystem.config.js --env production
+            pm2 save
+            
+            echo "Deployment Complete!"

@@ -1,5 +1,8 @@
+const mongoose = require('mongoose');
 const Department = require('../models/Department');
 const Ticket = require('../models/Ticket');
+const User = require('../models/User');
+const Category = require('../models/Category');
 const { NotFoundError, ConflictError, ValidationError } = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 const { getPaginationParams, createPaginationResponse } = require('../utils/pagination');
@@ -33,7 +36,7 @@ const getDepartments = asyncHandler(async (req, res) => {
     ]);
 
     // Enhance departments with frontend-required fields
-    const User = require('../models/User');
+
     const departments = await Promise.all(departmentsRaw.map(async (dept) => {
         const deptObj = dept.toObject();
         // Add status mapping
@@ -152,8 +155,7 @@ const deleteDepartment = asyncHandler(async (req, res) => {
     }
 
     // Cascading validation: Check for references before deletion
-    const User = require('../models/User');
-    const Category = require('../models/Category');
+
 
     // Collect all references
     const references = [];
@@ -243,13 +245,59 @@ const getDepartmentStats = asyncHandler(async (req, res) => {
         throw new NotFoundError('Department not found');
     }
 
-    // TODO: Implement when Ticket model is available
+    const deptId = new mongoose.Types.ObjectId(req.params.id);
+
+    // Run all queries in parallel for performance
+    const [totalTickets, openTickets, closedTickets, teamMemberCount, resolutionStats] = await Promise.all([
+        // 1. Total Tickets
+        Ticket.countDocuments({ departmentId: deptId }),
+
+        // 2. Open Tickets (Not Resolved or Closed)
+        Ticket.countDocuments({
+            departmentId: deptId,
+            status: { $nin: ['Resolved', 'Closed'] }
+        }),
+
+        // 3. Closed/Resolved Tickets
+        Ticket.countDocuments({
+            departmentId: deptId,
+            status: { $in: ['Resolved', 'Closed'] }
+        }),
+
+        // 4. Team Members
+        User.countDocuments({
+            department: deptId,
+            isActive: true
+        }),
+
+        // 5. Average Resolution Time (Aggregation)
+        Ticket.aggregate([
+            {
+                $match: {
+                    departmentId: deptId,
+                    status: { $in: ['Resolved', 'Closed'] },
+                    resolvedAt: { $ne: null }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    avgTime: { $avg: { $subtract: ['$resolvedAt', '$createdAt'] } }
+                }
+            }
+        ])
+    ]);
+
+    const avgResolutionTime = resolutionStats.length > 0
+        ? Math.round(resolutionStats[0].avgTime / (1000 * 60 * 60)) // Convert to hours
+        : 0;
+
     const stats = {
-        totalTickets: 0,
-        openTickets: 0,
-        closedTickets: 0,
-        avgResolutionTime: 0,
-        teamMemberCount: 0
+        totalTickets,
+        openTickets,
+        closedTickets,
+        avgResolutionTime,
+        teamMemberCount
     };
 
     res.status(200).json({
