@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Loader2, LayoutGrid, Kanban, List } from 'lucide-react';
@@ -36,6 +36,10 @@ export default function TicketsPage() {
     const searchQuery = searchParams.get('search') || '';
     const ticketIdParam = searchParams.get('id');
 
+    // Track mounted state and active requests to prevent race conditions
+    const isMounted = useRef(true);
+    const abortControllerRef = useRef(null);
+
     const { user } = useAuth();
     const isSuperAdmin = user?.role === 'SuperAdmin';
 
@@ -47,7 +51,15 @@ export default function TicketsPage() {
 
     // Fetch system settings on mount
     useEffect(() => {
+        isMounted.current = true;
         fetchSystemSettings().catch(() => { });
+
+        return () => {
+            isMounted.current = false;
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
     }, [fetchSystemSettings]);
 
     // Fetch departments for SuperAdmin
@@ -157,9 +169,15 @@ export default function TicketsPage() {
     }, [ticketIdParam]);
 
     const fetchTickets = async (search = '', appliedFilters = {}) => {
-        // If we are showing detail view, we might not need to fetch the list immediately,
-        // but it's good to have it ready in background or if user switches back.
-        // For now, let's keep fetching behavior as is.
+        // Cancel previous request if exists
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // Create new abort controller
+        const abortController = new AbortController();
+        abortControllerRef.current = abortController;
+
         try {
             setIsLoading(true);
             const params = {};
@@ -195,7 +213,12 @@ export default function TicketsPage() {
                 params.slaStatus = appliedFilters.slaStatus.join(',');
             }
 
+            // Pass signal to service (service needs to support it, but for now we just check signal after await)
             const output = await ticketService.getTickets(params);
+
+            // Check if aborted after await
+            if (abortController.signal.aborted || !isMounted.current) return;
+
             const payload = output;
             if (Array.isArray(payload)) {
                 setTickets(payload);
@@ -208,10 +231,15 @@ export default function TicketsPage() {
                 setTickets([]);
             }
         } catch (error) {
+            // Ignore abort errors
+            if (error.name === 'AbortError' || abortController.signal.aborted) return;
+
             console.error('Failed to fetch tickets:', error);
             toast.error('Failed to load tickets');
         } finally {
-            setIsLoading(false);
+            if (!abortController.signal.aborted && isMounted.current) {
+                setIsLoading(false);
+            }
         }
     };
 
