@@ -20,7 +20,7 @@ import KanbanCard from './KanbanCard';
 import AssignTicketModal from './AssignTicketModal';
 import ConfirmStatusChangeModal from './ConfirmStatusChangeModal';
 
-import { KANBAN_COLUMN_ORDER as STATUSES } from '@/lib/constants';
+import { KANBAN_COLUMN_ORDER as ORDERED_STATUSES } from '@/lib/constants';
 
 /**
  * KanbanBoard - Main Kanban view component with drag-and-drop ticket management
@@ -79,6 +79,10 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate, readO
     // Handle drag over (for visual feedback across columns)
     const handleDragOver = (event) => {
         // Optional: Add visual feedback when dragging over columns
+        const { active, over } = event;
+        if (!over) return;
+
+        // This is where we could add logic to highlight the column
     };
 
     // Handle drag end (show confirmation modal)
@@ -96,7 +100,7 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate, readO
         let newStatus = over.id;
 
         // If dropped over another ticket, get that ticket's status
-        if (!STATUSES.includes(newStatus)) {
+        if (!ORDERED_STATUSES.includes(newStatus)) {
             const overTicket = tickets.find((t) => t._id === newStatus);
             if (overTicket) {
                 newStatus = overTicket.status;
@@ -342,7 +346,7 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate, readO
                     className="flex gap-2 overflow-x-auto p-2 flex-1 cursor-grab active:cursor-grabbing select-none h-full"
                     data-scrollable="true"
                 >
-                    {STATUSES.map((status) => (
+                    {ORDERED_STATUSES.map((status) => (
                         <KanbanColumn
                             key={status}
                             status={status}

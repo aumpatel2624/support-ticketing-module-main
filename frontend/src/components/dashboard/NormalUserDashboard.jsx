@@ -14,7 +14,7 @@ import UserPriorityChart from './UserPriorityChart';
 import UserActiveTicketsTable from './UserActiveTicketsTable';
 import UserRecentResolutionsTable from './UserRecentResolutionsTable';
 import ticketService from '@/lib/services/ticketService';
-import { TICKET_STATUS, TICKET_PRIORITY } from '@/lib/constants';
+import { TICKET_STATUS, TICKET_PRIORITY, KANBAN_COLUMN_ORDER } from '@/lib/constants';
 import { cn, getInitials, getAvatarColor, formatDate } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -297,13 +297,21 @@ export default function NormalUserDashboard({ user }) {
   }
 
   // Kanban view
-  const kanbanColumns = [
-    { id: TICKET_STATUS.NEW, label: 'New', color: 'bg-blue-500/10 border-blue-500/20 text-blue-700' },
-    { id: TICKET_STATUS.ASSIGNED, label: 'Assigned', color: 'bg-purple-500/10 border-purple-500/20 text-purple-700' },
-    { id: TICKET_STATUS.IN_PROGRESS, label: 'In Progress', color: 'bg-amber-500/10 border-amber-500/20 text-amber-700' },
-    { id: TICKET_STATUS.COMPLETED, label: 'Resolved', color: 'bg-green-500/10 border-green-500/20 text-green-700' },
-    { id: TICKET_STATUS.ESCALATED, label: 'Escalated', color: 'bg-red-500/10 border-red-500/20 text-red-700' },
-  ];
+  // Kanban view
+  const STATUS_CONFIG = {
+    [TICKET_STATUS.NEW]: { label: 'New', color: 'bg-blue-500/10 border-blue-500/20 text-blue-700' },
+    [TICKET_STATUS.ASSIGNED]: { label: 'Assigned', color: 'bg-purple-500/10 border-purple-500/20 text-purple-700' },
+    [TICKET_STATUS.IN_PROGRESS]: { label: 'In Progress', color: 'bg-amber-500/10 border-amber-500/20 text-amber-700' },
+    [TICKET_STATUS.COMPLETED]: { label: 'Resolved', color: 'bg-green-500/10 border-green-500/20 text-green-700' },
+    [TICKET_STATUS.REOPENED]: { label: 'Reopened', color: 'bg-orange-500/10 border-orange-500/20 text-orange-700' },
+    [TICKET_STATUS.CLOSED]: { label: 'Closed', color: 'bg-slate-500/10 border-slate-500/20 text-slate-700' },
+    [TICKET_STATUS.ESCALATED]: { label: 'Escalated', color: 'bg-red-500/10 border-red-500/20 text-red-700' },
+  };
+
+  const kanbanColumns = KANBAN_COLUMN_ORDER.map(status => ({
+    id: status,
+    ...(STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-700' })
+  }));
 
   return (
     <div className="h-[calc(100vh-6rem)] flex flex-col space-y-6">
