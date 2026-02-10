@@ -98,16 +98,21 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             # Navigate to project directory
+            echo "Navigating to /var/www/ticketing-system"
             cd /var/www/ticketing-system
+            echo "Current Directory: $(pwd)"
             
             # Pull latest changes
             git pull origin main
             
             # Frontend Build
             echo "Building Frontend..."
+            echo "Navigating to frontend..."
             cd frontend
+            echo "Current Directory (Frontend): $(pwd)"
             npm run build
             cd ..
+            echo "Returned to Root: $(pwd)"
             
             # Restart Processes
             echo "Restarting PM2 processes..."
