@@ -70,9 +70,12 @@ export default function Sidebar({ isMobile = false }) {
     const { systemSettings, fetchSystemSettings } = useSettingsStore();
 
     // Fetch system settings on mount
+    // Fetch system settings on mount (SuperAdmin only)
     useEffect(() => {
-        fetchSystemSettings().catch(() => { });
-    }, [fetchSystemSettings]);
+        if (user?.role === 'SuperAdmin') {
+            fetchSystemSettings().catch(() => { });
+        }
+    }, [fetchSystemSettings, user?.role]);
 
     // Force expanded if mobile, otherwise use store state
     const isCollapsed = isMobile ? false : sidebarCollapsed;

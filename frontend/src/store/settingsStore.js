@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import useAuthStore from './authStore';
 import {
   getSystemSettings,
   updateSystemSettings,
@@ -33,6 +34,10 @@ const useSettingsStore = create((set, get) => ({
    * Fetch system settings (SuperAdmin only)
    */
   fetchSystemSettings: async () => {
+    // Check if user is SuperAdmin
+    const user = useAuthStore.getState().user;
+    if (user?.role !== 'SuperAdmin') return;
+
     set({ systemSettingsLoading: true, systemSettingsError: null });
     try {
       const settings = await getSystemSettings();
