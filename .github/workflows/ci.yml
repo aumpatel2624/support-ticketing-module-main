@@ -118,7 +118,7 @@ jobs:
             echo "Restarting PM2 processes..."
             cd backend
             echo "Current Directory (Backend): $(pwd)"
-            pm2 reload ecosystem.config.js --env production
+            pm2 reload process.json --env production
             pm2 save
             
             echo "Deployment Complete!"
