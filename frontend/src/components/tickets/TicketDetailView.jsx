@@ -117,6 +117,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
     };
 
     const handleClaimTicket = () => {
+        window.alert('DEBUG CHK: handleClaimTicket EXECUTED');
         console.log('handleClaimTicket called');
         setPendingStatusChange({ status: 'Assigned', buttonText: 'Yes, Claim Ticket', action: 'claim_self' });
         setShowStatusConfirmDialog(true);
@@ -125,6 +126,12 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
     // Performs the actual status update API call
     const executeStatusUpdate = async (newStatus) => {
         console.log('executeStatusUpdate called', newStatus);
+
+        // Debug check to see if we accidentally fell through here
+        if (newStatus === 'Assigned' && ticket.status === 'New' && user?.role === 'TeamMember') {
+            window.alert('DEBUG CHK: FELL THROUGH TO executeStatusUpdate! This is wrong.');
+        }
+
         try {
             setIsUpdatingStatus(true);
             const response = await ticketService.updateTicketStatus(ticket._id, newStatus);
