@@ -116,28 +116,10 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
         setShowChangeStatusModal(true);
     };
 
-    const handleStatusUpdate = async (newStatus) => {
-        // If changing to "Assigned", show assign modal if:
-        // 1. Ticket is unassigned (New -> Assigned) AND user is NOT TeamMember (Admins assigning)
-        // 2. Ticket is Reopened (Reopened -> Assigned) - to confirm/change assignee
-        const isTeamMemberClaim = newStatus === 'Assigned' && ticket.status === 'New' && user?.role === 'TeamMember';
-
-        if (newStatus === 'Assigned' && ((!ticket.assignedTo && !isTeamMemberClaim) || ticket.status === 'Reopened')) {
-            setPendingStatus(newStatus);
-            setShowAssignModal(true);
-            return;
-        }
-
+    // Performs the actual status update API call
+    const executeStatusUpdate = async (newStatus) => {
         try {
             setIsUpdatingStatus(true);
-            const updateData = { status: newStatus };
-
-            // If it's a Team Member claiming the ticket, ensuring it gets assigned to them
-            // The backend logic I added earlier handles this via updateStatus if I move it to Assigned.
-            // But I can also explicitly set assignedTo here if needed, or rely on backend.
-            // Backend `updateStatus` logic: if TeamMember && New -> Assigned, checks `isClaiming` and sets assignedTo = req.user._id.
-
-            // Use dedicate status update endpoint (PATCH) which allows assignees to change status
             const response = await ticketService.updateTicketStatus(ticket._id, newStatus);
             if (response.data) {
                 setTicket(response.data);
@@ -152,6 +134,26 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
         } finally {
             setIsUpdatingStatus(false);
         }
+    };
+
+    const handleStatusUpdate = async (newStatus) => {
+        // TeamMember claiming a New ticket → show claim confirmation dialog
+        const isTeamMemberClaim = newStatus === 'Assigned' && ticket.status === 'New' && user?.role === 'TeamMember';
+        if (isTeamMemberClaim) {
+            setPendingStatusChange({ status: newStatus, buttonText: 'Yes, Claim Ticket', action: 'claim_self' });
+            setShowStatusConfirmDialog(true);
+            return;
+        }
+
+        // Admin/SuperAdmin assigning, or Reopened → Assigned: show assign modal
+        if (newStatus === 'Assigned' && (!ticket.assignedTo || ticket.status === 'Reopened')) {
+            setPendingStatus(newStatus);
+            setShowAssignModal(true);
+            return;
+        }
+
+        // All other status changes → execute directly
+        await executeStatusUpdate(newStatus);
     };
 
     const handleReopenCallback = () => {
@@ -566,10 +568,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                                     <Button
                                                         size="sm"
                                                         className={`w-full shadow-sm transition-all hover:shadow-md ${nextStatus === 'Resolved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                                                        onClick={() => {
-                                                            setPendingStatusChange({ status: nextStatus, buttonText });
-                                                            setShowStatusConfirmDialog(true);
-                                                        }}
+                                                        onClick={() => handleStatusUpdate(nextStatus)}
                                                         disabled={isUpdatingStatus || !isReady}
                                                         variant={buttonVariant}
                                                     >
@@ -731,15 +730,21 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                         setPendingStatusChange(null);
                     }
                 }}
-                title="Confirm Status Change"
-                description={`Are you sure you want to change the ticket status to "${pendingStatusChange?.status}"?`}
+                title={pendingStatusChange?.action === 'claim_self' ? 'Claim Ticket' : 'Confirm Status Change'}
+                description={
+                    pendingStatusChange?.action === 'claim_self'
+                        ? `Are you sure you want to claim ticket "${ticket.ticketId}"? It will be assigned to you.`
+                        : `Are you sure you want to change the ticket status to "${pendingStatusChange?.status}"?`
+                }
                 confirmText={pendingStatusChange?.buttonText || 'Confirm'}
                 cancelText="Cancel"
                 onConfirm={() => {
-                    if (pendingStatusChange?.action === 'reassign_self') {
+                    if (pendingStatusChange?.action === 'claim_self') {
+                        executeStatusUpdate(pendingStatusChange.status);
+                    } else if (pendingStatusChange?.action === 'reassign_self') {
                         handleReassignUser(user);
                     } else if (pendingStatusChange?.status) {
-                        handleStatusUpdate(pendingStatusChange.status);
+                        executeStatusUpdate(pendingStatusChange.status);
                     }
                     setShowStatusConfirmDialog(false);
                     setPendingStatusChange(null);
