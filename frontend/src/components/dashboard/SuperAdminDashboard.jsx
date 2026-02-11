@@ -242,7 +242,7 @@ export default function SuperAdminDashboard({ user }) {
 
 
             {/* Admin Dashboard Content - Inherited */}
-            <AdminDashboard user={user} />
+            {/* <AdminDashboard user={user} /> */}
 
             {/* Quick Actions Footer */}
             <Card className="border-none shadow-premium bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5">
