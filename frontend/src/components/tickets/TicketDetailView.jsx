@@ -116,6 +116,11 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
         setShowChangeStatusModal(true);
     };
 
+    const handleClaimTicket = () => {
+        setPendingStatusChange({ status: 'Assigned', buttonText: 'Yes, Claim Ticket', action: 'claim_self' });
+        setShowStatusConfirmDialog(true);
+    };
+
     // Performs the actual status update API call
     const executeStatusUpdate = async (newStatus) => {
         try {
@@ -140,8 +145,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
         // TeamMember claiming a New ticket → show claim confirmation dialog
         const isTeamMemberClaim = newStatus === 'Assigned' && ticket.status === 'New' && user?.role === 'TeamMember';
         if (isTeamMemberClaim) {
-            setPendingStatusChange({ status: newStatus, buttonText: 'Yes, Claim Ticket', action: 'claim_self' });
-            setShowStatusConfirmDialog(true);
+            handleClaimTicket();
             return;
         }
 
@@ -531,12 +535,15 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                             let buttonText = '';
                                             let buttonVariant = 'default'; // Use default (primary) for main action
 
+                                            let onClickHandler = null;
+
                                             switch (ticket.status) {
                                                 // Confirm Claim Ticket (New -> Assigned for TeamMember)
                                                 case 'New':
                                                     if (user && user.role === 'TeamMember') {
                                                         nextStatus = 'Assigned';
                                                         buttonText = 'Claim Ticket';
+                                                        onClickHandler = handleClaimTicket;
                                                     } else {
                                                         nextStatus = 'Assigned';
                                                         buttonText = 'Assign Ticket';
@@ -568,7 +575,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                                     <Button
                                                         size="sm"
                                                         className={`w-full shadow-sm transition-all hover:shadow-md ${nextStatus === 'Resolved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                                                        onClick={() => handleStatusUpdate(nextStatus)}
+                                                        onClick={onClickHandler || (() => handleStatusUpdate(nextStatus))}
                                                         disabled={isUpdatingStatus || !isReady}
                                                         variant={buttonVariant}
                                                     >
