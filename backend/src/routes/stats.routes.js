@@ -49,7 +49,7 @@ const cache = require('../middleware/cache');
  *       200:
  *         description: SuperAdmin dashboard statistics retrieved
  */
-router.get('/superadmin/stats', authenticate, requireSuperAdmin, cache(60), getSuperAdminStats);
+router.get('/superadmin/stats', authenticate, requireSuperAdmin, cache(5), getSuperAdminStats);
 
 /**
  * @swagger
@@ -64,7 +64,7 @@ router.get('/superadmin/stats', authenticate, requireSuperAdmin, cache(60), getS
  *       200:
  *         description: Admin dashboard statistics retrieved
  */
-router.get('/admin/stats', authenticate, requireAdmin, cache(60), getAdminStats);
+router.get('/admin/stats', authenticate, requireAdmin, cache(5), getAdminStats);
 
 /**
  * @swagger
@@ -79,7 +79,7 @@ router.get('/admin/stats', authenticate, requireAdmin, cache(60), getAdminStats)
  *       200:
  *         description: Team Member dashboard statistics retrieved
  */
-router.get('/team-member/stats', authenticate, requireTeamMember, cache(60), getTeamMemberStats);
+router.get('/team-member/stats', authenticate, requireTeamMember, cache(5), getTeamMemberStats);
 
 /**
  * @swagger
@@ -94,7 +94,7 @@ router.get('/team-member/stats', authenticate, requireTeamMember, cache(60), get
  *       200:
  *         description: Normal User dashboard statistics retrieved
  */
-router.get('/user/stats', authenticate, cache(60), getNormalUserStats);
+router.get('/user/stats', authenticate, cache(5), getNormalUserStats);
 
 // ========================================================================================
 // LEGACY / SHARED ENDPOINTS
