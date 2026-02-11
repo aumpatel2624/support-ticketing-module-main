@@ -396,7 +396,18 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                         ticket.assignedTo?._id?.toString() !== user._id?.toString() &&
                         ticket.assignedTo?.toString() !== user._id?.toString() && (
                             <Button
-                                onClick={() => handleReassignUser(user)}
+                                onClick={() => {
+                                    // Use same confirmation dialog but set pendingStatusChange special case or handle via onConfirm
+                                    // Actually, let's reuse handleReassignUser in onConfirm if modified?
+                                    // Or better: set a special state or reuse ConfirmDialog differently.
+                                    // Simplest: Custom confirm for this action reusing the same dialog state.
+                                    setPendingStatusChange({
+                                        action: 'reassign_self',
+                                        buttonText: 'Yes, Assign to Me',
+                                        status: 'Assigned' // Just for display
+                                    });
+                                    setShowStatusConfirmDialog(true);
+                                }}
                                 variant="outline"
                                 size="sm"
                                 className="border-blue-500 text-blue-600 hover:bg-blue-50"
@@ -519,6 +530,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                             let buttonVariant = 'default'; // Use default (primary) for main action
 
                                             switch (ticket.status) {
+                                                // Confirm Claim Ticket (New -> Assigned for TeamMember)
                                                 case 'New':
                                                     if (user && user.role === 'TeamMember') {
                                                         nextStatus = 'Assigned';
@@ -559,6 +571,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                                             setShowStatusConfirmDialog(true);
                                                         }}
                                                         disabled={isUpdatingStatus || !isReady}
+                                                        variant={buttonVariant}
                                                     >
                                                         {buttonText}
                                                     </Button>
@@ -723,7 +736,9 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                 confirmText={pendingStatusChange?.buttonText || 'Confirm'}
                 cancelText="Cancel"
                 onConfirm={() => {
-                    if (pendingStatusChange?.status) {
+                    if (pendingStatusChange?.action === 'reassign_self') {
+                        handleReassignUser(user);
+                    } else if (pendingStatusChange?.status) {
                         handleStatusUpdate(pendingStatusChange.status);
                     }
                     setShowStatusConfirmDialog(false);
