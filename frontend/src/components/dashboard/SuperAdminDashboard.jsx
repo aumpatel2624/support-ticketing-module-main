@@ -113,13 +113,13 @@ function PlatformTotalsBanner({ totals, loading }) {
                         </div>
                     </Link>
 
-                    <Link href="/tickets?status=New,Assigned,InProgress" prefetch={false} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
+                    <Link href="/tickets?status=New,Assigned,InProgress,Reopened,Escalated" prefetch={false} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
                         <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center">
                             <Clock className="h-5 w-5 text-warning" />
                         </div>
                         <div>
                             <p className="text-2xl font-extrabold">{totals.openTickets}</p>
-                            <p className="text-xs text-muted-foreground">Open Tickets</p>
+                            <p className="text-xs text-muted-foreground">Active Tickets</p>
                         </div>
                     </Link>
 
