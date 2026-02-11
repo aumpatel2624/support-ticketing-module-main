@@ -117,12 +117,14 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
     };
 
     const handleClaimTicket = () => {
+        console.log('handleClaimTicket called');
         setPendingStatusChange({ status: 'Assigned', buttonText: 'Yes, Claim Ticket', action: 'claim_self' });
         setShowStatusConfirmDialog(true);
     };
 
     // Performs the actual status update API call
     const executeStatusUpdate = async (newStatus) => {
+        console.log('executeStatusUpdate called', newStatus);
         try {
             setIsUpdatingStatus(true);
             const response = await ticketService.updateTicketStatus(ticket._id, newStatus);
@@ -541,9 +543,9 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                                 // Confirm Claim Ticket (New -> Assigned for TeamMember)
                                                 case 'New':
                                                     if (user && user.role === 'TeamMember') {
+                                                        console.log('Render: Claim Ticket button for TeamMember');
                                                         nextStatus = 'Assigned';
                                                         buttonText = 'Claim Ticket';
-                                                        onClickHandler = handleClaimTicket;
                                                     } else {
                                                         nextStatus = 'Assigned';
                                                         buttonText = 'Assign Ticket';
@@ -571,11 +573,13 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                             }
 
                                             if (nextStatus) {
+                                                const isClaimAction = ticket.status === 'New' && user?.role === 'TeamMember';
+
                                                 return (
                                                     <Button
                                                         size="sm"
                                                         className={`w-full shadow-sm transition-all hover:shadow-md ${nextStatus === 'Resolved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                                                        onClick={onClickHandler || (() => handleStatusUpdate(nextStatus))}
+                                                        onClick={isClaimAction ? handleClaimTicket : () => handleStatusUpdate(nextStatus)}
                                                         disabled={isUpdatingStatus || !isReady}
                                                         variant={buttonVariant}
                                                     >
