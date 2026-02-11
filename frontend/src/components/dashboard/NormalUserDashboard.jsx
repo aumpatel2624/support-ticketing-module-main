@@ -15,12 +15,14 @@ import UserActiveTicketsTable from './UserActiveTicketsTable';
 import UserRecentResolutionsTable from './UserRecentResolutionsTable';
 import ticketService from '@/lib/services/ticketService';
 import analyticsService from '@/lib/services/analyticsService';
+import categoryService from '@/lib/services/categoryService';
 import { TICKET_STATUS, TICKET_PRIORITY, KANBAN_COLUMN_ORDER } from '@/lib/constants';
 import { cn, getInitials, getAvatarColor, formatDate } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function NormalUserDashboard({ user }) {
   const [tickets, setTickets] = useState([]);
+  const [categories, setCategories] = useState({});
   const [stats, setStats] = useState({
     myOpenTickets: 0,
     awaitingResponse: 0,
@@ -40,13 +42,17 @@ export default function NormalUserDashboard({ user }) {
         setLoading(true);
 
         // Fetch stats from server and tickets in parallel
-        const [userStats, ticketsData] = await Promise.all([
+        const [userStats, ticketsData, categoriesData] = await Promise.all([
           analyticsService.getNormalUserDashboardStats().catch(err => {
             console.warn('Failed to load user stats:', err);
             return null;
           }),
           ticketService.getMyTickets({ limit: 100 }).catch(err => {
             console.warn('Failed to load tickets:', err);
+            return { data: [] };
+          }),
+          categoryService.getCategories().catch(err => {
+            console.warn('Failed to load categories:', err);
             return { data: [] };
           })
         ]);
@@ -65,6 +71,15 @@ export default function NormalUserDashboard({ user }) {
         if (ticketsData) {
           const ticketArray = Array.isArray(ticketsData.data) ? ticketsData.data : (Array.isArray(ticketsData) ? ticketsData : []);
           setTickets(ticketArray);
+        }
+
+        // Process categories into a map for easy lookup
+        if (categoriesData && categoriesData.data) {
+          const categoryMap = {};
+          categoriesData.data.forEach(cat => {
+            categoryMap[cat._id] = cat.name;
+          });
+          setCategories(categoryMap);
         }
 
       } catch (error) {
@@ -263,7 +278,7 @@ export default function NormalUserDashboard({ user }) {
               <CardDescription>All your open service requests</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <UserActiveTicketsTable tickets={tickets} loading={loading} />
+              <UserActiveTicketsTable tickets={tickets} loading={loading} categories={categories} />
             </CardContent>
           </Card>
 

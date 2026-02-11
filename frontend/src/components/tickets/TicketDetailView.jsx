@@ -156,8 +156,25 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
             return;
         }
 
-        // All other status changes → execute directly
-        await executeStatusUpdate(newStatus);
+        // All other status changes → Show confirmation dialog
+        const actionMap = {
+            'InProgress': { text: 'Start Progress', message: 'Are you sure you want to start working on this ticket?' },
+            'Resolved': { text: 'Resolve Ticket', message: 'Are you sure you want to resolve this ticket?' },
+            'Closed': { text: 'Close Ticket', message: 'Are you sure you want to permanently close this ticket?' },
+            'Reopened': { text: 'Reopen Ticket', message: 'Are you sure you want to reopen this ticket?' },
+        };
+
+        const actionDetails = actionMap[newStatus] || {
+            text: 'Change Status',
+            message: `Are you sure you want to change status to ${newStatus}?`
+        };
+
+        setPendingStatusChange({
+            status: newStatus,
+            buttonText: `Yes, ${actionDetails.text}`,
+            message: actionDetails.message
+        });
+        setShowStatusConfirmDialog(true);
     };
 
     const handleReopenCallback = () => {
@@ -742,9 +759,10 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                 }}
                 title={pendingStatusChange?.action === 'claim_self' ? 'Claim Ticket' : 'Confirm Status Change'}
                 description={
-                    pendingStatusChange?.action === 'claim_self'
+                    pendingStatusChange?.message ||
+                    (pendingStatusChange?.action === 'claim_self'
                         ? `Are you sure you want to claim ticket "${ticket.ticketId}"? It will be assigned to you.`
-                        : `Are you sure you want to change the ticket status to "${pendingStatusChange?.status}"?`
+                        : `Are you sure you want to change the ticket status to "${pendingStatusChange?.status}"?`)
                 }
                 confirmText={pendingStatusChange?.buttonText || 'Confirm'}
                 cancelText="Cancel"

@@ -32,7 +32,7 @@ export default function StatsCard({
 
   const cardContent = (
     <Card className={cn(
-      "group relative overflow-hidden border-none shadow-premium transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 bg-card",
+      "group relative overflow-hidden border-none shadow-premium transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 bg-card h-full",
       href && "cursor-pointer",
       className
     )}>
