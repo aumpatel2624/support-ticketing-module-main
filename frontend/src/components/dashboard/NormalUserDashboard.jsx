@@ -14,6 +14,7 @@ import UserPriorityChart from './UserPriorityChart';
 import UserActiveTicketsTable from './UserActiveTicketsTable';
 import UserRecentResolutionsTable from './UserRecentResolutionsTable';
 import ticketService from '@/lib/services/ticketService';
+import analyticsService from '@/lib/services/analyticsService';
 import { TICKET_STATUS, TICKET_PRIORITY, KANBAN_COLUMN_ORDER } from '@/lib/constants';
 import { cn, getInitials, getAvatarColor, formatDate } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
@@ -37,49 +38,33 @@ export default function NormalUserDashboard({ user }) {
     const loadData = async () => {
       try {
         setLoading(true);
-        // Fetch all user's tickets (limit 100)
-        const ticketsData = await ticketService.getMyTickets({ limit: 100 });
 
+        // Fetch stats from server and tickets in parallel
+        const [userStats, ticketsData] = await Promise.all([
+          analyticsService.getNormalUserDashboardStats().catch(err => {
+            console.warn('Failed to load user stats:', err);
+            return null;
+          }),
+          ticketService.getMyTickets({ limit: 100 }).catch(err => {
+            console.warn('Failed to load tickets:', err);
+            return { data: [] };
+          })
+        ]);
+
+        // Set server-calculated stats
+        if (userStats) {
+          setStats({
+            myOpenTickets: userStats.myOpenTickets || 0,
+            awaitingResponse: userStats.awaitingResponse || 0,
+            resolvedThisMonth: userStats.resolvedThisMonth || 0,
+            avgResolutionTime: userStats.avgResolutionTime || '0h'
+          });
+        }
+
+        // Set tickets for tables/kanban
         if (ticketsData) {
           const ticketArray = Array.isArray(ticketsData.data) ? ticketsData.data : (Array.isArray(ticketsData) ? ticketsData : []);
           setTickets(ticketArray);
-
-          // Calculate stats
-          const now = new Date();
-          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-          const myOpenTickets = ticketArray.filter(t =>
-            t.status !== 'Resolved' && t.status !== 'Closed'
-          ).length;
-
-          const awaitingResponse = ticketArray.filter(t =>
-            t.status !== 'Resolved' && t.status !== 'Closed' && t.status !== 'InProgress'
-          ).length;
-
-          const resolvedThisMonth = ticketArray.filter(t =>
-            t.status === 'Resolved' &&
-            t.resolvedAt && new Date(t.resolvedAt) >= monthStart
-          ).length;
-
-          // Calculate average resolution time
-          const resolvedTickets = ticketArray.filter(t => t.resolvedAt && t.createdAt);
-          let avgResolutionTime = '0h';
-          if (resolvedTickets.length > 0) {
-            const totalHours = resolvedTickets.reduce((sum, t) => {
-              const created = new Date(t.createdAt);
-              const resolved = new Date(t.resolvedAt);
-              return sum + ((resolved - created) / (1000 * 60 * 60));
-            }, 0);
-            const avgHours = Math.round(totalHours / resolvedTickets.length);
-            avgResolutionTime = avgHours > 24 ? `${Math.round(avgHours / 24)}d` : `${avgHours}h`;
-          }
-
-          setStats({
-            myOpenTickets,
-            awaitingResponse,
-            resolvedThisMonth,
-            avgResolutionTime
-          });
         }
 
       } catch (error) {

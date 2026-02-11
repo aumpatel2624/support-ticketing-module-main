@@ -36,7 +36,7 @@ export default function TeamMemberDashboard({ user }) {
 
                 // Fetch personal performance stats and tickets in parallel
                 const [performanceData, ticketsData] = await Promise.all([
-                    analyticsService.getMyPerformance().catch(err => {
+                    analyticsService.getTeamMemberDashboardStats().catch(err => {
                         console.warn('Failed to load personal performance:', err);
                         return null;
                     }),

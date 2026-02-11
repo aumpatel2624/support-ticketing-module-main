@@ -156,8 +156,8 @@ export default function SuperAdminDashboard({ user }) {
         const fetchDepartmentStats = async () => {
             try {
                 setLoading(true);
-                const data = await analyticsService.getDepartmentBreakdown();
-                setDepartmentBreakdown(data);
+                const data = await analyticsService.getSuperAdminDashboardStats();
+                setDepartmentBreakdown(data || { departments: [], totals: {} });
             } catch (error) {
                 console.error('Error fetching department breakdown:', error);
             } finally {
@@ -242,7 +242,7 @@ export default function SuperAdminDashboard({ user }) {
 
 
             {/* Admin Dashboard Content - Inherited */}
-            {/* <AdminDashboard user={user} /> */}
+            <AdminDashboard user={user} />
 
             {/* Quick Actions Footer */}
             <Card className="border-none shadow-premium bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5">

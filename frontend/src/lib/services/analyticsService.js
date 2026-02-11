@@ -194,6 +194,74 @@ const analyticsService = {
     async getMyPerformance() {
         const response = await api.get(`${API_ENDPOINTS.ANALYTICS}/my-performance`);
         return response.data?.data || {};
+    },
+
+    // ========================================================================
+    // ROLE-SPECIFIC DASHBOARD STATS — new /{role}/stats endpoints
+    // ========================================================================
+
+    /**
+     * Get SuperAdmin dashboard stats (department breakdown only)
+     */
+    async getSuperAdminDashboardStats() {
+        const response = await api.get(`${API_ENDPOINTS.ANALYTICS}/superadmin/stats`);
+        return response.data?.data || { departments: [], totals: {} };
+    },
+
+    /**
+     * Get Admin dashboard stats (department-scoped)
+     */
+    async getAdminDashboardStats() {
+        const response = await api.get(`${API_ENDPOINTS.ANALYTICS}/admin/stats`);
+        const { data } = response.data;
+
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const formattedTrend = (data.monthlyTrend || []).map(item => ({
+            name: `${monthNames[item._id.month - 1]} ${item._id.year % 100}`,
+            total: item.count
+        }));
+
+        const statusDistribution = Object.entries(data.statusStats || {}).map(([name, value]) => ({
+            name, value, breakdown: data.statusBreakdown?.[name] || []
+        }));
+        const priorityDistribution = Object.entries(data.priorityStats || {}).map(([name, value]) => ({
+            name, value, breakdown: data.priorityBreakdown?.[name] || []
+        }));
+
+        return {
+            totalTickets: data.overview?.total || 0,
+            pendingTickets: data.overview?.open || 0,
+            resolvedTickets: data.overview?.resolved || 0,
+            slaBreached: data.overview?.atRisk || 0,
+            activeAgents: data.activeAgents || 0,
+            avgResolutionTime: data.overview?.avgResolutionTime || 0,
+            avgResponseTime: data.avgResponseTime || 0,
+            statusDistribution,
+            priorityDistribution,
+            monthlyTrend: formattedTrend,
+            trends: data.trends || { activeTickets: 0, slaRisk: 0, responseTime: 0, resolutionTime: 0 },
+            teamCapacity: data.teamCapacity || { active: 0, total: 0, percentage: 0 },
+            firstContactResolution: data.firstContactResolution || { percentage: 0, totalResolved: 0, fcrCount: 0 },
+            ticketBacklog: data.ticketBacklog || 0,
+            resolutionRateToday: data.resolutionRateToday || { percentage: 0, resolvedToday: 0, createdToday: 0 },
+            slaCompliance: data.slaCompliance || 0
+        };
+    },
+
+    /**
+     * Get Team Member dashboard stats (personal KPIs)
+     */
+    async getTeamMemberDashboardStats() {
+        const response = await api.get(`${API_ENDPOINTS.ANALYTICS}/team-member/stats`);
+        return response.data?.data || {};
+    },
+
+    /**
+     * Get Normal User dashboard stats (own ticket stats, server-calculated)
+     */
+    async getNormalUserDashboardStats() {
+        const response = await api.get(`${API_ENDPOINTS.ANALYTICS}/user/stats`);
+        return response.data?.data || {};
     }
 };
 

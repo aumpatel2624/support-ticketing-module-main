@@ -16,7 +16,11 @@ const {
     getAuditLog,
     getDepartmentBreakdown,
     getMyPerformance,
-    getFeedbackStats
+    getFeedbackStats,
+    getSuperAdminStats,
+    getAdminStats,
+    getTeamMemberStats,
+    getNormalUserStats
 } = require('../controllers/stats.controller');
 const { authenticate } = require('../middleware/auth');
 const { requireAdmin, requireSuperAdmin, requireTeamMember } = require('../middleware/rbac');
@@ -28,11 +32,79 @@ const cache = require('../middleware/cache');
  *   description: Statistics and reporting endpoints
  */
 
+// ========================================================================================
+// ROLE-SPECIFIC DASHBOARD STATS — /{role}/stats pattern
+// ========================================================================================
+
+/**
+ * @swagger
+ * /stats/superadmin/stats:
+ *   get:
+ *     summary: Get SuperAdmin dashboard statistics
+ *     description: Platform-wide stats including department breakdown, trends, team capacity, FCR, backlog, resolution rates
+ *     tags: [Stats]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: SuperAdmin dashboard statistics retrieved
+ */
+router.get('/superadmin/stats', authenticate, requireSuperAdmin, cache(60), getSuperAdminStats);
+
+/**
+ * @swagger
+ * /stats/admin/stats:
+ *   get:
+ *     summary: Get Admin dashboard statistics
+ *     description: Department-scoped stats including trends, team capacity, FCR, backlog, resolution rates
+ *     tags: [Stats]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Admin dashboard statistics retrieved
+ */
+router.get('/admin/stats', authenticate, requireAdmin, cache(60), getAdminStats);
+
+/**
+ * @swagger
+ * /stats/team-member/stats:
+ *   get:
+ *     summary: Get Team Member dashboard statistics
+ *     description: Personal KPIs including assigned/resolved tickets, SLA compliance, response times, workload
+ *     tags: [Stats]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Team Member dashboard statistics retrieved
+ */
+router.get('/team-member/stats', authenticate, requireTeamMember, cache(60), getTeamMemberStats);
+
+/**
+ * @swagger
+ * /stats/user/stats:
+ *   get:
+ *     summary: Get Normal User dashboard statistics
+ *     description: User's own ticket stats including open tickets, awaiting response, resolution times
+ *     tags: [Stats]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Normal User dashboard statistics retrieved
+ */
+router.get('/user/stats', authenticate, cache(60), getNormalUserStats);
+
+// ========================================================================================
+// LEGACY / SHARED ENDPOINTS
+// ========================================================================================
+
 /**
  * @swagger
  * /stats/dashboard:
  *   get:
- *     summary: Get dashboard statistics
+ *     summary: Get dashboard statistics (legacy — use role-specific endpoints instead)
  *     description: Retrieve metrics for dashboard visualizations including trends, team capacity, FCR, backlog, and resolution rates
  *     tags: [Stats]
  *     security:

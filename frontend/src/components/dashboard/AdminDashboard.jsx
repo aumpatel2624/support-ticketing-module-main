@@ -243,7 +243,7 @@ export default function AdminDashboard({ user }) {
                     agentsOutput,
                     criticalOutput
                 ] = await Promise.all([
-                    analyticsService.getDashboardStats().catch(err => {
+                    analyticsService.getAdminDashboardStats().catch(err => {
                         console.warn('Dashboard stats failed:', err);
                         return null;
                     }),

@@ -475,6 +475,421 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     });
 });
 
+// ========================================================================================
+// SHARED HELPERS — used by role-specific stats functions below
+// ========================================================================================
+
+/** Build a Mongo $match filter based on the caller's role */
+const buildMatchFilter = (role, userDep, userId) => {
+    const match = {};
+    if (role === 'NormalUser') match.createdBy = userId;
+    else if (role === 'Admin') match.departmentId = userDep;
+    else if (role === 'TeamMember') match.assignedTo = userId;
+    // SuperAdmin → empty match = all tickets
+    return match;
+};
+
+/** Status counts aggregation */
+const getStatusCounts = async (match) => {
+    const counts = await Ticket.aggregate([
+        { $match: match },
+        { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+    return counts.reduce((acc, c) => { acc[c._id] = c.count; return acc; }, {});
+};
+
+/** Priority counts aggregation */
+const getPriorityCounts = async (match) => {
+    const counts = await Ticket.aggregate([
+        { $match: match },
+        { $group: { _id: '$priority', count: { $sum: 1 } } }
+    ]);
+    return counts.reduce((acc, c) => { acc[c._id] = c.count; return acc; }, {});
+};
+
+/** Average resolution time in hours */
+const getAvgResolutionTime = async (match) => {
+    const result = await Ticket.aggregate([
+        { $match: { ...match, status: { $in: ['Resolved', 'Closed'] }, resolvedAt: { $ne: null } } },
+        { $group: { _id: null, avgTime: { $avg: { $subtract: ['$resolvedAt', '$createdAt'] } } } }
+    ]);
+    return result.length > 0 ? Math.round(result[0].avgTime / (1000 * 60 * 60)) : 0;
+};
+
+/** SLA compliance percentage */
+const getSLAComplianceRate = async (match) => {
+    const total = await Ticket.countDocuments({ ...match, status: { $in: ['Resolved', 'Closed'] } });
+    const met = await Ticket.countDocuments({ ...match, status: { $in: ['Resolved', 'Closed'] }, slaBreach: false });
+    return total > 0 ? Math.round((met / total) * 100) : 100;
+};
+
+/** Week-over-week trend helper (same as inline helper) */
+const calcTrend = (current, previous) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return Math.round(((current - previous) / previous) * 100);
+};
+
+/** Status/Priority breakdown by department (for SuperAdmin/Admin) */
+const getBreakdownByDepartment = async (match, field) => {
+    const data = await Ticket.aggregate([
+        { $match: match },
+        { $group: { _id: { val: `$${field}`, department: '$departmentId' }, count: { $sum: 1 } } },
+        { $lookup: { from: 'departments', localField: '_id.department', foreignField: '_id', as: 'dept' } },
+        { $unwind: { path: '$dept', preserveNullAndEmptyArrays: true } },
+        { $project: { val: '$_id.val', departmentName: { $ifNull: ['$dept.name', 'Unassigned'] }, count: 1, _id: 0 } },
+        { $sort: { count: -1 } }
+    ]);
+    return data.reduce((acc, c) => {
+        if (!acc[c.val]) acc[c.val] = [];
+        acc[c.val].push({ name: c.departmentName, value: c.count });
+        return acc;
+    }, {});
+};
+
+/** Monthly trend (last 6 months) */
+const getMonthlyTrend = async (match) => {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    return Ticket.aggregate([
+        { $match: { ...match, createdAt: { $gte: sixMonthsAgo } } },
+        { $group: { _id: { month: { $month: '$createdAt' }, year: { $year: '$createdAt' } }, count: { $sum: 1 } } },
+        { $sort: { '_id.year': 1, '_id.month': 1 } }
+    ]);
+};
+
+/** Active agents count */
+const getActiveAgentsCounts = async (role, userDep) => {
+    const filter = { role: { $in: ['Admin', 'TeamMember'] }, isActive: true };
+    if (role === 'Admin') filter.department = userDep;
+    const active = await User.countDocuments(filter);
+    const total = await User.countDocuments({ role: { $in: ['Admin', 'TeamMember'] }, ...(filter.department && { department: filter.department }) });
+    return { active, total, percentage: total > 0 ? Math.round((active / total) * 100) : 0 };
+};
+
+/** First Contact Resolution stats */
+const getFCRStats = async (match) => {
+    const result = await Ticket.aggregate([
+        { $match: { ...match, status: { $in: ['Resolved', 'Closed'] } } },
+        { $project: { commentCount: { $size: { $ifNull: ['$comments', []] } } } },
+        { $group: { _id: null, total: { $sum: 1 }, fcrCount: { $sum: { $cond: [{ $eq: ['$commentCount', 1] }, 1, 0] } } } }
+    ]);
+    const stats = result[0] || { total: 0, fcrCount: 0 };
+    return {
+        percentage: stats.total > 0 ? Math.round((stats.fcrCount / stats.total) * 100) : 0,
+        totalResolved: stats.total,
+        fcrCount: stats.fcrCount
+    };
+};
+
+/** Week-over-week trends for active tickets, SLA risk, response time, resolution time */
+const getWeekOverWeekTrends = async (match) => {
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+    const [curActive, prevActive, curSLA, prevSLA] = await Promise.all([
+        Ticket.countDocuments({ ...match, status: { $nin: ['Resolved', 'Closed'] }, createdAt: { $gte: oneWeekAgo } }),
+        Ticket.countDocuments({ ...match, status: { $nin: ['Resolved', 'Closed'] }, createdAt: { $gte: twoWeeksAgo, $lt: oneWeekAgo } }),
+        Ticket.countDocuments({ ...match, status: { $nin: ['Resolved', 'Closed'] }, $or: [{ slaBreach: true }, { slaDeadline: { $lte: new Date(now.getTime() + 4 * 60 * 60 * 1000) } }] }),
+        Ticket.countDocuments({ ...match, status: { $nin: ['Resolved', 'Closed'] }, createdAt: { $gte: twoWeeksAgo, $lt: oneWeekAgo }, $or: [{ slaBreach: true }, { slaDeadline: { $lte: new Date(oneWeekAgo.getTime() + 4 * 60 * 60 * 1000) } }] })
+    ]);
+
+    // Response time trends
+    const aggResponseTime = async (dateFilter) => {
+        const r = await Ticket.aggregate([
+            { $match: { ...match, ...dateFilter, comments: { $exists: true, $ne: [] } } },
+            { $project: { responseTime: { $subtract: [{ $arrayElemAt: ['$comments.createdAt', 0] }, '$createdAt'] } } },
+            { $group: { _id: null, avg: { $avg: '$responseTime' } } }
+        ]);
+        return r[0]?.avg || 0;
+    };
+    const [curResp, prevResp] = await Promise.all([
+        aggResponseTime({ createdAt: { $gte: oneWeekAgo } }),
+        aggResponseTime({ createdAt: { $gte: twoWeeksAgo, $lt: oneWeekAgo } })
+    ]);
+
+    // Resolution time trends
+    const aggResolutionTime = async (dateFilter) => {
+        const r = await Ticket.aggregate([
+            { $match: { ...match, status: { $in: ['Resolved', 'Closed'] }, ...dateFilter } },
+            { $group: { _id: null, avg: { $avg: { $subtract: ['$resolvedAt', '$createdAt'] } } } }
+        ]);
+        return r[0]?.avg || 0;
+    };
+    const [curRes, prevRes] = await Promise.all([
+        aggResolutionTime({ resolvedAt: { $gte: oneWeekAgo } }),
+        aggResolutionTime({ resolvedAt: { $gte: twoWeeksAgo, $lt: oneWeekAgo } })
+    ]);
+
+    return {
+        activeTickets: calcTrend(curActive, prevActive),
+        slaRisk: calcTrend(curSLA, prevSLA),
+        responseTime: calcTrend(curResp, prevResp),
+        resolutionTime: calcTrend(curRes, prevRes)
+    };
+};
+
+/** Department distribution (ticket count per department) */
+const getDepartmentDistribution = async (match) => {
+    return Ticket.aggregate([
+        { $match: match },
+        { $group: { _id: '$departmentId', count: { $sum: 1 } } },
+        { $lookup: { from: 'departments', localField: '_id', foreignField: '_id', as: 'dept' } },
+        { $unwind: '$dept' },
+        { $project: { name: '$dept.name', count: 1 } }
+    ]);
+};
+
+// ========================================================================================
+// ROLE-SPECIFIC STATS CONTROLLERS
+// ========================================================================================
+
+/**
+ * @desc    Get SuperAdmin dashboard stats
+ * @route   GET /api/stats/superadmin/stats
+ * @access  Private (SuperAdmin only)
+ */
+const getSuperAdminStats = asyncHandler(async (req, res) => {
+    // SuperAdminDashboard only uses departmentBreakdown (departments + totals).
+    // It embeds AdminDashboard which makes its own /admin/stats call.
+    const slaCompliance = await getSLAComplianceRate({});
+
+    const departments = await Department.find({ isActive: true }).select('name _id');
+    const deptBreakdown = await Promise.all(
+        departments.map(async (dept) => {
+            const deptId = dept._id;
+            const [total, open, resolved, slaStats, resStats, deptAgents] = await Promise.all([
+                Ticket.countDocuments({ departmentId: deptId }),
+                Ticket.countDocuments({ departmentId: deptId, status: { $in: ['New', 'Assigned', 'InProgress', 'Reopened', 'Escalated'] } }),
+                Ticket.countDocuments({ departmentId: deptId, status: { $in: ['Resolved', 'Closed'] } }),
+                Ticket.aggregate([
+                    { $match: { departmentId: deptId, status: { $in: ['Resolved', 'Closed'] } } },
+                    { $group: { _id: null, total: { $sum: 1 }, breached: { $sum: { $cond: [{ $eq: ['$slaBreach', true] }, 1, 0] } } } }
+                ]),
+                Ticket.aggregate([
+                    { $match: { departmentId: deptId, status: { $in: ['Resolved', 'Closed'] }, resolvedAt: { $ne: null } } },
+                    { $group: { _id: null, avgTime: { $avg: { $subtract: ['$resolvedAt', '$createdAt'] } } } }
+                ]),
+                User.countDocuments({ department: deptId, role: { $in: ['Admin', 'TeamMember'] }, isActive: true })
+            ]);
+            const deptSla = slaStats.length > 0 && slaStats[0].total > 0
+                ? Math.round(((slaStats[0].total - slaStats[0].breached) / slaStats[0].total) * 100) : 100;
+            const avgResH = resStats.length > 0 ? Math.round(resStats[0].avgTime / (1000 * 60 * 60)) : 0;
+            return { departmentId: deptId.toString(), departmentName: dept.name, totalTickets: total, openTickets: open, resolvedTickets: resolved, slaCompliance: deptSla, avgResolutionHours: avgResH, activeAgents: deptAgents };
+        })
+    );
+
+    const deptTotals = deptBreakdown.reduce((acc, d) => ({
+        totalTickets: acc.totalTickets + d.totalTickets,
+        openTickets: acc.openTickets + d.openTickets,
+        resolvedTickets: acc.resolvedTickets + d.resolvedTickets,
+        activeAgents: acc.activeAgents + d.activeAgents
+    }), { totalTickets: 0, openTickets: 0, resolvedTickets: 0, activeAgents: 0 });
+    deptTotals.slaCompliance = slaCompliance;
+
+    res.status(200).json({
+        success: true,
+        data: {
+            departments: deptBreakdown,
+            totals: deptTotals
+        }
+    });
+});
+
+/**
+ * @desc    Get Admin dashboard stats
+ * @route   GET /api/stats/admin/stats
+ * @access  Private (Admin/SuperAdmin)
+ */
+const getAdminStats = asyncHandler(async (req, res) => {
+    const { role, department: userDep } = req.user;
+    const match = {};
+    if (role === 'Admin') match.departmentId = userDep;
+    // SuperAdmin calling this endpoint sees all (fallback)
+
+    const [
+        statusStats,
+        priorityStats,
+        monthlyTrend,
+        agents,
+        avgResolutionTime,
+        trends,
+        fcr,
+        slaCompliance,
+        statusBreakdown,
+        priorityBreakdown
+    ] = await Promise.all([
+        getStatusCounts(match),
+        getPriorityCounts(match),
+        getMonthlyTrend(match),
+        getActiveAgentsCounts(role, userDep),
+        getAvgResolutionTime(match),
+        getWeekOverWeekTrends(match),
+        getFCRStats(match),
+        getSLAComplianceRate(match),
+        getBreakdownByDepartment(match, 'status'),
+        getBreakdownByDepartment(match, 'priority')
+    ]);
+
+    // Derived overview
+    const activeStatuses = ['New', 'Assigned', 'InProgress', 'Reopened', 'Escalated'];
+    const terminalStatuses = ['Resolved', 'Closed'];
+    const overviewTotal = Object.values(statusStats).reduce((sum, c) => sum + c, 0);
+    const overviewOpen = activeStatuses.reduce((sum, s) => sum + (statusStats[s] || 0), 0);
+    const overviewResolved = terminalStatuses.reduce((sum, s) => sum + (statusStats[s] || 0), 0);
+    const overviewAtRisk = await Ticket.countDocuments({ ...match, status: { $nin: terminalStatuses }, slaBreach: true });
+
+    // Backlog
+    const now = new Date();
+    const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    const backlogCount = await Ticket.countDocuments({ ...match, createdAt: { $lt: fortyEightHoursAgo }, status: 'New', assignedTo: null });
+
+    // Resolution rate today
+    const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+    const [resolvedToday, createdToday] = await Promise.all([
+        Ticket.countDocuments({ ...match, status: { $in: ['Resolved', 'Closed'] }, resolvedAt: { $gte: startOfToday } }),
+        Ticket.countDocuments({ ...match, createdAt: { $gte: startOfToday } })
+    ]);
+    const resolutionRateToday = createdToday > 0 ? Math.round((resolvedToday / createdToday) * 100) : 0;
+
+    res.status(200).json({
+        success: true,
+        data: {
+            statusStats,
+            priorityStats,
+            monthlyTrend,
+            activeAgents: agents.active,
+            overview: { total: overviewTotal, open: overviewOpen, atRisk: overviewAtRisk, resolved: overviewResolved, avgResolutionTime },
+            trends,
+            teamCapacity: agents,
+            firstContactResolution: fcr,
+            ticketBacklog: backlogCount,
+            resolutionRateToday: { percentage: resolutionRateToday, resolvedToday, createdToday },
+            slaCompliance,
+            statusBreakdown,
+            priorityBreakdown
+        }
+    });
+});
+
+/**
+ * @desc    Get Team Member dashboard stats
+ * @route   GET /api/stats/team-member/stats
+ * @access  Private (TeamMember/Admin/SuperAdmin)
+ */
+const getTeamMemberStats = asyncHandler(async (req, res) => {
+    const { _id: userId } = req.user;
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekStart = new Date(now);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+
+    const userObjId = new mongoose.Types.ObjectId(userId);
+
+    const [
+        totalAssigned,
+        totalResolved,
+        activeTicketCount,
+        completedToday,
+        completedThisWeek,
+        responseTimeStats,
+        resolutionStats,
+        slaStats,
+        fcrStats
+    ] = await Promise.all([
+        Ticket.countDocuments({ assignedTo: userId }),
+        Ticket.countDocuments({ assignedTo: userId, status: { $in: ['Resolved', 'Closed'] } }),
+        Ticket.countDocuments({ assignedTo: userId, status: { $nin: ['Resolved', 'Closed'] } }),
+        Ticket.countDocuments({ assignedTo: userId, status: { $in: ['Resolved', 'Closed'] }, resolvedAt: { $gte: todayStart } }),
+        Ticket.countDocuments({ assignedTo: userId, status: { $in: ['Resolved', 'Closed'] }, resolvedAt: { $gte: weekStart } }),
+        Ticket.aggregate([
+            { $match: { assignedTo: userObjId, comments: { $exists: true, $ne: [] } } },
+            { $project: { responseTime: { $subtract: [{ $arrayElemAt: ['$comments.createdAt', 0] }, '$createdAt'] } } },
+            { $group: { _id: null, avgResponseTime: { $avg: '$responseTime' } } }
+        ]),
+        Ticket.aggregate([
+            { $match: { assignedTo: userObjId, status: { $in: ['Resolved', 'Closed'] }, resolvedAt: { $ne: null } } },
+            { $group: { _id: null, avgTime: { $avg: { $subtract: ['$resolvedAt', '$createdAt'] } } } }
+        ]),
+        Ticket.aggregate([
+            { $match: { assignedTo: userObjId, status: { $in: ['Resolved', 'Closed'] } } },
+            { $group: { _id: null, total: { $sum: 1 }, breached: { $sum: { $cond: [{ $eq: ['$slaBreach', true] }, 1, 0] } } } }
+        ]),
+        Ticket.aggregate([
+            { $match: { assignedTo: userObjId, status: { $in: ['Resolved', 'Closed'] } } },
+            { $project: { commentCount: { $size: { $ifNull: ['$comments', []] } } } },
+            { $group: { _id: null, total: { $sum: 1 }, fcrCount: { $sum: { $cond: [{ $lte: ['$commentCount', 1] }, 1, 0] } } } }
+        ])
+    ]);
+
+    const avgResponseHours = responseTimeStats.length > 0 ? Math.round(responseTimeStats[0].avgResponseTime / (1000 * 60 * 60)) : 0;
+    const avgResolutionHours = resolutionStats.length > 0 ? Math.round(resolutionStats[0].avgTime / (1000 * 60 * 60)) : 0;
+    const slaCompliance = slaStats.length > 0 && slaStats[0].total > 0
+        ? Math.round(((slaStats[0].total - slaStats[0].breached) / slaStats[0].total) * 100) : 100;
+    const fcrPercentage = fcrStats.length > 0 && fcrStats[0].total > 0
+        ? Math.round((fcrStats[0].fcrCount / fcrStats[0].total) * 100) : 0;
+    const workloadPercentage = Math.min(Math.round((activeTicketCount / 10) * 100), 100);
+
+    res.status(200).json({
+        success: true,
+        data: {
+            totalAssigned,
+            totalResolved,
+            completedToday,
+            completedThisWeek,
+            avgResponseHours,
+            avgResolutionHours,
+            slaCompliance,
+            fcrPercentage,
+            workloadPercentage
+        }
+    });
+});
+
+/**
+ * @desc    Get Normal User dashboard stats
+ * @route   GET /api/stats/user/stats
+ * @access  Private
+ */
+const getNormalUserStats = asyncHandler(async (req, res) => {
+    const { _id: userId } = req.user;
+    const userObjId = new mongoose.Types.ObjectId(userId);
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [
+        myOpenTickets,
+        awaitingResponse,
+        resolvedThisMonth,
+        resolutionAvg
+    ] = await Promise.all([
+        Ticket.countDocuments({ createdBy: userId, status: { $nin: ['Resolved', 'Closed'] } }),
+        Ticket.countDocuments({ createdBy: userId, status: { $nin: ['Resolved', 'Closed', 'InProgress'] } }),
+        Ticket.countDocuments({ createdBy: userId, status: { $in: ['Resolved', 'Closed'] }, resolvedAt: { $gte: monthStart } }),
+        Ticket.aggregate([
+            { $match: { createdBy: userObjId, status: { $in: ['Resolved', 'Closed'] }, resolvedAt: { $ne: null } } },
+            { $group: { _id: null, avgTime: { $avg: { $subtract: ['$resolvedAt', '$createdAt'] } } } }
+        ])
+    ]);
+
+    const avgHours = resolutionAvg.length > 0 ? Math.round(resolutionAvg[0].avgTime / (1000 * 60 * 60)) : 0;
+    const avgResolutionTime = avgHours > 24 ? `${Math.round(avgHours / 24)}d` : `${avgHours}h`;
+
+    res.status(200).json({
+        success: true,
+        data: {
+            myOpenTickets,
+            awaitingResponse,
+            resolvedThisMonth,
+            avgResolutionTime
+        }
+    });
+});
+
 /**
  * @desc    Get ticket volume trends
  * @route   GET /api/stats/trends
@@ -1945,5 +2360,10 @@ module.exports = {
     getAuditLog,
     getDepartmentBreakdown,
     getMyPerformance,
-    getFeedbackStats
+    getFeedbackStats,
+    // Role-specific dashboard stats
+    getSuperAdminStats,
+    getAdminStats,
+    getTeamMemberStats,
+    getNormalUserStats
 };
