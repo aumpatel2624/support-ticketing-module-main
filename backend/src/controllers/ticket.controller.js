@@ -403,9 +403,9 @@ const updateStatus = asyncHandler(async (req, res) => {
 
     // Allow TeamMembers to update status if:
     // 1. They are assigned to the ticket
-    // 2. The ticket is unassigned and they are moving it to InProgress (Claiming it)
+    // 2. The ticket is unassigned, status is 'New', and they are moving it to 'Assigned' (Claiming it)
     const isTeamMember = req.user.role === 'TeamMember';
-    const isClaiming = isTeamMember && !ticket.assignedTo && status === 'InProgress';
+    const isClaiming = isTeamMember && !ticket.assignedTo && ticket.status === 'New' && status === 'Assigned';
 
     if (!isAssigned && !isAdmin && !isClaiming && !(isCreator && ['Resolved', 'InProgress'].includes(status))) {
         throw new AuthorizationError('You do not have permission to change the status of this ticket');
