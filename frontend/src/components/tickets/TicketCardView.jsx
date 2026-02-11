@@ -6,6 +6,7 @@ import EmptyState from '@/components/common/EmptyState';
 import ticketService from '@/lib/services/ticketService';
 import AssignTicketModal from './AssignTicketModal';
 import ChangePriorityModal from './ChangePriorityModal';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import useAuth from '@/hooks/useAuth';
@@ -20,6 +21,8 @@ export default function TicketCardView({ tickets, onTicketUpdate }) {
     const [priorityModalOpen, setPriorityModalOpen] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [showClaimConfirm, setShowClaimConfirm] = useState(false);
+    const [claimTarget, setClaimTarget] = useState(null);
 
     const handleAssignUser = async (assignee) => {
         try {
@@ -59,14 +62,8 @@ export default function TicketCardView({ tickets, onTicketUpdate }) {
                 setAssignModalOpen(true);
                 break;
             case 'claim':
-                try {
-                    await ticketService.assignTicket(ticket._id, { assignedTo: user?._id });
-                    toast.success('Ticket claimed successfully');
-                    onTicketUpdate?.();
-                } catch (error) {
-                    console.error('Failed to claim ticket', error);
-                    toast.error('Failed to claim ticket');
-                }
+                setClaimTarget(ticket);
+                setShowClaimConfirm(true);
                 break;
             case 'priority':
                 setSelectedTicket(ticket);
@@ -78,6 +75,23 @@ export default function TicketCardView({ tickets, onTicketUpdate }) {
                 break;
             default:
                 break;
+        }
+    };
+
+    const handleConfirmClaim = async () => {
+        if (!claimTarget) return;
+        try {
+            setIsLoading(true);
+            await ticketService.assignTicket(claimTarget._id, { assignedTo: user?._id });
+            toast.success('Ticket claimed successfully');
+            onTicketUpdate?.();
+        } catch (error) {
+            console.error('Failed to claim ticket', error);
+            toast.error('Failed to claim ticket');
+        } finally {
+            setIsLoading(false);
+            setShowClaimConfirm(false);
+            setClaimTarget(null);
         }
     };
 
@@ -126,6 +140,23 @@ export default function TicketCardView({ tickets, onTicketUpdate }) {
                     />
                 </>
             )}
+
+            {/* Claim Confirmation Dialog */}
+            <ConfirmDialog
+                open={showClaimConfirm}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setShowClaimConfirm(false);
+                        setClaimTarget(null);
+                    }
+                }}
+                title="Claim Ticket"
+                description={`Are you sure you want to claim ticket ${claimTarget?.ticketId || ''}? It will be assigned to you.`}
+                confirmText="Yes, Claim Ticket"
+                cancelText="Cancel"
+                onConfirm={handleConfirmClaim}
+                isLoading={isLoading}
+            />
         </div>
     );
 }
