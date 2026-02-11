@@ -604,7 +604,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                                 return (
                                                     <Button
                                                         size="sm"
-                                                        className={`w-full shadow-sm transition-all hover:shadow-md ${nextStatus === 'Resolved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                                                        className={`w-full shadow-sm transition-all hover:shadow-md ${nextStatus === 'Resolved' ? 'bg-green-600 hover:bg-green-700 text-white' : ''}`}
                                                         onClick={isClaimAction ? handleClaimTicket : () => handleStatusUpdate(nextStatus)}
                                                         disabled={isUpdatingStatus || !isReady}
                                                         variant={buttonVariant}
