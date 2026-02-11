@@ -524,11 +524,12 @@ const assignTicket = asyncHandler(async (req, res) => {
         statusChanged = true;
     } else {
         // Fallback checks
-        const wasReopened = ticket.status === 'Reopened';
-        if (wasReopened) {
-            ticket.status = 'Assigned';
-            statusChanged = true;
-        }
+        // Removed automatic transition from Reopened to Assigned
+        // const wasReopened = ticket.status === 'Reopened';
+        // if (wasReopened) {
+        //     ticket.status = 'Assigned';
+        //     statusChanged = true;
+        // }
     }
 
     // Update timestamps if status changed
