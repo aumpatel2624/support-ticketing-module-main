@@ -118,9 +118,11 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
 
     const handleStatusUpdate = async (newStatus) => {
         // If changing to "Assigned", show assign modal if:
-        // 1. Ticket is unassigned (New -> Assigned)
+        // 1. Ticket is unassigned (New -> Assigned) AND user is NOT TeamMember (Admins assigning)
         // 2. Ticket is Reopened (Reopened -> Assigned) - to confirm/change assignee
-        if (newStatus === 'Assigned' && (!ticket.assignedTo || ticket.status === 'Reopened')) {
+        const isTeamMemberClaim = newStatus === 'Assigned' && ticket.status === 'New' && user?.role === 'TeamMember';
+
+        if (newStatus === 'Assigned' && ((!ticket.assignedTo && !isTeamMemberClaim) || ticket.status === 'Reopened')) {
             setPendingStatus(newStatus);
             setShowAssignModal(true);
             return;
@@ -130,8 +132,10 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
             setIsUpdatingStatus(true);
             const updateData = { status: newStatus };
 
-            // If resolving, show resolution modal? Or just update.
-            // For now just update. Component will handle 'Resolved' state display.
+            // If it's a Team Member claiming the ticket, ensuring it gets assigned to them
+            // The backend logic I added earlier handles this via updateStatus if I move it to Assigned.
+            // But I can also explicitly set assignedTo here if needed, or rely on backend.
+            // Backend `updateStatus` logic: if TeamMember && New -> Assigned, checks `isClaiming` and sets assignedTo = req.user._id.
 
             // Use dedicate status update endpoint (PATCH) which allows assignees to change status
             const response = await ticketService.updateTicketStatus(ticket._id, newStatus);
@@ -516,8 +520,13 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
 
                                             switch (ticket.status) {
                                                 case 'New':
-                                                    nextStatus = 'Assigned';
-                                                    buttonText = 'Assign Ticket';
+                                                    if (user && user.role === 'TeamMember') {
+                                                        nextStatus = 'Assigned';
+                                                        buttonText = 'Claim Ticket';
+                                                    } else {
+                                                        nextStatus = 'Assigned';
+                                                        buttonText = 'Assign Ticket';
+                                                    }
                                                     break;
                                                 case 'Assigned':
                                                     nextStatus = 'InProgress';
