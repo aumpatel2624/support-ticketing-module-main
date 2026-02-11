@@ -223,14 +223,15 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
         }
     };
 
-    const handleReassignUser = async (selectedUser) => {
+    const handleReassignUser = async (selectedUser, newStatus = null) => {
         try {
             setIsUpdatingStatus(true);
-            // Use the assignTicket endpoint which doesn't change status
+            // Use the assignTicket endpoint which doesn't change status unless specified
             const response = await ticketService.assignTicket(
                 ticket._id,
                 selectedUser._id,
-                `Ticket reassigned from ${ticket.assignedTo?.name || 'unassigned'} to ${selectedUser.name}`
+                `Ticket reassigned from ${ticket.assignedTo?.name || 'unassigned'} to ${selectedUser.name}`,
+                newStatus
             );
             // Update local ticket state with the response
             if (response.data) {
@@ -749,7 +750,7 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                 cancelText="Cancel"
                 onConfirm={async () => {
                     if (pendingStatusChange?.action === 'claim_self') {
-                        handleReassignUser(user);
+                        handleReassignUser(user, 'Assigned');
                         setShowStatusConfirmDialog(false);
                         setPendingStatusChange(null);
                     } else if (pendingStatusChange?.action === 'reassign_self') {
