@@ -49,11 +49,11 @@ export default function NormalUserDashboard({ user }) {
           const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
           const myOpenTickets = ticketArray.filter(t =>
-            t.status !== 'Resolved'
+            t.status !== 'Resolved' && t.status !== 'Closed'
           ).length;
 
           const awaitingResponse = ticketArray.filter(t =>
-            t.status !== 'Resolved' && t.status !== 'InProgress'
+            t.status !== 'Resolved' && t.status !== 'Closed' && t.status !== 'InProgress'
           ).length;
 
           const resolvedThisMonth = ticketArray.filter(t =>
