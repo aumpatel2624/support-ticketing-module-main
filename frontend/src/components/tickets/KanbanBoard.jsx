@@ -112,6 +112,22 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate, readO
         // Validate status transition
         if (ticket.status === newStatus) return;
 
+        // Define allowed transitions
+        const allowedTransitions = {
+            'New': ['Assigned'],
+            'Assigned': ['InProgress'],
+            'InProgress': ['Resolved', 'Escalated'],
+            'Resolved': ['Reopened'],
+            'Reopened': ['Closed'],
+            'Escalated': ['Assigned', 'InProgress']
+        };
+
+        const validNextStatuses = allowedTransitions[ticket.status] || [];
+        if (!validNextStatuses.includes(newStatus)) {
+            toast.error(`You cannot move a ticket from ${ticket.status} to ${newStatus}.`);
+            return;
+        }
+
         // Restriction: Only creator can reopen a Resolved ticket
         if (ticket.status === 'Resolved' && newStatus === 'Reopened') {
             const isCreator = (ticket.createdBy?._id || ticket.createdBy) === user?._id;

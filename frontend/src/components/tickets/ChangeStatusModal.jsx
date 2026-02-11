@@ -36,7 +36,7 @@ export default function ChangeStatusModal({
     const getValidTransitions = (status) => {
         const output = {
             'New': ['Assigned'],
-            'Assigned': ['InProgress', 'New'],
+            'Assigned': ['InProgress'],
             'InProgress': ['Resolved', 'Escalated'],
             'Resolved': ['Reopened'],
             'Reopened': ['Closed'],
