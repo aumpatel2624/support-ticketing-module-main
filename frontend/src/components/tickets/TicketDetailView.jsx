@@ -400,7 +400,8 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                     {user && user.role === 'TeamMember' &&
                         user.department?.toString() === (ticket.departmentId?._id || ticket.departmentId)?.toString() &&
                         ticket.assignedTo?._id?.toString() !== user._id?.toString() &&
-                        ticket.assignedTo?.toString() !== user._id?.toString() && (
+                        ticket.assignedTo?.toString() !== user._id?.toString() &&
+                        ticket.status !== 'New' && (
                             <Button
                                 onClick={() => {
                                     // Use same confirmation dialog but set pendingStatusChange special case or handle via onConfirm
