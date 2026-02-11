@@ -157,6 +157,16 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
         }
 
         // All other status changes → Show confirmation dialog
+
+        // Restriction: Only creator can reopen a Resolved ticket
+        if (ticket.status === 'Resolved' && newStatus === 'Reopened') {
+            const isCreator = (ticket.createdBy?._id || ticket.createdBy) === user?._id;
+            if (!isCreator) {
+                toast.error('Only the ticket creator can reopen this ticket.');
+                return;
+            }
+        }
+
         const actionMap = {
             'InProgress': { text: 'Start Progress', message: 'Are you sure you want to start working on this ticket?' },
             'Resolved': { text: 'Resolve Ticket', message: 'Are you sure you want to resolve this ticket?' },
@@ -689,6 +699,8 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                 currentStatus={ticket.status}
                 onStatusChange={handleStatusUpdate}
                 isLoading={isUpdatingStatus}
+                ticket={ticket}
+                user={user}
             />
 
             {/* Resolution Modal */}

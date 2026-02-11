@@ -112,6 +112,15 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate, readO
         // Validate status transition
         if (ticket.status === newStatus) return;
 
+        // Restriction: Only creator can reopen a Resolved ticket
+        if (ticket.status === 'Resolved' && newStatus === 'Reopened') {
+            const isCreator = (ticket.createdBy?._id || ticket.createdBy) === user?._id;
+            if (!isCreator) {
+                toast.error('Only the ticket creator can reopen this ticket.');
+                return;
+            }
+        }
+
         // If dragging to "Assigned" status, show assign modal first
         if (newStatus === 'Assigned') {
             if (user && ['Admin', 'SuperAdmin'].includes(user.role)) {

@@ -54,11 +54,13 @@ export default function UserActiveTicketsTable({ tickets = [], loading = false, 
                     {activeTickets.map((ticket) => {
                         // Resolve category name from object or ID mapping
                         let categoryName = 'Uncategorized';
-                        if (ticket.category) {
-                            if (typeof ticket.category === 'object' && ticket.category.name) {
-                                categoryName = ticket.category.name;
-                            } else if (categories[ticket.category]) {
-                                categoryName = categories[ticket.category];
+                        const cat = ticket.category || ticket.categoryId; // Check both properties
+
+                        if (cat) {
+                            if (typeof cat === 'object' && cat.name) {
+                                categoryName = cat.name;
+                            } else if (categories[cat]) {
+                                categoryName = categories[cat];
                             }
                         }
 

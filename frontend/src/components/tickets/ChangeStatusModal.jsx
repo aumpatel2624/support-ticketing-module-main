@@ -1,4 +1,5 @@
 'use client';
+import useAuth from '@/hooks/useAuth';
 
 import { useState } from 'react';
 import {
@@ -25,7 +26,9 @@ export default function ChangeStatusModal({
     onClose,
     currentStatus,
     onStatusChange,
-    isLoading
+    isLoading,
+    ticket,
+    user
 }) {
     const [selectedStatus, setSelectedStatus] = useState('');
 
@@ -42,7 +45,15 @@ export default function ChangeStatusModal({
         return output[status] || [];
     };
 
-    const availableStatuses = getValidTransitions(currentStatus);
+    let availableStatuses = getValidTransitions(currentStatus);
+
+    // Filter out 'Reopened' if user is not the creator
+    if (currentStatus === 'Resolved' && availableStatuses.includes('Reopened')) {
+        const isCreator = (ticket?.createdBy?._id || ticket?.createdBy) === user?._id;
+        if (!isCreator) {
+            availableStatuses = availableStatuses.filter(s => s !== 'Reopened');
+        }
+    }
 
     const handleSubmit = () => {
         if (selectedStatus) {
