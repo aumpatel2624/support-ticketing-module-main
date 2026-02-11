@@ -682,13 +682,13 @@ const getSuperAdminStats = asyncHandler(async (req, res) => {
         })
     );
 
-    const deptTotals = deptBreakdown.reduce((acc, d) => ({
-        totalTickets: acc.totalTickets + d.totalTickets,
-        openTickets: acc.openTickets + d.openTickets,
-        resolvedTickets: acc.resolvedTickets + d.resolvedTickets,
-        activeAgents: acc.activeAgents + d.activeAgents
-    }), { totalTickets: 0, openTickets: 0, resolvedTickets: 0, activeAgents: 0 });
-    deptTotals.slaCompliance = slaCompliance;
+    const deptTotals = {
+        totalTickets: await Ticket.countDocuments({}),
+        openTickets: await Ticket.countDocuments({ status: { $in: ['New', 'Assigned', 'InProgress', 'Reopened', 'Escalated'] } }),
+        resolvedTickets: await Ticket.countDocuments({ status: { $in: ['Resolved', 'Closed'] } }),
+        activeAgents: await User.countDocuments({ role: { $in: ['Admin', 'TeamMember'] }, isActive: true }),
+        slaCompliance
+    };
 
     res.status(200).json({
         success: true,
@@ -839,6 +839,7 @@ const getTeamMemberStats = asyncHandler(async (req, res) => {
         data: {
             totalAssigned,
             totalResolved,
+            activeTickets: activeTicketCount,
             completedToday,
             completedThisWeek,
             avgResponseHours,
