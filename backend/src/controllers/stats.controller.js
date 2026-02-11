@@ -421,6 +421,21 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         ? Math.round((slaMetTickets / totalClosedTickets) * 100)
         : 100;
 
+    // Derive overview counts from statusStats to ensure consistency
+    const activeStatuses = ['New', 'Assigned', 'InProgress', 'Reopened', 'Escalated'];
+    const terminalStatuses = ['Resolved', 'Closed'];
+
+    const overviewTotal = Object.values(statusStats).reduce((sum, count) => sum + count, 0);
+    const overviewOpen = activeStatuses.reduce((sum, s) => sum + (statusStats[s] || 0), 0);
+    const overviewResolved = terminalStatuses.reduce((sum, s) => sum + (statusStats[s] || 0), 0);
+
+    // atRisk needs a separate query since it involves slaBreach field
+    const overviewAtRisk = await Ticket.countDocuments({
+        ...match,
+        status: { $nin: terminalStatuses },
+        slaBreach: true
+    });
+
     res.status(200).json({
         success: true,
         data: {
@@ -430,10 +445,10 @@ const getDashboardStats = asyncHandler(async (req, res) => {
             monthlyTrend,
             activeAgents,
             overview: {
-                total: await Ticket.countDocuments(match),
-                open: await Ticket.countDocuments({ ...match, status: { $in: ['New', 'Assigned', 'InProgress', 'Reopened', 'Escalated'] } }),
-                atRisk: await Ticket.countDocuments({ ...match, status: { $ne: 'Resolved' }, slaBreach: true }),
-                resolved: await Ticket.countDocuments({ ...match, status: { $in: ['Resolved', 'Closed'] } }),
+                total: overviewTotal,
+                open: overviewOpen,
+                atRisk: overviewAtRisk,
+                resolved: overviewResolved,
                 avgResolutionTime
             },
             trends,
@@ -454,9 +469,8 @@ const getDashboardStats = asyncHandler(async (req, res) => {
                 createdToday
             },
             slaCompliance,
-            slaCompliance,
             statusBreakdown,
-            priorityBreakdown // New field
+            priorityBreakdown
         }
     });
 });
@@ -1529,10 +1543,10 @@ const getDepartmentBreakdown = asyncHandler(async (req, res) => {
             // Total tickets
             const totalTickets = await Ticket.countDocuments({ departmentId: deptId });
 
-            // Open tickets
+            // Open tickets (active statuses only)
             const openTickets = await Ticket.countDocuments({
                 departmentId: deptId,
-                status: { $nin: ['Resolved', 'Closed'] }
+                status: { $in: ['New', 'Assigned', 'InProgress', 'Reopened', 'Escalated'] }
             });
 
             // Resolved tickets
