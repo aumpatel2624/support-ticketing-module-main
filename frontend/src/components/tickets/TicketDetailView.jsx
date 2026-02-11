@@ -748,23 +748,9 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                 cancelText="Cancel"
                 onConfirm={async () => {
                     if (pendingStatusChange?.action === 'claim_self') {
-                        // For claim_self, call assignTicket to assign to current user
-                        try {
-                            setIsUpdatingStatus(true);
-                            await ticketService.assignTicket(ticket._id, user._id);
-                            toast.success('Ticket claimed successfully');
-                            // Refresh ticket data
-                            const response = await ticketService.getTicket(ticket._id);
-                            setTicket(response.data || response);
-                            if (onTicketUpdate) onTicketUpdate();
-                        } catch (error) {
-                            console.error('Failed to claim ticket:', error);
-                            toast.error('Failed to claim ticket');
-                        } finally {
-                            setIsUpdatingStatus(false);
-                            setShowStatusConfirmDialog(false);
-                            setPendingStatusChange(null);
-                        }
+                        handleReassignUser(user);
+                        setShowStatusConfirmDialog(false);
+                        setPendingStatusChange(null);
                     } else if (pendingStatusChange?.action === 'reassign_self') {
                         handleReassignUser(user);
                         setShowStatusConfirmDialog(false);
