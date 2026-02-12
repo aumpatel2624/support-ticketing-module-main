@@ -32,13 +32,6 @@ const useTicketStore = create(
             // Saved Filter Presets
             savedFilters: [],
 
-            // Pagination
-            pagination: {
-                page: 1,
-                pageSize: 20,
-                total: 0,
-                totalPages: 0,
-            },
 
             // Sorting
             sorting: {
@@ -119,22 +112,7 @@ const useTicketStore = create(
                 });
             },
 
-            // Pagination Actions
-            setPagination: (pagination) => {
-                set({ pagination: { ...get().pagination, ...pagination } });
-            },
 
-            setPage: (page) => {
-                set((state) => ({
-                    pagination: { ...state.pagination, page },
-                }));
-            },
-
-            setPageSize: (pageSize) => {
-                set((state) => ({
-                    pagination: { ...state.pagination, pageSize, page: 1 },
-                }));
-            },
 
             // Sorting Actions
             setSorting: (sorting) => {
@@ -254,12 +232,6 @@ const useTicketStore = create(
                         assignedTo: null,
                         dateRange: null,
                         search: '',
-                    },
-                    pagination: {
-                        page: 1,
-                        pageSize: 20,
-                        total: 0,
-                        totalPages: 0,
                     },
                     sorting: {
                         field: 'createdAt',
