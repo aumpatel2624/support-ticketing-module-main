@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import PageHeader from '@/components/common/PageHeader';
 import { DataTable } from '@/components/ui/data-table';
@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 export default function DepartmentsPage() {
     const [departments, setDepartments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const initialLoadDone = useRef(false);
     const [editDepartment, setEditDepartment] = useState(null);
     const [deleteDepartment, setDeleteDepartment] = useState(null);
     const [deleteError, setDeleteError] = useState(null);
@@ -22,7 +23,9 @@ export default function DepartmentsPage() {
 
     const fetchDepartments = async () => {
         try {
-            setIsLoading(true);
+            if (!initialLoadDone.current) {
+                setIsLoading(true);
+            }
             const output = await departmentService.getDepartments();
             // Handle response
             let list = [];
@@ -35,6 +38,7 @@ export default function DepartmentsPage() {
             toast.error('Failed to load departments');
         } finally {
             setIsLoading(false);
+            initialLoadDone.current = true;
         }
     };
 

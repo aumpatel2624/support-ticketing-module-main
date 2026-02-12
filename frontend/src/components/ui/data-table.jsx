@@ -31,6 +31,7 @@ export function DataTable({
     initialPageSize,
 }) {
 
+    const [rowSelection, setRowSelection] = React.useState({});
     const [columnVisibility, setColumnVisibility] = React.useState({});
     const [columnFilters, setColumnFilters] = React.useState([]);
     const [sorting, setSorting] = React.useState([]);
@@ -46,9 +47,12 @@ export function DataTable({
         state: {
             sorting,
             columnVisibility,
+            rowSelection,
             columnFilters,
             pagination,
         },
+        enableRowSelection: true,
+        onRowSelectionChange: setRowSelection,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onColumnVisibilityChange: setColumnVisibility,

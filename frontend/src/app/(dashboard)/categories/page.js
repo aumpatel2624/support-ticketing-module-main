@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import PageHeader from '@/components/common/PageHeader';
 import CreateCategoryDialog from '@/components/settings/CreateCategoryDialog';
@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 export default function CategoriesPage() {
     const [categories, setCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const initialLoadDone = useRef(false);
     const [editCategory, setEditCategory] = useState(null);
     const [deleteCategory, setDeleteCategory] = useState(null);
     const [deleteError, setDeleteError] = useState(null);
@@ -25,7 +26,9 @@ export default function CategoriesPage() {
 
     const fetchCategories = async () => {
         try {
-            setIsLoading(true);
+            if (!initialLoadDone.current) {
+                setIsLoading(true);
+            }
             const output = await categoryService.getCategories({ limit: 1000 });
 
             let list = [];
@@ -43,6 +46,7 @@ export default function CategoriesPage() {
             toast.error('Failed to load categories');
         } finally {
             setIsLoading(false);
+            initialLoadDone.current = true;
         }
     };
 

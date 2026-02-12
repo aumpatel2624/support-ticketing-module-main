@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
@@ -18,6 +18,7 @@ import useAuthStore from '@/store/authStore';
 export default function UsersPage() {
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const initialLoadDone = useRef(false);
     const [editUser, setEditUser] = useState(null);
     const [deleteUser, setDeleteUser] = useState(null);
     const [deleteError, setDeleteError] = useState(null);
@@ -28,7 +29,9 @@ export default function UsersPage() {
 
     const fetchUsers = async () => {
         try {
-            setIsLoading(true);
+            if (!initialLoadDone.current) {
+                setIsLoading(true);
+            }
             const output = await userService.getUsers();
             // Handle response structure { data: [...], ... }
             let list = [];
@@ -41,6 +44,7 @@ export default function UsersPage() {
             toast.error('Failed to load users');
         } finally {
             setIsLoading(false);
+            initialLoadDone.current = true;
         }
     };
 

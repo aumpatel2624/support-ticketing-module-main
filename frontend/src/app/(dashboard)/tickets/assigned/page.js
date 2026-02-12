@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Loader2, LayoutGrid, Kanban, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
@@ -18,13 +18,16 @@ import toast from 'react-hot-toast';
 export default function AssignedTicketsPage() {
     const [tickets, setTickets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const initialLoadDone = useRef(false);
     const { viewMode, setViewMode, filters } = useTicketStore();
 
     const stableTickets = useMemo(() => tickets, [tickets]);
 
     const fetchAssignedTickets = async (appliedFilters = {}) => {
         try {
-            setIsLoading(true);
+            if (!initialLoadDone.current) {
+                setIsLoading(true);
+            }
             const params = {};
 
             // Add filter parameters
@@ -60,6 +63,7 @@ export default function AssignedTicketsPage() {
             toast.error('Failed to load assigned tickets');
         } finally {
             setIsLoading(false);
+            initialLoadDone.current = true;
         }
     };
 
