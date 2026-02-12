@@ -19,6 +19,14 @@ import {
 export function DataTablePagination({ table }) {
     return (
         <div className="flex items-center justify-between px-2">
+            {console.log('Pagination Debug:', {
+                pageIndex: table.getState().pagination.pageIndex,
+                pageSize: table.getState().pagination.pageSize,
+                pageCount: table.getPageCount(),
+                canPrevious: table.getCanPreviousPage(),
+                canNext: table.getCanNextPage(),
+                totalRows: table.getFilteredRowModel().rows.length
+            })}
             <div className="flex-1 text-sm text-muted-foreground">
                 {table.getFilteredSelectedRowModel().rows.length} of{' '}
                 {table.getFilteredRowModel().rows.length} row(s) selected.
