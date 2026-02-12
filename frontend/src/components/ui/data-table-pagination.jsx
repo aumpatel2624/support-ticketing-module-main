@@ -19,14 +19,6 @@ import {
 export function DataTablePagination({ table }) {
     return (
         <div className="flex items-center justify-between px-2">
-            {console.log('Pagination Debug:', {
-                pageIndex: table.getState().pagination.pageIndex,
-                pageSize: table.getState().pagination.pageSize,
-                pageCount: table.getPageCount(),
-                canPrevious: table.getCanPreviousPage(),
-                canNext: table.getCanNextPage(),
-                totalRows: table.getFilteredRowModel().rows.length
-            })}
             <div className="flex-1 text-sm text-muted-foreground">
                 {table.getFilteredSelectedRowModel().rows.length} of{' '}
                 {table.getFilteredRowModel().rows.length} row(s) selected.
@@ -51,7 +43,7 @@ export function DataTablePagination({ table }) {
                             ))}
                         </SelectContent>
                     </Select>
-                </div>
+                </div >
                 <div className="flex w-[100px] items-center justify-center text-sm font-medium">
                     Page {table.getState().pagination.pageIndex + 1} of{' '}
                     {table.getPageCount()}
@@ -70,10 +62,7 @@ export function DataTablePagination({ table }) {
                     <Button
                         variant="outline"
                         className="h-8 w-8 p-0"
-                        onClick={() => {
-                            console.log('Previous Page Clicked. Current Index:', table.getState().pagination.pageIndex);
-                            table.previousPage();
-                        }}
+                        onClick={() => table.setPageIndex(table.getState().pagination.pageIndex - 1)}
                         disabled={!table.getCanPreviousPage()}
                         type="button"
                     >
@@ -83,10 +72,7 @@ export function DataTablePagination({ table }) {
                     <Button
                         variant="outline"
                         className="h-8 w-8 p-0"
-                        onClick={() => {
-                            console.log('Next Page Clicked. Current Index:', table.getState().pagination.pageIndex);
-                            table.nextPage();
-                        }}
+                        onClick={() => table.setPageIndex(table.getState().pagination.pageIndex + 1)}
                         disabled={!table.getCanNextPage()}
                         type="button"
                     >
@@ -104,7 +90,7 @@ export function DataTablePagination({ table }) {
                         <ChevronsRight className="h-4 w-4" />
                     </Button>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
