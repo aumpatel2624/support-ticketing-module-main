@@ -39,6 +39,7 @@ export default function TicketsPage() {
     // Track mounted state and active requests to prevent race conditions
     const isMounted = useRef(true);
     const abortControllerRef = useRef(null);
+    const initialLoadDone = useRef(false);
 
     const { user } = useAuth();
     const isSuperAdmin = user?.role === 'SuperAdmin';
@@ -179,7 +180,11 @@ export default function TicketsPage() {
         abortControllerRef.current = abortController;
 
         try {
-            setIsLoading(true);
+            // Only show full loading spinner on initial load to prevent
+            // DataTable from unmounting and losing pagination state
+            if (!initialLoadDone.current) {
+                setIsLoading(true);
+            }
             const params = {};
 
             // Add search parameter
@@ -239,6 +244,7 @@ export default function TicketsPage() {
         } finally {
             if (!abortController.signal.aborted && isMounted.current) {
                 setIsLoading(false);
+                initialLoadDone.current = true;
             }
         }
     };
