@@ -360,34 +360,28 @@ const seedDB = async () => {
             }
         }
 
-        // ========== STEP 6: Create Tickets ==========
-        console.log('\n--- Creating Tickets ---');
+        // ========== STEP 6: Create Tickets (4 per department, 1 per category = 12 total) ==========
+        console.log('\n--- Creating Tickets (4 per department) ---');
 
         const priorities = ['Low', 'Medium', 'High', 'Urgent'];
-        const statuses = ['New', 'Assigned', 'InProgress', 'Resolved', 'Escalated'];
+        const statuses = ['New', 'Assigned', 'InProgress', 'Resolved'];
         const ticketSubjects = {
             'IT': [
                 'Cannot access email on new laptop',
                 'Printer driver installation fails',
                 'VPN connection timeout',
-                'Monitor resolution problems',
-                'Keyboard not recognized',
-                'Software license renewal'
+                'Monitor resolution problems'
             ],
             'HR': [
                 'Salary discrepancy in last paycheck',
                 'Leave balance not updated',
                 'Benefits enrollment assistance needed',
-                'Employee contract renewal',
-                'Internal job transfer request',
-                'Performance review feedback'
+                'Employee contract renewal'
             ],
             'Facility Management': [
                 'Broken air conditioning in conference room',
                 'Leaking faucet in restroom',
                 'Damaged ceiling tile needs replacement',
-                'Parking lot lighting repair needed',
-                'Unauthorized access control issue',
                 'Cleaning supplies low in inventory'
             ]
         };
@@ -397,26 +391,24 @@ const seedDB = async () => {
         for (const [deptName, categories_dict] of Object.entries(categories)) {
             const categoryKeys = Object.keys(categories_dict);
             const dept = departments[deptName];
-            const deptHeads = [heads[deptName]];
             const deptTeamMembers = teamMembers[deptName] || [];
             const subjects = ticketSubjects[deptName];
 
-            // Create 5-6 tickets per department
-            const ticketCount = Math.floor(Math.random() * 2) + 5; // 5 or 6
-            for (let i = 0; i < ticketCount; i++) {
-                const categoryName = categoryKeys[Math.floor(Math.random() * categoryKeys.length)];
+            // Create exactly 4 tickets per department (1 per category)
+            for (let i = 0; i < 4; i++) {
+                const categoryName = categoryKeys[i];
                 const category = categories_dict[categoryName];
-                const priority = priorities[Math.floor(Math.random() * priorities.length)];
-                const status = statuses[Math.floor(Math.random() * statuses.length)];
-                const creator = normalUsers[Math.floor(Math.random() * normalUsers.length)];
+                const priority = priorities[i]; // Cycle through priorities
+                const status = statuses[i];     // Cycle through statuses
+                const creator = normalUsers[i % normalUsers.length];
                 const assignee = (status !== 'New' && deptTeamMembers.length > 0)
-                    ? deptTeamMembers[Math.floor(Math.random() * deptTeamMembers.length)]
+                    ? deptTeamMembers[i % deptTeamMembers.length]
                     : null;
 
                 // Create ticket with calculated SLA
                 const ticket = new Ticket({
-                    subject: subjects[i % subjects.length],
-                    description: `Detailed description for ${subjects[i % subjects.length]}. This ticket requires attention and resolution.`,
+                    subject: subjects[i],
+                    description: `Detailed description for ${subjects[i]}. This ticket requires attention and resolution.`,
                     departmentId: dept._id,
                     categoryId: category._id,
                     priority: priority,
@@ -446,7 +438,7 @@ const seedDB = async () => {
                 }
 
                 await ticket.save();
-                console.log(`✓ Ticket created: ${ticket.ticketId} - ${ticket.subject} (${deptName})`);
+                console.log(`✓ Ticket created: ${ticket.ticketId} - ${ticket.subject} [${categoryName}] (${deptName})`);
                 ticketCounter++;
             }
         }
@@ -460,8 +452,8 @@ const seedDB = async () => {
         console.log('✓ 3 Department Heads created (1 per department)');
         console.log('✓ 6 Team Members created (2 per department)');
         console.log('✓ 3 Normal Users created');
-        console.log('✓ 16 Categories created (4 per department)');
-        console.log('✓ 16-18 Tickets created (5-6 per department)');
+        console.log('✓ 12 Categories created (4 per department)');
+        console.log('✓ 12 Tickets created (4 per department, 1 per category)');
         console.log('\nLogin Credentials (All Users):');
         console.log('─────────────────────────────────────────────────────────────');
         console.log('SUPERADMIN:');
