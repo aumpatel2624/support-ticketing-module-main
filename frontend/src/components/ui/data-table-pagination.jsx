@@ -70,7 +70,10 @@ export function DataTablePagination({ table }) {
                     <Button
                         variant="outline"
                         className="h-8 w-8 p-0"
-                        onClick={() => table.previousPage()}
+                        onClick={() => {
+                            console.log('Previous Page Clicked. Current Index:', table.getState().pagination.pageIndex);
+                            table.previousPage();
+                        }}
                         disabled={!table.getCanPreviousPage()}
                         type="button"
                     >
@@ -80,7 +83,10 @@ export function DataTablePagination({ table }) {
                     <Button
                         variant="outline"
                         className="h-8 w-8 p-0"
-                        onClick={() => table.nextPage()}
+                        onClick={() => {
+                            console.log('Next Page Clicked. Current Index:', table.getState().pagination.pageIndex);
+                            table.nextPage();
+                        }}
                         disabled={!table.getCanNextPage()}
                         type="button"
                     >
