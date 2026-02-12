@@ -215,6 +215,13 @@ const createTicket = asyncHandler(async (req, res) => {
     // Add initial history
     ticket.addStatusHistory('New', req.user._id, 'Ticket created');
 
+    // Auto-assign for Facility Management department (no team members, only head)
+    if (department.name === 'Facility Management' && department.headUserId) {
+        ticket.assignedTo = department.headUserId;
+        ticket.status = 'Assigned';
+        ticket.addStatusHistory('Assigned', req.user._id, 'Auto-assigned to Facility Management head');
+    }
+
     await ticket.save();
 
     // Notify Department Head, Admins, and Team Members of the department
