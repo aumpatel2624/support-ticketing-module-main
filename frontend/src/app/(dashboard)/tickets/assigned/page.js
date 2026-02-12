@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Loader2, LayoutGrid, Kanban, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
@@ -19,6 +19,8 @@ export default function AssignedTicketsPage() {
     const [tickets, setTickets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const { viewMode, setViewMode, filters } = useTicketStore();
+
+    const stableTickets = useMemo(() => tickets, [tickets]);
 
     const fetchAssignedTickets = async (appliedFilters = {}) => {
         try {
@@ -136,7 +138,7 @@ export default function AssignedTicketsPage() {
                     />
                 ) : (
                     <DataTable
-                        data={tickets}
+                        data={stableTickets}
                         columns={columns}
                         toolbar={DataTableToolbar}
                     />

@@ -84,6 +84,8 @@ export default function UsersPage() {
         []
     );
 
+    const stableUsers = useMemo(() => users, [users]);
+
     return (
         <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
             <PageHeader
@@ -105,7 +107,7 @@ export default function UsersPage() {
                     </div>
                 ) : (
                     <DataTable
-                        data={users}
+                        data={stableUsers}
                         columns={columns}
                         toolbar={UserDataTableToolbar}
                     />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Loader2, LayoutGrid, Kanban, List } from 'lucide-react';
@@ -35,6 +35,8 @@ export default function TicketsPage() {
     const router = useRouter();
     const searchQuery = searchParams.get('search') || '';
     const ticketIdParam = searchParams.get('id');
+
+    const stableTickets = useMemo(() => tickets, [tickets]);
 
     // Track mounted state and active requests to prevent race conditions
     const isMounted = useRef(true);
@@ -389,7 +391,7 @@ export default function TicketsPage() {
                     />
                 ) : (
                     <DataTable
-                        data={tickets}
+                        data={stableTickets}
                         columns={columns}
                         toolbar={DataTableToolbar}
                     />

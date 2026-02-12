@@ -98,7 +98,7 @@ export const DATE_FORMATS = {
 
 // Pagination
 export const PAGINATION = {
-    DEFAULT_PAGE_SIZE: 20,
+    DEFAULT_PAGE_SIZE: 10,
     PAGE_SIZE_OPTIONS: [10, 20, 30, 40, 50],
 };
 

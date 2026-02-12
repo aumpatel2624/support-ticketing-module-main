@@ -78,6 +78,8 @@ export default function DepartmentsPage() {
         []
     );
 
+    const stableDepartments = useMemo(() => departments, [departments]);
+
     return (
         <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
             <PageHeader
@@ -94,7 +96,7 @@ export default function DepartmentsPage() {
                     </div>
                 ) : (
                     <DataTable
-                        data={departments}
+                        data={stableDepartments}
                         columns={columns}
                     />
                 )}

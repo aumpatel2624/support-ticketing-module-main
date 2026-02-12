@@ -86,6 +86,8 @@ export default function CategoriesPage() {
         []
     );
 
+    const stableCategories = useMemo(() => categories, [categories]);
+
     return (
         <div className="h-full flex-1 flex-col space-y-6 p-4 sm:p-6 md:p-8 md:flex">
             <PageHeader
@@ -103,7 +105,7 @@ export default function CategoriesPage() {
                 ) : (
                     <div className="min-w-[320px]">
                         <DataTable
-                            data={categories}
+                            data={stableCategories}
                             columns={columns}
                         />
                     </div>
