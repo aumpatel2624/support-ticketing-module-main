@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, Send, Paperclip, Building2, FolderOpen, FileText, MessageSquare, ArrowLeft } from 'lucide-react';
+import { Loader2, Send, Paperclip, Building2, FolderOpen, FileText, MessageSquare, ArrowLeft, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -313,12 +313,19 @@ export default function CreateTicketForm() {
                         </div>
                     </div>
 
-                    <FileUpload
-                        files={attachments}
-                        onFilesSelected={(newFiles) => setAttachments([...attachments, ...newFiles])}
-                        onFileRemove={(index) => setAttachments(attachments.filter((_, i) => i !== index))}
-                        disabled={isSubmitting}
-                    />
+                    {departments.find(d => (d.id || d._id) === selectedDepartmentId)?.name === 'Facility Management' ? (
+                        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800 flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4" />
+                            File uploads are disabled for Facility Management tickets.
+                        </div>
+                    ) : (
+                        <FileUpload
+                            files={attachments}
+                            onFilesSelected={(newFiles) => setAttachments([...attachments, ...newFiles])}
+                            onFileRemove={(index) => setAttachments(attachments.filter((_, i) => i !== index))}
+                            disabled={isSubmitting}
+                        />
+                    )}
                 </div>
 
                 {/* Actions */}
