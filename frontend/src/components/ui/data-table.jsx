@@ -31,32 +31,28 @@ export function DataTable({
     initialPageSize,
 }) {
 
-    const [rowSelection, setRowSelection] = React.useState({});
     const [columnVisibility, setColumnVisibility] = React.useState({});
     const [columnFilters, setColumnFilters] = React.useState([]);
     const [sorting, setSorting] = React.useState([]);
-    const [pagination, setPagination] = React.useState({
-        pageIndex: 0,
-        pageSize: initialPageSize ?? PAGINATION.DEFAULT_PAGE_SIZE,
-    });
 
     const table = useReactTable({
         data,
         columns,
         autoResetPageIndex: false,
+        initialState: {
+            pagination: {
+                pageIndex: 0,
+                pageSize: initialPageSize ?? PAGINATION.DEFAULT_PAGE_SIZE,
+            },
+        },
         state: {
             sorting,
             columnVisibility,
-            rowSelection,
             columnFilters,
-            pagination,
         },
-        enableRowSelection: true,
-        onRowSelectionChange: setRowSelection,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onColumnVisibilityChange: setColumnVisibility,
-        onPaginationChange: setPagination,
         getCoreRowModel: getCoreRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
