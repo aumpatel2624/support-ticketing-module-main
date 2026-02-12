@@ -503,304 +503,304 @@ export default function TicketDetailView({ ticket: initialTicket, onTicketUpdate
                                             {ticket.attachments?.length || 0}
                                         </span>
                                     </h4>
-                                </h4>
-                                {!isUploadRestricted && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setShowUpload(!showUpload)}
-                                        className="hover:bg-primary/10 hover:text-primary transition-colors"
-                                    >
-                                        <Upload className="mr-1 h-3 w-3" />
-                                        {showUpload ? 'Cancel' : 'Add'}
-                                    </Button>
+
+                                    {!isUploadRestricted && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setShowUpload(!showUpload)}
+                                            className="hover:bg-primary/10 hover:text-primary transition-colors"
+                                        >
+                                            <Upload className="mr-1 h-3 w-3" />
+                                            {showUpload ? 'Cancel' : 'Add'}
+                                        </Button>
+                                    )}
+                                </div>
+
+                                {showUpload && !isUploadRestricted && (
+                                    <div className="mb-4">
+                                        <FileUpload
+                                            onFilesSelected={handleFileUpload}
+                                            disabled={isUploading}
+                                            uploadProgress={uploadProgress}
+                                        />
+                                    </div>
+                                )}
+
+                                <AttachmentList
+                                    attachments={ticket.attachments || []}
+                                    onDelete={handleDeleteAttachment}
+                                    onDownload={handleDownloadAttachment}
+                                    canDelete={true}
+                                    ticketId={ticket._id}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Activity Feed */}
+                    <ActivityFeed
+                        ticket={ticket}
+                        onCommentAdded={() => {
+                            // Ticket state is already updated via refetchTicket in ActivityFeed
+                        }}
+                    />
+                </div>
+
+                {/* Sidebar - Right Column */}
+                <div className="space-y-4">
+                    <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 border-slate-200/60 sticky top-4">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                Ticket Details
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {/* Status Section */}
+                            <div className="p-3 rounded-lg bg-slate-50/80">
+                                <span className="text-xs font-medium text-slate-500 block mb-2">Status</span>
+                                {isStaff ? (
+                                    // Staff can change status
+                                    <div className="flex flex-col gap-2">
+                                        <Badge variant="outline" className={`${getStatusColor(ticket.status)} w-fit shadow-sm`}>
+                                            {ticket.status}
+                                        </Badge>
+                                        {(() => {
+                                            let nextStatus = null;
+                                            let buttonText = '';
+                                            let buttonVariant = 'default'; // Use default (primary) for main action
+
+                                            let onClickHandler = null;
+
+                                            switch (ticket.status) {
+                                                // Confirm Claim Ticket (New -> Assigned for TeamMember)
+                                                case 'New':
+                                                    if (user && user.role === 'TeamMember') {
+                                                        nextStatus = 'Assigned';
+                                                        buttonText = 'Claim Ticket';
+                                                    } else {
+                                                        nextStatus = 'Assigned';
+                                                        buttonText = 'Assign Ticket';
+                                                    }
+                                                    break;
+                                                case 'Assigned':
+                                                    nextStatus = 'InProgress';
+                                                    buttonText = 'Start Progress';
+                                                    break;
+                                                case 'InProgress':
+                                                    nextStatus = 'Resolved';
+                                                    buttonText = 'Resolve Ticket';
+                                                    buttonVariant = 'success';
+                                                    break;
+                                                case 'Reopened':
+                                                    nextStatus = 'Closed';
+                                                    buttonText = 'Close Ticket';
+                                                    break;
+                                                case 'Escalated':
+                                                    nextStatus = 'InProgress';
+                                                    buttonText = 'Start Progress';
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
+
+                                            if (nextStatus) {
+                                                const isClaimAction = ticket.status === 'New' && user?.role === 'TeamMember';
+
+                                                return (
+                                                    <Button
+                                                        size="sm"
+                                                        className={`w-full shadow-sm transition-all hover:shadow-md ${nextStatus === 'Resolved' ? 'bg-green-600 hover:bg-green-700 text-white' : ''}`}
+                                                        onClick={isClaimAction ? handleClaimTicket : () => handleStatusUpdate(nextStatus)}
+                                                        disabled={isUpdatingStatus || !isReady}
+                                                        variant={buttonVariant}
+                                                    >
+                                                        {buttonText}
+                                                    </Button>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
+                                    </div>
+                                ) : (
+                                    <Badge variant="outline" className={`${getStatusColor(ticket.status)} shadow-sm`}>
+                                        {ticket.status || 'No Status'}
+                                    </Badge>
                                 )}
                             </div>
 
-                            {showUpload && !isUploadRestricted && (
-                                <div className="mb-4">
-                                    <FileUpload
-                                        onFilesSelected={handleFileUpload}
-                                        disabled={isUploading}
-                                        uploadProgress={uploadProgress}
-                                    />
-                                </div>
-                            )}
-
-                            <AttachmentList
-                                attachments={ticket.attachments || []}
-                                onDelete={handleDeleteAttachment}
-                                onDownload={handleDownloadAttachment}
-                                canDelete={true}
-                                ticketId={ticket._id}
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Activity Feed */}
-                <ActivityFeed
-                    ticket={ticket}
-                    onCommentAdded={() => {
-                        // Ticket state is already updated via refetchTicket in ActivityFeed
-                    }}
-                />
-            </div>
-
-            {/* Sidebar - Right Column */}
-            <div className="space-y-4">
-                <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 border-slate-200/60 sticky top-4">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                            Ticket Details
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {/* Status Section */}
-                        <div className="p-3 rounded-lg bg-slate-50/80">
-                            <span className="text-xs font-medium text-slate-500 block mb-2">Status</span>
-                            {isStaff ? (
-                                // Staff can change status
-                                <div className="flex flex-col gap-2">
-                                    <Badge variant="outline" className={`${getStatusColor(ticket.status)} w-fit shadow-sm`}>
-                                        {ticket.status}
-                                    </Badge>
-                                    {(() => {
-                                        let nextStatus = null;
-                                        let buttonText = '';
-                                        let buttonVariant = 'default'; // Use default (primary) for main action
-
-                                        let onClickHandler = null;
-
-                                        switch (ticket.status) {
-                                            // Confirm Claim Ticket (New -> Assigned for TeamMember)
-                                            case 'New':
-                                                if (user && user.role === 'TeamMember') {
-                                                    nextStatus = 'Assigned';
-                                                    buttonText = 'Claim Ticket';
-                                                } else {
-                                                    nextStatus = 'Assigned';
-                                                    buttonText = 'Assign Ticket';
-                                                }
-                                                break;
-                                            case 'Assigned':
-                                                nextStatus = 'InProgress';
-                                                buttonText = 'Start Progress';
-                                                break;
-                                            case 'InProgress':
-                                                nextStatus = 'Resolved';
-                                                buttonText = 'Resolve Ticket';
-                                                buttonVariant = 'success';
-                                                break;
-                                            case 'Reopened':
-                                                nextStatus = 'Closed';
-                                                buttonText = 'Close Ticket';
-                                                break;
-                                            case 'Escalated':
-                                                nextStatus = 'InProgress';
-                                                buttonText = 'Start Progress';
-                                                break;
-                                            default:
-                                                break;
-                                        }
-
-                                        if (nextStatus) {
-                                            const isClaimAction = ticket.status === 'New' && user?.role === 'TeamMember';
-
-                                            return (
-                                                <Button
-                                                    size="sm"
-                                                    className={`w-full shadow-sm transition-all hover:shadow-md ${nextStatus === 'Resolved' ? 'bg-green-600 hover:bg-green-700 text-white' : ''}`}
-                                                    onClick={isClaimAction ? handleClaimTicket : () => handleStatusUpdate(nextStatus)}
-                                                    disabled={isUpdatingStatus || !isReady}
-                                                    variant={buttonVariant}
-                                                >
-                                                    {buttonText}
-                                                </Button>
-                                            );
-                                        }
-                                        return null;
-                                    })()}
-                                </div>
-                            ) : (
-                                <Badge variant="outline" className={`${getStatusColor(ticket.status)} shadow-sm`}>
-                                    {ticket.status || 'No Status'}
+                            {/* Priority Section */}
+                            <div className="p-3 rounded-lg bg-slate-50/80">
+                                <span className="text-xs font-medium text-slate-500 block mb-2">Priority</span>
+                                <Badge variant="outline" className={`${getPriorityColor(ticket.priority)} shadow-sm`}>
+                                    <AlertCircle className="mr-1 h-3 w-3" />
+                                    {ticket.priority}
                                 </Badge>
-                            )}
-                        </div>
-
-                        {/* Priority Section */}
-                        <div className="p-3 rounded-lg bg-slate-50/80">
-                            <span className="text-xs font-medium text-slate-500 block mb-2">Priority</span>
-                            <Badge variant="outline" className={`${getPriorityColor(ticket.priority)} shadow-sm`}>
-                                <AlertCircle className="mr-1 h-3 w-3" />
-                                {ticket.priority}
-                            </Badge>
-                        </div>
-
-                        <Separator className="bg-slate-100" />
-
-                        {/* Category */}
-                        <div>
-                            <span className="text-xs font-medium text-slate-500 block mb-1.5">Category</span>
-                            <div className="font-medium text-slate-800">{ticket.category?.name || ticket.categoryId?.name || 'Uncategorized'}</div>
-                        </div>
-
-                        <Separator className="bg-slate-100" />
-
-                        {/* Assignee */}
-                        <div>
-                            <span className="text-xs font-medium text-slate-500 block mb-2">Assignee</span>
-                            <div className="flex items-center gap-2.5">
-                                <Avatar className="h-8 w-8 ring-2 ring-white shadow-sm">
-                                    <AvatarFallback className={`${getAvatarColor(ticket.assignedTo?.name)} text-xs text-white font-medium`}>
-                                        {getInitials(ticket.assignedTo?.name || '?')}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <span className="text-sm font-medium text-slate-800">{ticket.assignedTo?.name || 'Unassigned'}</span>
                             </div>
-                        </div>
 
-                        <Separator className="bg-slate-100" />
+                            <Separator className="bg-slate-100" />
 
-                        {/* Reporter */}
-                        <div>
-                            <span className="text-xs font-medium text-slate-500 block mb-2">Reporter</span>
-                            <div className="flex items-center gap-2.5">
-                                <Avatar className="h-8 w-8 ring-2 ring-white shadow-sm">
-                                    <AvatarFallback className={`${getAvatarColor(ticket.createdBy?.name)} text-xs text-white font-medium`}>
-                                        {getInitials(ticket.createdBy?.name || '?')}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <span className="text-sm font-medium text-slate-800">{ticket.createdBy?.name || 'Unknown'}</span>
+                            {/* Category */}
+                            <div>
+                                <span className="text-xs font-medium text-slate-500 block mb-1.5">Category</span>
+                                <div className="font-medium text-slate-800">{ticket.category?.name || ticket.categoryId?.name || 'Uncategorized'}</div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
 
-                {/* Timestamps Card */}
-                <Card className="shadow-sm border-slate-200/60">
-                    <CardContent className="pt-4 space-y-3 text-sm">
-                        <div className="flex items-center justify-between">
-                            <span className="text-slate-500 flex items-center gap-1.5">
-                                <Calendar className="h-3.5 w-3.5" /> Created
-                            </span>
-                            <span className="font-medium text-slate-700">{formatDate(ticket.createdAt)}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-slate-500 flex items-center gap-1.5">
-                                <Clock className="h-3.5 w-3.5" /> Updated
-                            </span>
-                            <span className="font-medium text-slate-700">{formatRelativeTime(ticket.updatedAt || ticket.createdAt)}</span>
-                        </div>
-                    </CardContent>
-                </Card>
+                            <Separator className="bg-slate-100" />
+
+                            {/* Assignee */}
+                            <div>
+                                <span className="text-xs font-medium text-slate-500 block mb-2">Assignee</span>
+                                <div className="flex items-center gap-2.5">
+                                    <Avatar className="h-8 w-8 ring-2 ring-white shadow-sm">
+                                        <AvatarFallback className={`${getAvatarColor(ticket.assignedTo?.name)} text-xs text-white font-medium`}>
+                                            {getInitials(ticket.assignedTo?.name || '?')}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm font-medium text-slate-800">{ticket.assignedTo?.name || 'Unassigned'}</span>
+                                </div>
+                            </div>
+
+                            <Separator className="bg-slate-100" />
+
+                            {/* Reporter */}
+                            <div>
+                                <span className="text-xs font-medium text-slate-500 block mb-2">Reporter</span>
+                                <div className="flex items-center gap-2.5">
+                                    <Avatar className="h-8 w-8 ring-2 ring-white shadow-sm">
+                                        <AvatarFallback className={`${getAvatarColor(ticket.createdBy?.name)} text-xs text-white font-medium`}>
+                                            {getInitials(ticket.createdBy?.name || '?')}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm font-medium text-slate-800">{ticket.createdBy?.name || 'Unknown'}</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Timestamps Card */}
+                    <Card className="shadow-sm border-slate-200/60">
+                        <CardContent className="pt-4 space-y-3 text-sm">
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-500 flex items-center gap-1.5">
+                                    <Calendar className="h-3.5 w-3.5" /> Created
+                                </span>
+                                <span className="font-medium text-slate-700">{formatDate(ticket.createdAt)}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-500 flex items-center gap-1.5">
+                                    <Clock className="h-3.5 w-3.5" /> Updated
+                                </span>
+                                <span className="font-medium text-slate-700">{formatRelativeTime(ticket.updatedAt || ticket.createdAt)}</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
-        </div>
 
-            {/* Change Status Modal */ }
-    <ChangeStatusModal
-        isOpen={showChangeStatusModal}
-        onClose={() => setShowChangeStatusModal(false)}
-        currentStatus={ticket.status}
-        onStatusChange={handleStatusUpdate}
-        isLoading={isUpdatingStatus}
-        ticket={ticket}
-        user={user}
-    />
+            {/* Change Status Modal */}
+            <ChangeStatusModal
+                isOpen={showChangeStatusModal}
+                onClose={() => setShowChangeStatusModal(false)}
+                currentStatus={ticket.status}
+                onStatusChange={handleStatusUpdate}
+                isLoading={isUpdatingStatus}
+                ticket={ticket}
+                user={user}
+            />
 
-    {/* Resolution Modal */ }
-    <ResolutionModal
-        isOpen={showResolutionModal}
-        onClose={() => {
-            setShowResolutionModal(false);
-            // Remember that user dismissed the modal
-            if (ticket._id) {
-                localStorage.setItem(`resolution_dismissed_${ticket._id}`, 'true');
-            }
-        }}
-        onReopen={handleReopenCallback}
-    />
+            {/* Resolution Modal */}
+            <ResolutionModal
+                isOpen={showResolutionModal}
+                onClose={() => {
+                    setShowResolutionModal(false);
+                    // Remember that user dismissed the modal
+                    if (ticket._id) {
+                        localStorage.setItem(`resolution_dismissed_${ticket._id}`, 'true');
+                    }
+                }}
+                onReopen={handleReopenCallback}
+            />
 
-    {/* Reopen Dialog */ }
-    <ReopenDialog
-        isOpen={showReopenDialog}
-        onClose={() => setShowReopenDialog(false)}
-        onConfirm={handleConfirmReopen}
-        isLoading={isUpdatingStatus}
-    />
+            {/* Reopen Dialog */}
+            <ReopenDialog
+                isOpen={showReopenDialog}
+                onClose={() => setShowReopenDialog(false)}
+                onConfirm={handleConfirmReopen}
+                isLoading={isUpdatingStatus}
+            />
 
-    {/* Assign/Reassign Ticket Modal */ }
-    <AssignTicketModal
-        isOpen={showAssignModal}
-        onClose={() => {
-            setShowAssignModal(false);
-            setPendingStatus(null);
-            setAssignmentMode(null);
-        }}
-        onAssign={assignmentMode === 'reassign' ? handleReassignUser : handleAssignUser}
-        isLoading={isUpdatingStatus}
-        title={assignmentMode === 'reassign' ? 'Reassign Ticket' : 'Assign Ticket'}
-        description={assignmentMode === 'reassign'
-            ? 'Select a new team member or head to reassign this ticket to'
-            : 'Select a team member or head to assign this ticket to'}
-        currentAssignee={assignmentMode === 'reassign' ? ticket.assignedTo : null}
-    />
+            {/* Assign/Reassign Ticket Modal */}
+            <AssignTicketModal
+                isOpen={showAssignModal}
+                onClose={() => {
+                    setShowAssignModal(false);
+                    setPendingStatus(null);
+                    setAssignmentMode(null);
+                }}
+                onAssign={assignmentMode === 'reassign' ? handleReassignUser : handleAssignUser}
+                isLoading={isUpdatingStatus}
+                title={assignmentMode === 'reassign' ? 'Reassign Ticket' : 'Assign Ticket'}
+                description={assignmentMode === 'reassign'
+                    ? 'Select a new team member or head to reassign this ticket to'
+                    : 'Select a team member or head to assign this ticket to'}
+                currentAssignee={assignmentMode === 'reassign' ? ticket.assignedTo : null}
+            />
 
-    {/* Removed FeedbackDialog */ }
+            {/* Removed FeedbackDialog */}
 
-    {/* Escalate Ticket Dialog */ }
-    <EscalateTicketDialog
-        open={showEscalateDialog}
-        onOpenChange={setShowEscalateDialog}
-        ticket={ticket}
-        onSuccess={() => {
-            // Refetch ticket to get updated status
-            ticketService.getTicket(ticket._id)
-                .then((response) => {
-                    setTicket(response.data || response);
-                })
-                .catch((error) => {
-                    console.error('Failed to refetch ticket:', error);
-                });
-        }}
-    />
+            {/* Escalate Ticket Dialog */}
+            <EscalateTicketDialog
+                open={showEscalateDialog}
+                onOpenChange={setShowEscalateDialog}
+                ticket={ticket}
+                onSuccess={() => {
+                    // Refetch ticket to get updated status
+                    ticketService.getTicket(ticket._id)
+                        .then((response) => {
+                            setTicket(response.data || response);
+                        })
+                        .catch((error) => {
+                            console.error('Failed to refetch ticket:', error);
+                        });
+                }}
+            />
 
-    {/* Status Change Confirmation Dialog */ }
-    <ConfirmDialog
-        open={showStatusConfirmDialog}
-        onOpenChange={(open) => {
-            if (!open) {
-                setShowStatusConfirmDialog(false);
-                setPendingStatusChange(null);
-            }
-        }}
-        title={pendingStatusChange?.action === 'claim_self' ? 'Claim Ticket' : 'Confirm Status Change'}
-        description={
-            pendingStatusChange?.message ||
-            (pendingStatusChange?.action === 'claim_self'
-                ? `Are you sure you want to claim ticket "${ticket.ticketId}"? It will be assigned to you.`
-                : `Are you sure you want to change the ticket status to "${pendingStatusChange?.status}"?`)
-        }
-        confirmText={pendingStatusChange?.buttonText || 'Confirm'}
-        cancelText="Cancel"
-        onConfirm={async () => {
-            if (pendingStatusChange?.action === 'claim_self') {
-                handleReassignUser(user, 'Assigned');
-                setShowStatusConfirmDialog(false);
-                setPendingStatusChange(null);
-            } else if (pendingStatusChange?.action === 'reassign_self') {
-                handleReassignUser(user);
-                setShowStatusConfirmDialog(false);
-                setPendingStatusChange(null);
-            } else if (pendingStatusChange?.status) {
-                executeStatusUpdate(pendingStatusChange.status);
-                setShowStatusConfirmDialog(false);
-                setPendingStatusChange(null);
-            }
-        }}
-        isLoading={isUpdatingStatus}
-    />
+            {/* Status Change Confirmation Dialog */}
+            <ConfirmDialog
+                open={showStatusConfirmDialog}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setShowStatusConfirmDialog(false);
+                        setPendingStatusChange(null);
+                    }
+                }}
+                title={pendingStatusChange?.action === 'claim_self' ? 'Claim Ticket' : 'Confirm Status Change'}
+                description={
+                    pendingStatusChange?.message ||
+                    (pendingStatusChange?.action === 'claim_self'
+                        ? `Are you sure you want to claim ticket "${ticket.ticketId}"? It will be assigned to you.`
+                        : `Are you sure you want to change the ticket status to "${pendingStatusChange?.status}"?`)
+                }
+                confirmText={pendingStatusChange?.buttonText || 'Confirm'}
+                cancelText="Cancel"
+                onConfirm={async () => {
+                    if (pendingStatusChange?.action === 'claim_self') {
+                        handleReassignUser(user, 'Assigned');
+                        setShowStatusConfirmDialog(false);
+                        setPendingStatusChange(null);
+                    } else if (pendingStatusChange?.action === 'reassign_self') {
+                        handleReassignUser(user);
+                        setShowStatusConfirmDialog(false);
+                        setPendingStatusChange(null);
+                    } else if (pendingStatusChange?.status) {
+                        executeStatusUpdate(pendingStatusChange.status);
+                        setShowStatusConfirmDialog(false);
+                        setPendingStatusChange(null);
+                    }
+                }}
+                isLoading={isUpdatingStatus}
+            />
         </div >
     );
 }
