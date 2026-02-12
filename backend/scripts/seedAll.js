@@ -5,6 +5,8 @@ require('dotenv').config();
 const User = require('../src/models/User');
 const Department = require('../src/models/Department');
 const Category = require('../src/models/Category');
+const Ticket = require('../src/models/Ticket');
+const SystemSettings = require('../src/models/SystemSettings');
 
 const seedData = async () => {
     try {
@@ -17,6 +19,26 @@ const seedData = async () => {
         // 1. Clear default database
         await mongoose.connection.dropDatabase();
         console.log('Dropped entire database');
+
+        // Seed System Settings (needed for SLA calculation)
+        await SystemSettings.create({
+            companyName: 'Apidel Technologies',
+            companyLogo: null,
+            brandColor: '#3b82f6',
+            slaDefaults: {
+                lowPriority: 72,
+                mediumPriority: 48,
+                highPriority: 24,
+                urgentPriority: 4
+            },
+            features: {
+                kanbanView: true,
+                cardView: true,
+                tableView: true,
+                darkMode: false
+            }
+        });
+        console.log('Created System Settings');
 
         // 2. Create Users
         console.log('Seeding Users...');
@@ -140,33 +162,119 @@ const seedData = async () => {
         await User.findByIdAndUpdate(fmHead._id, { department: fmDept._id });
 
 
-        // 4. Create Categories
+        // 4. Create Categories (4 per department)
         console.log('Seeding Categories...');
 
         // IT Categories
-        await Category.create([
+        const itCategories = await Category.create([
             { name: 'Hardware Issue', departmentId: itDept._id, defaultPriority: 'High', createdBy: superAdmin._id },
             { name: 'Software Issue', departmentId: itDept._id, defaultPriority: 'Medium', createdBy: superAdmin._id },
             { name: 'Network Issue', departmentId: itDept._id, defaultPriority: 'Urgent', createdBy: superAdmin._id },
             { name: 'Access Request', departmentId: itDept._id, defaultPriority: 'Low', createdBy: superAdmin._id }
         ]);
 
-        // HR Categories
-        await Category.create([
+        // HR Categories (added 4th: Benefits Enrollment)
+        const hrCategories = await Category.create([
             { name: 'Payroll Inquiry', departmentId: hrDept._id, defaultPriority: 'High', createdBy: superAdmin._id },
             { name: 'Leave Request', departmentId: hrDept._id, defaultPriority: 'Medium', createdBy: superAdmin._id },
-            { name: 'Policy Question', departmentId: hrDept._id, defaultPriority: 'Low', createdBy: superAdmin._id }
+            { name: 'Policy Question', departmentId: hrDept._id, defaultPriority: 'Low', createdBy: superAdmin._id },
+            { name: 'Benefits Enrollment', departmentId: hrDept._id, defaultPriority: 'Medium', createdBy: superAdmin._id }
         ]);
 
-        // FM Categories
-        await Category.create([
+        // FM Categories (added 4th: Space Request)
+        const fmCategories = await Category.create([
             { name: 'Maintenance Request', departmentId: fmDept._id, defaultPriority: 'Medium', createdBy: superAdmin._id },
             { name: 'Cleaning Request', departmentId: fmDept._id, defaultPriority: 'Low', createdBy: superAdmin._id },
-            { name: 'Security Issue', departmentId: fmDept._id, defaultPriority: 'Urgent', createdBy: superAdmin._id }
+            { name: 'Security Issue', departmentId: fmDept._id, defaultPriority: 'Urgent', createdBy: superAdmin._id },
+            { name: 'Space Request', departmentId: fmDept._id, defaultPriority: 'Low', createdBy: superAdmin._id }
         ]);
-        console.log('Created Categories for all departments');
+        console.log('Created 12 Categories (4 per department)');
 
-        console.log('Seeding Complete!');
+        // 5. Create Tickets (4 per department, 1 per category = 12 total)
+        console.log('Seeding Tickets...');
+
+        const deptTicketData = [
+            {
+                dept: itDept,
+                categories: itCategories,
+                members: [itMember],
+                subjects: [
+                    'Cannot access email on new laptop',
+                    'Printer driver installation fails',
+                    'VPN connection timeout',
+                    'Need access to internal dashboard'
+                ]
+            },
+            {
+                dept: hrDept,
+                categories: hrCategories,
+                members: [hrMember],
+                subjects: [
+                    'Salary discrepancy in last paycheck',
+                    'Leave balance not updated',
+                    'Question about remote work policy',
+                    'Benefits enrollment assistance needed'
+                ]
+            },
+            {
+                dept: fmDept,
+                categories: fmCategories,
+                members: [],
+                subjects: [
+                    'Broken air conditioning in conference room',
+                    'Cleaning supplies low in inventory',
+                    'Unauthorized access to server room',
+                    'Need additional desk space for new hire'
+                ]
+            }
+        ];
+
+        const priorities = ['Low', 'Medium', 'High', 'Urgent'];
+        const statuses = ['New', 'Assigned', 'InProgress', 'Resolved'];
+
+        for (const data of deptTicketData) {
+            for (let i = 0; i < 4; i++) {
+                const status = statuses[i];
+                const assignee = (status !== 'New' && data.members.length > 0)
+                    ? data.members[i % data.members.length]
+                    : null;
+
+                const ticket = new Ticket({
+                    subject: data.subjects[i],
+                    description: `Detailed description for: ${data.subjects[i]}. This ticket requires attention and resolution.`,
+                    departmentId: data.dept._id,
+                    categoryId: data.categories[i]._id,
+                    priority: priorities[i],
+                    status: status,
+                    createdBy: normalUser._id,
+                    assignedTo: assignee ? assignee._id : null
+                });
+
+                // Calculate SLA deadline
+                await ticket.calculateSLA();
+
+                // Add status history
+                if (status !== 'New') {
+                    ticket.statusHistory.push({ status: 'New', changedBy: normalUser._id, comment: 'Ticket created' });
+                    if (assignee && status !== 'Assigned') {
+                        ticket.statusHistory.push({ status: 'Assigned', changedBy: assignee._id, comment: 'Ticket assigned' });
+                    }
+                    if (status !== 'Assigned' && status !== 'New') {
+                        ticket.statusHistory.push({ status, changedBy: assignee ? assignee._id : normalUser._id, comment: `Status changed to ${status}` });
+                    }
+                }
+
+                if (status === 'Resolved') {
+                    ticket.resolvedAt = new Date();
+                }
+
+                await ticket.save();
+                console.log(`✓ Ticket: ${ticket.ticketId} - ${data.subjects[i]} [${data.categories[i].name}] (${data.dept.name})`);
+            }
+        }
+        console.log('Created 12 Tickets (4 per department, 1 per category)');
+
+        console.log('\nSeeding Complete!');
         process.exit();
 
     } catch (error) {
