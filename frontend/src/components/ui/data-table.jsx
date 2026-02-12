@@ -47,6 +47,7 @@ export function DataTable({
             columnFilters,
             pagination,
         },
+        autoResetPageIndex: false,
         enableRowSelection: true,
         onRowSelectionChange: setRowSelection,
         onSortingChange: setSorting,

@@ -54,6 +54,7 @@ export function DataTablePagination({ table }) {
                         className="hidden h-8 w-8 p-0 lg:flex"
                         onClick={() => table.setPageIndex(0)}
                         disabled={!table.getCanPreviousPage()}
+                        type="button"
                     >
                         <span className="sr-only">Go to first page</span>
                         <ChevronsLeft className="h-4 w-4" />
@@ -63,6 +64,7 @@ export function DataTablePagination({ table }) {
                         className="h-8 w-8 p-0"
                         onClick={() => table.previousPage()}
                         disabled={!table.getCanPreviousPage()}
+                        type="button"
                     >
                         <span className="sr-only">Go to previous page</span>
                         <ChevronLeft className="h-4 w-4" />
@@ -72,6 +74,7 @@ export function DataTablePagination({ table }) {
                         className="h-8 w-8 p-0"
                         onClick={() => table.nextPage()}
                         disabled={!table.getCanNextPage()}
+                        type="button"
                     >
                         <span className="sr-only">Go to next page</span>
                         <ChevronRight className="h-4 w-4" />
@@ -81,6 +84,7 @@ export function DataTablePagination({ table }) {
                         className="hidden h-8 w-8 p-0 lg:flex"
                         onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                         disabled={!table.getCanNextPage()}
+                        type="button"
                     >
                         <span className="sr-only">Go to last page</span>
                         <ChevronsRight className="h-4 w-4" />
