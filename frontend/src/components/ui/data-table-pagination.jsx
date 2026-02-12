@@ -17,6 +17,11 @@ import {
 } from '@/components/ui/select';
 
 export function DataTablePagination({ table }) {
+    const pageIndex = table.getState().pagination.pageIndex;
+    const pageCount = table.getPageCount();
+    const canGoPrevious = pageIndex > 0;
+    const canGoNext = pageIndex < pageCount - 1;
+
     return (
         <div className="flex items-center justify-between px-2">
             <div className="flex-1 text-sm text-muted-foreground">
@@ -43,17 +48,17 @@ export function DataTablePagination({ table }) {
                             ))}
                         </SelectContent>
                     </Select>
-                </div >
+                </div>
                 <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                    Page {table.getState().pagination.pageIndex + 1} of{' '}
-                    {table.getPageCount()}
+                    Page {pageIndex + 1} of{' '}
+                    {pageCount}
                 </div>
                 <div className="flex items-center space-x-2">
                     <Button
                         variant="outline"
                         className="hidden h-8 w-8 p-0 lg:flex"
                         onClick={() => table.setPageIndex(0)}
-                        disabled={!table.getCanPreviousPage()}
+                        disabled={!canGoPrevious}
                         type="button"
                     >
                         <span className="sr-only">Go to first page</span>
@@ -62,8 +67,8 @@ export function DataTablePagination({ table }) {
                     <Button
                         variant="outline"
                         className="h-8 w-8 p-0"
-                        onClick={() => table.setPageIndex(table.getState().pagination.pageIndex - 1)}
-                        disabled={!table.getCanPreviousPage()}
+                        onClick={() => table.previousPage()}
+                        disabled={!canGoPrevious}
                         type="button"
                     >
                         <span className="sr-only">Go to previous page</span>
@@ -72,8 +77,8 @@ export function DataTablePagination({ table }) {
                     <Button
                         variant="outline"
                         className="h-8 w-8 p-0"
-                        onClick={() => table.setPageIndex(table.getState().pagination.pageIndex + 1)}
-                        disabled={!table.getCanNextPage()}
+                        onClick={() => table.nextPage()}
+                        disabled={!canGoNext}
                         type="button"
                     >
                         <span className="sr-only">Go to next page</span>
@@ -82,15 +87,15 @@ export function DataTablePagination({ table }) {
                     <Button
                         variant="outline"
                         className="hidden h-8 w-8 p-0 lg:flex"
-                        onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                        disabled={!table.getCanNextPage()}
+                        onClick={() => table.setPageIndex(pageCount - 1)}
+                        disabled={!canGoNext}
                         type="button"
                     >
                         <span className="sr-only">Go to last page</span>
                         <ChevronsRight className="h-4 w-4" />
                     </Button>
                 </div>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 }
