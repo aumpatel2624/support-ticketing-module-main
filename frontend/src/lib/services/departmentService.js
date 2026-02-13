@@ -36,6 +36,16 @@ const departmentService = {
     async deleteDepartment(id) {
         const response = await api.delete(`${API_ENDPOINTS.DEPARTMENTS}/${id}`);
         return response.data;
+    },
+
+    /**
+     * Toggle department status
+     * @param {string} id 
+     * @param {boolean} isActive 
+     */
+    async toggleStatus(id, isActive) {
+        const response = await api.patch(`${API_ENDPOINTS.DEPARTMENTS}/${id}/status`, { isActive });
+        return response.data;
     }
 };
 

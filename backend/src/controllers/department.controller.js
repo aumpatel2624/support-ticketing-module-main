@@ -306,11 +306,129 @@ const getDepartmentStats = asyncHandler(async (req, res) => {
     });
 });
 
+/**
+ * @desc    Toggle department active status
+ * @route   PATCH /api/departments/:id/status
+ * @access  Private (SuperAdmin)
+ */
+const toggleDepartmentStatus = asyncHandler(async (req, res) => {
+    const { isActive } = req.body;
+    const department = await Department.findById(req.params.id);
+
+    if (!department) {
+        throw new NotFoundError('Department not found');
+    }
+
+    // If activating, just update
+    if (isActive) {
+        department.isActive = true;
+        await department.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Department activated successfully',
+            data: {
+                _id: department._id,
+                name: department.name,
+                isActive: department.isActive
+            }
+        });
+    }
+
+    // If deactivating, perform reference checks
+    const Category = require('../models/Category');
+    const Ticket = require('../models/Ticket');
+    const User = require('../models/User');
+
+    // Collect all references
+    const references = [];
+
+    // Check 1: Users assigned to this department
+    const users = await User.find({
+        department: req.params.id,
+        isActive: true
+    }).select('_id name email employeeId').lean();
+
+    if (users.length > 0) {
+        references.push({
+            type: 'users',
+            count: users.length,
+            items: users.map(u => ({
+                id: u._id,
+                name: u.name,
+                email: u.email,
+                employeeId: u.employeeId
+            }))
+        });
+    }
+
+    // Check 2: Categories assigned to this department
+    const categories = await Category.find({
+        departmentId: req.params.id,
+        isActive: true
+    }).select('_id name').lean();
+
+    if (categories.length > 0) {
+        references.push({
+            type: 'categories',
+            count: categories.length,
+            items: categories.map(c => ({
+                id: c._id,
+                name: c.name
+            }))
+        });
+    }
+
+    // Check 3: Active tickets in this department
+    const tickets = await Ticket.find({
+        departmentId: req.params.id,
+        status: { $nin: ['Closed'] }
+    }).select('_id id title status priority').lean();
+
+    if (tickets.length > 0) {
+        references.push({
+            type: 'tickets',
+            count: tickets.length,
+            items: tickets.map(t => ({
+                id: t._id,
+                ticketId: t.id,
+                title: t.title,
+                status: t.status,
+                priority: t.priority
+            }))
+        });
+    }
+
+    // If any references exist, return error with details
+    if (references.length > 0) {
+        const error = new ValidationError(
+            `Cannot deactivate department "${department.name}" because it has active references. Please resolve them first.`
+        );
+        error.references = references;
+        throw error;
+    }
+
+    // Deactivate
+    department.isActive = false;
+    await department.save();
+
+    res.status(200).json({
+        success: true,
+        message: 'Department deactivated successfully',
+        data: {
+            _id: department._id,
+            name: department.name,
+            isActive: department.isActive
+        }
+    });
+});
+
 module.exports = {
     getDepartments,
     getDepartmentById,
     createDepartment,
     updateDepartment,
     deleteDepartment,
-    getDepartmentStats
+    getDepartmentStats,
+    toggleDepartmentStatus
 };

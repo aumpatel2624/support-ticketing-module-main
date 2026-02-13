@@ -93,11 +93,19 @@ const nestedObjectIdSchema = z.object({
     attachmentId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid attachment ID format')
 });
 
+const toggleStatusSchema = z.object({
+    isActive: z.boolean({
+        required_error: "isActive status is required",
+        invalid_type_error: "isActive must be a boolean"
+    })
+});
+
 module.exports = {
     createUserSchema,
     updateUserSchema,
     updateProfileSchema,
     userListQuerySchema,
     objectIdSchema,
-    nestedObjectIdSchema
+    nestedObjectIdSchema,
+    toggleStatusSchema
 };

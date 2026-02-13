@@ -6,7 +6,8 @@ const {
     getCategoriesByDepartment,
     createCategory,
     updateCategory,
-    deleteCategory
+    deleteCategory,
+    toggleCategoryStatus
 } = require('../controllers/category.controller');
 const { authenticate } = require('../middleware/auth');
 const { requireSuperAdmin, requireAdmin } = require('../middleware/rbac');
@@ -14,7 +15,8 @@ const { validateBody, validateParams, validateQuery } = require('../middleware/v
 const {
     createCategorySchema,
     updateCategorySchema,
-    categoryListQuerySchema
+    categoryListQuerySchema,
+    toggleStatusSchema
 } = require('../validators/category.validator');
 const { objectIdSchema } = require('../validators/user.validator');
 
@@ -183,5 +185,41 @@ router.put('/:id', authenticate, requireAdmin, validateParams(objectIdSchema), v
  *         description: Cannot delete category with active tickets
  */
 router.delete('/:id', authenticate, requireAdmin, validateParams(objectIdSchema), deleteCategory);
+
+/**
+ * @swagger
+ * /categories/{id}/status:
+ *   patch:
+ *     summary: Toggle category status
+ *     description: Activate or deactivate a category (SuperAdmin or Admin with permission)
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - isActive
+ *             properties:
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Category status updated
+ *       400:
+ *         description: Cannot deactivate category with active tickets
+ *       404:
+ *         description: Category not found
+ */
+router.patch('/:id/status', authenticate, requireAdmin, validateParams(objectIdSchema), validateBody(toggleStatusSchema), toggleCategoryStatus);
 
 module.exports = router;

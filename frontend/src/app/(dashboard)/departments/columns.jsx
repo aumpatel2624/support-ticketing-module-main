@@ -14,7 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials, getAvatarColor } from '@/lib/utils';
 
-export const createColumns = (onEdit, onDelete) => [
+export const createColumns = (onEdit, onToggleStatus) => [
     {
         accessorKey: 'name',
         header: 'Department Name',

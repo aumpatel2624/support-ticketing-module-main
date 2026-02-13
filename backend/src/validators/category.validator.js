@@ -50,8 +50,16 @@ const categoryListQuerySchema = z.object({
     search: z.string().optional()
 });
 
+const toggleStatusSchema = z.object({
+    isActive: z.boolean({
+        required_error: "isActive status is required",
+        invalid_type_error: "isActive must be a boolean"
+    })
+});
+
 module.exports = {
     createCategorySchema,
     updateCategorySchema,
-    categoryListQuerySchema
+    categoryListQuerySchema,
+    toggleStatusSchema
 };

@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials, getAvatarColor } from '@/lib/utils';
 
-export const createColumns = (onEdit, onDeactivate) => [
+export const createColumns = (onEdit, onToggleStatus) => [
     {
         accessorKey: 'name',
         header: ({ column }) => {
@@ -126,9 +126,15 @@ export const createColumns = (onEdit, onDeactivate) => [
                             Edit User
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onClick={() => onDeactivate(user)}>
-                            Deactivate
-                        </DropdownMenuItem>
+                        {user.isActive ? (
+                            <DropdownMenuItem className="text-destructive" onClick={() => onToggleStatus(user, false)}>
+                                Deactivate
+                            </DropdownMenuItem>
+                        ) : (
+                            <DropdownMenuItem className="text-green-600" onClick={() => onToggleStatus(user, true)}>
+                                Activate
+                            </DropdownMenuItem>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             );

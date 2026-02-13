@@ -55,30 +55,45 @@ export default function DepartmentsPage() {
         setEditDepartment(null);
     };
 
-    const handleDeleteDepartment = async () => {
+    const handleToggleStatus = async (department, status) => {
+        if (status) {
+            // Activating - do it immediately
+            try {
+                await departmentService.toggleStatus(department._id, true);
+                toast.success('Department activated successfully');
+                fetchDepartments();
+            } catch (error) {
+                toast.error('Failed to activate department');
+            }
+        } else {
+            // Deactivating - show confirmation
+            setDeleteDepartment(department);
+        }
+    };
+
+    const confirmDeactivate = async () => {
         setIsDeleting(true);
         setDeleteError(null);
         setDeleteReferences(null);
         try {
-            await departmentService.deleteDepartment(deleteDepartment._id);
-            toast.success('Department deleted successfully');
+            await departmentService.toggleStatus(deleteDepartment._id, false);
+            toast.success('Department deactivated successfully');
             setDeleteDepartment(null);
             setDeleteError(null);
             setDeleteReferences(null);
             fetchDepartments();
         } catch (error) {
-            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to delete department';
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to deactivate department';
             const references = error.response?.data?.references || null;
             setDeleteError(errorMessage);
             setDeleteReferences(references);
-            // Keep the dialog open to show the error and references
         } finally {
             setIsDeleting(false);
         }
     };
 
     const columns = useMemo(
-        () => createColumns(setEditDepartment, setDeleteDepartment),
+        () => createColumns(setEditDepartment, handleToggleStatus),
         []
     );
 
@@ -122,11 +137,11 @@ export default function DepartmentsPage() {
                         setDeleteReferences(null);
                     }
                 }}
-                title="Delete Department"
-                description={`Are you sure you want to delete "${deleteDepartment?.name}"? This action cannot be undone.`}
-                confirmText="Delete"
+                title="Deactivate Department"
+                description={`Are you sure you want to deactivate "${deleteDepartment?.name}"? It will no longer be available for new tickets.`}
+                confirmText="Deactivate"
                 variant="destructive"
-                onConfirm={handleDeleteDepartment}
+                onConfirm={confirmDeactivate}
                 isLoading={isDeleting}
                 error={deleteError}
                 references={deleteReferences}

@@ -61,12 +61,28 @@ export default function UsersPage() {
         setEditUser(null);
     };
 
-    const handleDeleteUser = async () => {
+    const handleToggleStatus = async (user, status) => {
+        if (status) {
+            // Activating - do it immediately
+            try {
+                await userService.toggleStatus(user._id, true);
+                toast.success('User activated successfully');
+                fetchUsers();
+            } catch (error) {
+                toast.error('Failed to activate user');
+            }
+        } else {
+            // Deactivating - show confirmation
+            setDeleteUser(user);
+        }
+    };
+
+    const confirmDeactivate = async () => {
         setIsDeleting(true);
         setDeleteError(null);
         setDeleteReferences(null);
         try {
-            await userService.deleteUser(deleteUser._id);
+            await userService.toggleStatus(deleteUser._id, false);
             toast.success('User deactivated successfully');
             setDeleteUser(null);
             setDeleteError(null);
@@ -77,14 +93,13 @@ export default function UsersPage() {
             const references = error.response?.data?.references || null;
             setDeleteError(errorMessage);
             setDeleteReferences(references);
-            // Keep the dialog open to show the error and references
         } finally {
             setIsDeleting(false);
         }
     };
 
     const columns = useMemo(
-        () => createColumns(setEditUser, setDeleteUser),
+        () => createColumns(setEditUser, handleToggleStatus),
         []
     );
 
@@ -138,7 +153,7 @@ export default function UsersPage() {
                 description={`Are you sure you want to deactivate "${deleteUser?.name}"? They will no longer be able to access the system.`}
                 confirmText="Deactivate"
                 variant="destructive"
-                onConfirm={handleDeleteUser}
+                onConfirm={confirmDeactivate}
                 isLoading={isDeleting}
                 error={deleteError}
                 references={deleteReferences}

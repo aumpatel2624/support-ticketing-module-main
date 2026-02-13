@@ -20,6 +20,11 @@ const categoryService = {
     async deleteCategory(id) {
         const response = await api.delete(`${API_ENDPOINTS.CATEGORIES}/${id}`);
         return response.data;
+    },
+
+    async toggleStatus(id, isActive) {
+        const response = await api.patch(`${API_ENDPOINTS.CATEGORIES}/${id}/status`, { isActive });
+        return response.data;
     }
 };
 

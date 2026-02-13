@@ -19,6 +19,7 @@ import useTicketStore from '@/store/ticketStore';
 import useSettingsStore from '@/store/settingsStore';
 import useTicketUpdates from '@/hooks/useTicketUpdates';
 import useAuth from '@/hooks/useAuth';
+import { KANBAN_COLUMN_ORDER_ADMIN } from '@/lib/constants';
 import toast from 'react-hot-toast';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -383,6 +384,7 @@ export default function TicketsPage() {
                     <KanbanBoard
                         initialTickets={tickets}
                         onTicketUpdate={fetchTickets}
+                        columnOrder={user?.role === 'Admin' ? KANBAN_COLUMN_ORDER_ADMIN : undefined}
                     />
                 ) : viewMode === 'card' ? (
                     <TicketCardView

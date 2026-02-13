@@ -65,6 +65,16 @@ export const KANBAN_COLUMN_ORDER = [
     TICKET_STATUS.ESCALATED,
 ];
 
+// Kanban Column Order for Facility Management Head (Admin role) — excludes 'New'
+export const KANBAN_COLUMN_ORDER_ADMIN = [
+    TICKET_STATUS.ASSIGNED,
+    TICKET_STATUS.IN_PROGRESS,
+    TICKET_STATUS.COMPLETED,
+    TICKET_STATUS.REOPENED,
+    TICKET_STATUS.CLOSED,
+    TICKET_STATUS.ESCALATED,
+];
+
 // Ticket Priorities
 export const TICKET_PRIORITY = {
     LOW: 'Low',

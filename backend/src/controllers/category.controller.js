@@ -261,11 +261,83 @@ const deleteCategory = asyncHandler(async (req, res) => {
     });
 });
 
+const toggleCategoryStatus = asyncHandler(async (req, res) => {
+    const { isActive } = req.body;
+    const category = await Category.findById(req.params.id);
+
+    if (!category) {
+        throw new NotFoundError('Category not found');
+    }
+
+    // RESTRICTION: Admin can only delete their department's category
+    if (req.user.role === 'Admin' && category.departmentId.toString() !== req.user.department.toString()) {
+        throw new AuthorizationError('Not authorized to update this category');
+    }
+
+    // If activating, just update
+    if (isActive) {
+        category.isActive = true;
+        await category.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Category activated successfully',
+            data: {
+                _id: category._id,
+                name: category.name,
+                isActive: category.isActive
+            }
+        });
+    }
+
+    // If deactivating, perform reference checks
+    const Ticket = require('../models/Ticket');
+
+    // Cascading validation: Check for active tickets using this category
+    const tickets = await Ticket.find({
+        categoryId: req.params.id,
+        status: { $nin: ['Closed'] }
+    }).select('_id id title status priority').lean();
+
+    if (tickets.length > 0) {
+        const error = new ValidationError(
+            `Cannot deactivate category "${category.name}" because it has active references. Please resolve them first.`
+        );
+        error.references = [{
+            type: 'tickets',
+            count: tickets.length,
+            items: tickets.map(t => ({
+                id: t._id,
+                ticketId: t.id,
+                title: t.title,
+                status: t.status,
+                priority: t.priority
+            }))
+        }];
+        throw error;
+    }
+
+    // Deactivate
+    category.isActive = false;
+    await category.save();
+
+    res.status(200).json({
+        success: true,
+        message: 'Category deactivated successfully',
+        data: {
+            _id: category._id,
+            name: category.name,
+            isActive: category.isActive
+        }
+    });
+});
+
 module.exports = {
     getCategories,
     getCategoryById,
     getCategoriesByDepartment,
     createCategory,
     updateCategory,
-    deleteCategory
+    deleteCategory,
+    toggleCategoryStatus
 };

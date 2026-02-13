@@ -6,7 +6,8 @@ const {
     createDepartment,
     updateDepartment,
     deleteDepartment,
-    getDepartmentStats
+    getDepartmentStats,
+    toggleDepartmentStatus
 } = require('../controllers/department.controller');
 const { authenticate } = require('../middleware/auth');
 const { requireSuperAdmin, requireAdmin } = require('../middleware/rbac');
@@ -14,7 +15,8 @@ const { validateBody, validateParams, validateQuery } = require('../middleware/v
 const {
     createDepartmentSchema,
     updateDepartmentSchema,
-    departmentListQuerySchema
+    departmentListQuerySchema,
+    toggleStatusSchema
 } = require('../validators/department.validator');
 const { objectIdSchema } = require('../validators/user.validator');
 
@@ -175,5 +177,41 @@ router.delete('/:id', authenticate, requireSuperAdmin, validateParams(objectIdSc
  *         description: Statistics retrieved
  */
 router.get('/:id/stats', authenticate, validateParams(objectIdSchema), getDepartmentStats);
+
+/**
+ * @swagger
+ * /departments/{id}/status:
+ *   patch:
+ *     summary: Toggle department status
+ *     description: Activate or deactivate a department (SuperAdmin only)
+ *     tags: [Departments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - isActive
+ *             properties:
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Department status updated
+ *       400:
+ *         description: Cannot deactivate department with active references
+ *       404:
+ *         description: Department not found
+ */
+router.patch('/:id/status', authenticate, requireSuperAdmin, validateParams(objectIdSchema), validateBody(toggleStatusSchema), toggleDepartmentStatus);
 
 module.exports = router;

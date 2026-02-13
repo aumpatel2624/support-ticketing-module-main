@@ -10,7 +10,8 @@ const {
     getMe,
     updateMe,
     bulkImportUsers,
-    downloadSampleTemplate
+    downloadSampleTemplate,
+    toggleUserStatus
 } = require('../controllers/user.controller');
 const { authenticate } = require('../middleware/auth');
 const { requireSuperAdmin, requireAdmin } = require('../middleware/rbac');
@@ -20,7 +21,8 @@ const {
     updateUserSchema,
     updateProfileSchema,
     userListQuerySchema,
-    objectIdSchema
+    objectIdSchema,
+    toggleStatusSchema
 } = require('../validators/user.validator');
 
 // Debug middleware
@@ -325,5 +327,41 @@ router.put('/:id', authenticate, requireAdmin, validateParams(objectIdSchema), v
  *         description: User not found
  */
 router.delete('/:id', authenticate, requireSuperAdmin, validateParams(objectIdSchema), deleteUser);
+
+/**
+ * @swagger
+ * /users/{id}/status:
+ *   patch:
+ *     summary: Toggle user status
+ *     description: Activate or deactivate a user (SuperAdmin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - isActive
+ *             properties:
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: User status updated
+ *       400:
+ *         description: Cannot deactivate user with active references
+ *       404:
+ *         description: User not found
+ */
+router.patch('/:id/status', authenticate, requireSuperAdmin, validateParams(objectIdSchema), validateBody(toggleStatusSchema), toggleUserStatus);
 
 module.exports = router;

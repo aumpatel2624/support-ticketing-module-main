@@ -25,7 +25,8 @@ import { KANBAN_COLUMN_ORDER as ORDERED_STATUSES } from '@/lib/constants';
 /**
  * KanbanBoard - Main Kanban view component with drag-and-drop ticket management
  */
-export default function KanbanBoard({ initialTickets = [], onTicketUpdate, readOnly = false }) {
+export default function KanbanBoard({ initialTickets = [], onTicketUpdate, readOnly = false, columnOrder }) {
+    const statuses = columnOrder || ORDERED_STATUSES;
     const { user } = useAuth();
     const [tickets, setTickets] = useState(initialTickets);
     const [isUpdating, setIsUpdating] = useState(null);
@@ -100,7 +101,7 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate, readO
         let newStatus = over.id;
 
         // If dropped over another ticket, get that ticket's status
-        if (!ORDERED_STATUSES.includes(newStatus)) {
+        if (!statuses.includes(newStatus)) {
             const overTicket = tickets.find((t) => t._id === newStatus);
             if (overTicket) {
                 newStatus = overTicket.status;
@@ -371,7 +372,7 @@ export default function KanbanBoard({ initialTickets = [], onTicketUpdate, readO
                     className="flex gap-2 overflow-x-auto p-2 flex-1 cursor-grab active:cursor-grabbing select-none h-full"
                     data-scrollable="true"
                 >
-                    {ORDERED_STATUSES.map((status) => (
+                    {statuses.map((status) => (
                         <KanbanColumn
                             key={status}
                             status={status}

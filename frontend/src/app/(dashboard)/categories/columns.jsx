@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 
-export const createColumns = (onEdit, onDelete) => [
+export const createColumns = (onEdit, onToggleStatus) => [
     {
         accessorKey: 'name',
         header: ({ column }) => {
@@ -96,9 +96,15 @@ export const createColumns = (onEdit, onDelete) => [
                             Edit Category
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onClick={() => onDelete(category)}>
-                            Delete
-                        </DropdownMenuItem>
+                        {category.isActive ? (
+                            <DropdownMenuItem className="text-destructive" onClick={() => onToggleStatus(category, false)}>
+                                Deactivate
+                            </DropdownMenuItem>
+                        ) : (
+                            <DropdownMenuItem className="text-green-600" onClick={() => onToggleStatus(category, true)}>
+                                Activate
+                            </DropdownMenuItem>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             );

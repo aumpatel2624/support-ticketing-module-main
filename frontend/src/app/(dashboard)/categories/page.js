@@ -63,30 +63,45 @@ export default function CategoriesPage() {
         setEditCategory(null);
     };
 
-    const handleDeleteCategory = async () => {
+    const handleToggleStatus = async (category, status) => {
+        if (status) {
+            // Activating - do it immediately
+            try {
+                await categoryService.toggleStatus(category._id, true);
+                toast.success('Category activated successfully');
+                fetchCategories();
+            } catch (error) {
+                toast.error('Failed to activate category');
+            }
+        } else {
+            // Deactivating - show confirmation
+            setDeleteCategory(category);
+        }
+    };
+
+    const confirmDeactivate = async () => {
         setIsDeleting(true);
         setDeleteError(null);
         setDeleteReferences(null);
         try {
-            await categoryService.deleteCategory(deleteCategory._id);
-            toast.success('Category deleted successfully');
+            await categoryService.toggleStatus(deleteCategory._id, false);
+            toast.success('Category deactivated successfully');
             setDeleteCategory(null);
             setDeleteError(null);
             setDeleteReferences(null);
             fetchCategories();
         } catch (error) {
-            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to delete category';
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to deactivate category';
             const references = error.response?.data?.references || null;
             setDeleteError(errorMessage);
             setDeleteReferences(references);
-            // Keep the dialog open to show the error and references
         } finally {
             setIsDeleting(false);
         }
     };
 
     const columns = useMemo(
-        () => createColumns(setEditCategory, setDeleteCategory),
+        () => createColumns(setEditCategory, handleToggleStatus),
         []
     );
 
@@ -132,11 +147,11 @@ export default function CategoriesPage() {
                         setDeleteReferences(null);
                     }
                 }}
-                title="Delete Category"
-                description={`Are you sure you want to delete "${deleteCategory?.name}"? This action cannot be undone.`}
-                confirmText="Delete"
+                title="Deactivate Category"
+                description={`Are you sure you want to deactivate "${deleteCategory?.name}"? It will no longer be available for new tickets.`}
+                confirmText="Deactivate"
                 variant="destructive"
-                onConfirm={handleDeleteCategory}
+                onConfirm={confirmDeactivate}
                 isLoading={isDeleting}
                 error={deleteError}
                 references={deleteReferences}

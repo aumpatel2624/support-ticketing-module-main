@@ -581,6 +581,109 @@ const downloadSampleTemplate = asyncHandler(async (req, res) => {
     }
 });
 
+/**
+ * @desc    Toggle user active status
+ * @route   PATCH /api/users/:id/status
+ * @access  Private (SuperAdmin)
+ */
+const toggleUserStatus = asyncHandler(async (req, res) => {
+    const { isActive } = req.body;
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+        throw new NotFoundError('User not found');
+    }
+
+    // Prevent deactivating self
+    if (String(user._id) === String(req.user._id)) {
+        throw new ValidationError('Cannot change status of your own account');
+    }
+
+    // If activating, just update
+    if (isActive) {
+        user.isActive = true;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'User activated successfully',
+            data: {
+                _id: user._id,
+                name: user.name,
+                isActive: user.isActive
+            }
+        });
+    }
+
+    // If deactivating, perform reference checks (same as delete)
+    const Department = require('../models/Department');
+    const Ticket = require('../models/Ticket');
+
+    // Collect all references
+    const references = [];
+
+    // Check 1: User is a department head
+    const departments = await Department.find({
+        headUserId: req.params.id,
+        isActive: true
+    }).select('_id name code').lean();
+
+    if (departments.length > 0) {
+        references.push({
+            type: 'departments',
+            count: departments.length,
+            items: departments.map(d => ({
+                id: d._id,
+                name: d.name,
+                code: d.code
+            }))
+        });
+    }
+
+    // Check 2: User has assigned tickets
+    const tickets = await Ticket.find({
+        assignedTo: req.params.id,
+        status: { $nin: ['Closed'] }
+    }).select('_id id title status priority').lean();
+
+    if (tickets.length > 0) {
+        references.push({
+            type: 'tickets',
+            count: tickets.length,
+            items: tickets.map(t => ({
+                id: t._id,
+                ticketId: t.id,
+                title: t.title,
+                status: t.status,
+                priority: t.priority
+            }))
+        });
+    }
+
+    // If any references exist, return error with details
+    if (references.length > 0) {
+        const error = new ValidationError(
+            `Cannot deactivate user "${user.name}" because they have active references. Please resolve them first.`
+        );
+        error.references = references;
+        throw error;
+    }
+
+    // Deactivate
+    user.isActive = false;
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: 'User deactivated successfully',
+        data: {
+            _id: user._id,
+            name: user.name,
+            isActive: user.isActive
+        }
+    });
+});
+
 module.exports = {
     getUsers,
     getUserById,
@@ -590,5 +693,6 @@ module.exports = {
     getMe,
     updateMe,
     bulkImportUsers,
-    downloadSampleTemplate
+    downloadSampleTemplate,
+    toggleUserStatus
 };

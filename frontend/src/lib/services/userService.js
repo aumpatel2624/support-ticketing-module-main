@@ -40,6 +40,16 @@ const userService = {
     },
 
     /**
+     * Toggle user status (Activate/Deactivate)
+     * @param {string} id 
+     * @param {boolean} isActive 
+     */
+    async toggleStatus(id, isActive) {
+        const response = await api.patch(`${API_ENDPOINTS.USERS}/${id}/status`, { isActive });
+        return response.data;
+    },
+
+    /**
      * Get team members
      */
     async getTeamMembers() {
