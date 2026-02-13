@@ -72,9 +72,15 @@ export const createColumns = (onEdit, onToggleStatus) => [
                             Edit Details
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onClick={() => onDelete(department)}>
-                            Delete
-                        </DropdownMenuItem>
+                        {department.isActive ? (
+                            <DropdownMenuItem className="text-destructive" onClick={() => onToggleStatus(department, false)}>
+                                Deactivate
+                            </DropdownMenuItem>
+                        ) : (
+                            <DropdownMenuItem className="text-green-600" onClick={() => onToggleStatus(department, true)}>
+                                Activate
+                            </DropdownMenuItem>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
