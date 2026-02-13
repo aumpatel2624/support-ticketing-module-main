@@ -65,6 +65,16 @@ const authService = {
         const response = await api.get(API_ENDPOINTS.CURRENT_USER);
         return response.data;
     },
+
+    /**
+     * Change password for authenticated user
+     * @param {Object} data - { currentPassword, newPassword }
+     * @returns {Promise}
+     */
+    async changePassword(data) {
+        const response = await api.post(API_ENDPOINTS.CHANGE_PASSWORD, data);
+        return response.data;
+    },
 };
 
 export default authService;

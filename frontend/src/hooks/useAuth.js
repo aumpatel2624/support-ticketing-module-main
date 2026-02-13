@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import useAuthStore from '@/store/authStore';
 import authService from '@/lib/services/authService';
+import { getErrorMessage } from '@/lib/api';
 
 /**
  * useAuth Hook
@@ -51,10 +52,16 @@ export default function useAuth() {
 
                 return response.data;
             } catch (err) {
-                const errorMessage = err.message || 'Login failed. Please try again.';
+                const errorMessage = getErrorMessage(err);
+                console.error('Login failed:', {
+                    status: err.response?.status,
+                    message: errorMessage,
+                    data: err.response?.data
+                });
                 setError(errorMessage);
-                toast.error(errorMessage);
-                throw err;
+                // Ensure toast is shown with proper message
+                toast.error(errorMessage, { duration: 4000 });
+                // Don't re-throw to prevent page reload
             } finally {
                 setLoading(false);
             }

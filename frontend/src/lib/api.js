@@ -58,8 +58,14 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // If error is 401 and we haven't retried yet
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Don't apply token refresh to login/auth endpoints
+        const isAuthEndpoint = originalRequest.url?.includes('/auth/login') ||
+                               originalRequest.url?.includes('/auth/register') ||
+                               originalRequest.url?.includes('/auth/forgot-password') ||
+                               originalRequest.url?.includes('/auth/reset-password');
+
+        // If error is 401 and we haven't retried yet (and it's not an auth endpoint)
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
             originalRequest._retry = true;
 
             try {
@@ -92,6 +98,11 @@ api.interceptors.response.use(
             }
         }
 
+        // For auth endpoints with 401, just return the error without forcing logout
+        if (isAuthEndpoint && error.response?.status === 401) {
+            return Promise.reject(error);
+        }
+
         // Return the original Axios error object (has response, config, etc.)
         // Don't spread/modify it as it loses properties
         return Promise.reject(error);
@@ -101,21 +112,27 @@ api.interceptors.response.use(
 /**
  * Extract user-friendly error message from API error
  */
-function getErrorMessage(error) {
-    if (error.response) {
+export function getErrorMessage(error) {
+    // Handle different error types
+    if (error?.response) {
         // Server responded with error
-        const { data, status } = error.response;
+        const { data = {}, status } = error.response;
 
-        if (data?.message) {
+        // Check multiple possible error message fields
+        // Backend structure: { success: false, error: "message", details: null }
+        if (data.error && typeof data.error === 'string') {
+            return data.error;
+        }
+        if (data.message && typeof data.message === 'string') {
             return data.message;
         }
 
-        // Default messages for common status codes
+        // Handle status-specific messages
         switch (status) {
             case 400:
-                return 'Invalid request. Please check your input.';
+                return 'Invalid credentials. Please check your email and password.';
             case 401:
-                return 'Unauthorized. Please login again.';
+                return 'Invalid credentials. Please check your email and password.';
             case 403:
                 return 'You do not have permission to perform this action.';
             case 404:
@@ -131,15 +148,17 @@ function getErrorMessage(error) {
             case 503:
                 return 'Service temporarily unavailable. Please try again later.';
             default:
-                return `An error occurred (${status}). Please try again.`;
+                return `An error occurred. Please try again.`;
         }
-    } else if (error.request) {
+    } else if (error?.request) {
         // Request made but no response
-        return 'Network error. Please check your connection.';
-    } else {
-        // Something else happened
-        return error.message || 'An unexpected error occurred.';
+        return 'Network error. Please check your connection and try again.';
+    } else if (error?.message) {
+        // Client-side error
+        return error.message;
     }
+
+    return 'An unexpected error occurred. Please try again.';
 }
 
 export default api;

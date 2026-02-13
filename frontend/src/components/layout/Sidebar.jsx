@@ -20,6 +20,7 @@ import {
     Zap,
     Tags,
     Bell,
+    Lock,
 } from 'lucide-react';
 import Image from 'next/image';
 import {
@@ -134,11 +135,17 @@ export default function Sidebar({ isMobile = false }) {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator className="opacity-50" />
+                        <DropdownMenuItem asChild className="rounded-xl py-2.5 my-0.5 focus:bg-primary/5 focus:text-primary cursor-pointer">
+                            <Link href="/settings/security" prefetch={false} className="flex items-center">
+                                <Lock className="mr-3 h-4 w-4" />
+                                <span className="font-medium">Change Password</span>
+                            </Link>
+                        </DropdownMenuItem>
                         {user?.role === 'SuperAdmin' && (
                             <DropdownMenuItem asChild className="rounded-xl py-2.5 my-0.5 focus:bg-primary/5 focus:text-primary cursor-pointer">
                                 <Link href="/settings/system" prefetch={false} className="flex items-center">
                                     <Settings className="mr-3 h-4 w-4" />
-                                    <span className="font-medium">Settings</span>
+                                    <span className="font-medium">System Settings</span>
                                 </Link>
                             </DropdownMenuItem>
                         )}

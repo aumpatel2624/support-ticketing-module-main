@@ -46,14 +46,22 @@ export default function LoginForm() {
         try {
             await login(values);
         } catch (error) {
-            // Error is handled by useAuth (displays toast)
-            console.error('Login submission error:', error);
+            // Error is already handled by useAuth hook
+            console.debug('Form submission error handled', error);
+        }
+    };
+
+    // Prevent accidental form submission
+    const handleFormKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+            // Let the form's normal submit handler take care of it
+            // This is already prevented by React Hook Form
         }
     };
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} onKeyDown={handleFormKeyDown} className="space-y-6" noValidate>
                 <FormField
                     control={form.control}
                     name="email"
